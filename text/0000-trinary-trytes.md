@@ -52,19 +52,16 @@ The methods and traits are going to br implemented are roughly list below:
 
 ```rust
 impl Trytes {
-    #[inline]
     pub fn new() -> Trytes {
         Trytes { vec: Vec::new() }
     }
 
-    #[inline]
     pub fn with_capacity(capacity: usize) -> Trytes {
         Trytes {
             vec: Vec::with_capacity(capacity),
         }
     }
 
-    #[inline]
     pub fn from_utf8(vec: Vec<u8>) -> Result<Trytes> {
         Self::all_tryte_alphabete(vec.iter())?;
         Ok(Trytes { vec })
@@ -74,74 +71,59 @@ impl Trytes {
         Trytes { vec: bytes }
     }
 
-    #[inline]
     pub unsafe fn from_raw_parts(buf: *mut u8, length: usize, capacity: usize) -> Trytes {
     }
 
-    #[inline]
     pub fn into_bytes(self) -> Vec<u8> {
         self.vec
     }
 
-    #[inline]
     pub fn as_bytes(&self) -> &[u8] {
         &self.vec
     }
 
-    #[inline]
     pub fn as_str(&self) -> &str {
         str::from_utf8(&self.vec).unwrap()
     }
 
-    #[inline]
     pub fn as_mut_str(&mut self) -> &mut str {
         str::from_utf8_mut(&mut self.vec).unwrap()
     }
 
-    #[inline]
     pub fn push_str(&mut self, string: &str) -> Result<()> {
     }
 
-    #[inline]
     pub fn capacity(&self) -> usize {
         self.vec.capacity()
     }
 
-    #[inline]
     pub fn reserve(&mut self, additional: usize) {
         self.vec.reserve(additional)
     }
 
-    #[inline]
     pub fn reserve_exact(&mut self, additional: usize) {
         self.vec.reserve_exact(additional)
     }
 
-    #[inline]
     pub fn shrink_to_fit(&mut self) {
         self.vec.shrink_to_fit()
     }
 
-    #[inline]
     pub fn push(&mut self, ch: char) -> Result<()> {
     }
 
-    #[inline]
     pub fn truncate(&mut self, new_len: usize) {
     }
 
-    #[inline]
     pub fn pop(&mut self) -> Option<char> {
     }
 
     pub fn remove(&mut self, idx: usize) -> char {
     }
 
-    #[inline]
     pub fn insert(&mut self, idx: usize, ch: char) -> Result<()> {
     }
 
-    #[inline]
     pub fn insert_str(&mut self, idx: usize, string: &str) -> Result<()> {
     }
 
@@ -149,34 +131,30 @@ impl Trytes {
         &mut self.vec
     }
 
-    #[inline]
     pub fn len(&self) -> usize {
         self.vec.len()
     }
 
-    #[inline]
     pub fn is_empty(&self) -> bool {
         self.len() == 0
     }
 
-    #[inline]
     pub fn split_off(&mut self, at: usize) -> Trytes {
     }
 
-    #[inline]
     pub fn clear(&mut self) {
     }
 
     unsafe fn insert_bytes(&mut self, idx: usize, bytes: &[u8]) {
     }
 
-    fn all_tryte_alphabete<'a, I>(vals: I) -> Result<()>
+    fn all_tryte_alphabete<I>(vals: I) -> Result<()>
     where
-        I: Iterator<Item = &'a u8>,
+        I: Iterator<Item = u8>,
     {
     }
 
-    fn is_tryte_alphabete(t: &u8) -> bool {
+    fn is_tryte_alphabete(t: u8) -> bool {
     }
 }
 ```
