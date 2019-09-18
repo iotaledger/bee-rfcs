@@ -63,75 +63,101 @@ Besides that, Transactions can be only built by "Transaction Builders", or by th
 ```rust
 impl Transaction {
 
-    pub fn from_transaction_builder(transaction_builder: &TransactionBuilder) -> Transaction {
-        unimplemented!()
+    pub fn from_transaction_builder(transaction_builder: &TransactionBuilder) -> Result<Transaction, TransactionBuilderValidationError> {
+                
+        match TransactionBuilderValidator::validate(&transaction_builder) {
+            Ok(()) => { ; }
+            Err(e) => { return Err(e) }
+        }
+
+        let (transaction_hash, nonce, timestamp) = Pow::compute(&transaction_builder);
+
+        Ok(Transaction {
+            transaction_hash,
+            signature_fragments: transaction_builder.signature_fragments.clone(),
+            address: transaction_builder.address.clone(),
+            value: transaction_builder.value.clone(),
+            obsolete_tag: transaction_builder.obsolete_tag.clone(),
+            timestamp,
+            current_index: transaction_builder.current_index.clone(),
+            last_index: transaction_builder.last_index.clone(),
+            bundle_hash: transaction_builder.bundle_hash.clone(),
+            trunk: transaction_builder.trunk.clone(),
+            branch: transaction_builder.branch.clone(),
+            nonce,
+            tag: transaction_builder.tag.clone(),
+            attachment_timestamp: transaction_builder.attachment_timestamp.clone(),
+            attachment_timestamp_lower_bound: transaction_builder.attachment_timestamp_lower_bound.clone(),
+            attachment_timestamp_upper_bound: transaction_builder.attachment_timestamp_upper_bound.clone(),
+        })
+                
     }
     
-    pub fn from_bytes(bytes: &Vec<u8>) -> Transaction {
+    pub fn from_bytes(bytes: &Vec<u8>) -> Result<Transaction, TransactionBuilderValidationError> {
         unimplemented!()
     }
 
-    pub fn get_transaction_hash(&self) -> &String {
+    pub fn transaction_hash(&self) -> &String {
         &self.transaction_hash
     }
 
-    pub fn get_signature_fragments(&self) -> &String {
+    pub fn signature_fragments(&self) -> &String {
         &self.signature_fragments
     }
 
-    pub fn get_address(&self) -> &String {
+    pub fn address(&self) -> &String {
         &self.address
     }
 
-    pub fn get_value(&self) -> &i64 {
+    pub fn value(&self) -> &i64 {
         &self.value
     }
 
-    pub fn get_obsolete_tag(&self) -> &String {
+    pub fn obsolete_tag(&self) -> &String {
         &self.obsolete_tag
     }
 
-    pub fn get_timestamp(&self) -> &i64 {
+    pub fn timestamp(&self) -> &i64 {
         &self.timestamp
     }
 
-    pub fn get_current_index(&self) -> &usize {
+    pub fn current_index(&self) -> &usize {
         &self.current_index
     }
 
-    pub fn get_last_index(&self) -> &usize {
+    pub fn last_index(&self) -> &usize {
         &self.last_index
     }
 
-    pub fn get_bundle_hash(&self) -> &String {
+    pub fn bundle_hash(&self) -> &String {
         &self.bundle_hash
     }
 
-    pub fn get_trunk(&self) -> &String {
+    pub fn trunk(&self) -> &String {
         &self.trunk
     }
 
-    pub fn get_branch(&self) -> &String {
+    pub fn branch(&self) -> &String {
         &self.branch
     }
 
-    pub fn get_nonce(&self) -> &String {
+    pub fn nonce(&self) -> &String {
         &self.nonce
     }
 
-    pub fn get_tag(&self) -> &String {
+    pub fn tag(&self) -> &String {
         &self.tag
     }
 
-    pub fn get_attachment_timestamp(&self) -> &i64 {
+    pub fn attachment_timestamp(&self) -> &i64 {
         &self.attachment_timestamp
     }
 
-    pub fn get_attachment_timestamp_lower_bound(&self) -> &i64 {
+    pub fn attachment_timestamp_lower_bound(&self) -> &i64 {
         &self.attachment_timestamp_lower_bound
     }
 
-    pub fn get_attachment_timestamp_upper_bound(&self) -> &i64 {
+    pub fn attachment_timestamp_upper_bound(&self) -> &i64 {
         &self.attachment_timestamp_upper_bound
     }
 
@@ -143,21 +169,30 @@ The set values can be validated in the build() function which then returns the c
 Moreover, also the Proof-Of-Work will be part of the build() function.
 
 ```rust
-impl Transaction_Builder {
+#[derive(Default)]
+pub struct TransactionBuilder {
+    pub signature_fragments: String,
+    pub address: String,
+    pub value: i64,
+    pub obsolete_tag: String,
+    pub current_index: usize,
+    pub last_index: usize,
+    pub bundle_hash: String,
+    pub trunk: String,
+    pub branch: String,
+    pub tag: String,
+    pub attachment_timestamp: i64,
+    pub attachment_timestamp_lower_bound: i64,
+    pub attachment_timestamp_upper_bound: i64,
+}
 
-    pub fn new() -> TransactionBuilder {
+impl TransactionBuilder {
 
-        !unimplemented()
-
-    }
-
-    pub fn build(&self) -> Transaction {
+    pub fn build(&self) -> Result<Transaction, TransactionBuilderValidationError> {
         Transaction::from_transaction_builder(self)
     }
-    
-    ...
-    
-}   
+
+}
 ```
 
 # Drawbacks
