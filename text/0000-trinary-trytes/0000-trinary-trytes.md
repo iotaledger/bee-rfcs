@@ -68,24 +68,9 @@ impl Trytes {
     ...
 
     pub fn encode(&mut self, plain: &str) {
-        for byte in plain.bytes() {
-            let first = byte % 27;
-            let second = (byte - first) / 27;
-            self.0.put(TRYTE_ALPHABET[first as usize]);
-            self.0.put(TRYTE_ALPHABET[second as usize]);
-        }
     }
 
     pub fn decode(&self) -> String {
-        let mut s = String::with_capacity(self.len() / 2);
-        for slice in self.chunks(2) {
-            let first: u8 = TRYTE_ALPHABET.iter().position(|&x| x == slice[0]).unwrap() as u8;
-            let second: u8 = TRYTE_ALPHABET.iter().position(|&x| x == slice[1]).unwrap() as u8;
-            let decimal = first + second * 27;
-
-            s.push(decimal as char);
-        }
-        s
     }
 
     ...
