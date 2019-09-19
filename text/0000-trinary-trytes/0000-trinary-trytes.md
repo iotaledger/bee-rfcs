@@ -36,11 +36,17 @@ convert byte literals in the end, but still this can be done afterwards.
 
 ## Trytes
 
-Type `Trytes` is a type `BytesMut` and moreover a smart pointer.
+Type `Trytes` is a type `BytesMut` and moreover a smart pointer. There are also
+a series of fixed sized type to help checking at compiled time to increase
+correctness and performance.
 The structure simply looks like this:
 
 ```rust
 pub type Tryte = u8;
+
+pub type Tag = [Tryte; 9];
+pub type Adress = [Tryte; 81];
+...
 
 pub struct Trytes(BytesMut);
 ```
