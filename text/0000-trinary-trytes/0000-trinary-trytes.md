@@ -1,7 +1,7 @@
 + Feature Name: `trinary-trytes`
 + Start Date: 2019-09-09
-+ RFC PR: [iotaledger/bee-rfcs#0000](https://github.com/iotaledger/bee-rfcs/pull/4)
-+ Bee issue: [iotaledger/bee#0000](https://github.com/iotaledger/bee/issues/50)
++ RFC PR: [iotaledger/bee-rfcs#4](https://github.com/iotaledger/bee-rfcs/pull/4)
++ Bee issue: [iotaledger/bee#50](https://github.com/iotaledger/bee/issues/50)
 
 # Summary
 
