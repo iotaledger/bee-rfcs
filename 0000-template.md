@@ -1,7 +1,7 @@
 + Feature Name: (fill me in with a unique ident, `my_awesome_feature`)
 + Start Date: (fill me in with today's date, YYYY-MM-DD)
 + RFC PR: [iotaledger/bee-rfcs#0000](https://github.com/iotaledger/bee-rfcs/pull/0000)
-+ Bee issue: [iotaledger/bee#0000](https://github.com/iotaledger/bee/issues/0000)
++ Bee Issue: [iotaledger/bee#0000](https://github.com/iotaledger/bee/issues/0000)
 
 # Summary
 
