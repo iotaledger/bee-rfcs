@@ -36,7 +36,51 @@ This interface should offer methods like allocations, conversions and manipulati
 
 # Detailed design
 
-WIP
+```rust
+pub trait Trinary {
+    fn with_capacity(n: usize) -> Self;
+    fn double_in_place(&mut self) -> bool;
+    fn reserve(&mut self, used: usize, needed: usize);
+    fn to_trits(ref: &[u8]) -> Self;
+    ...
+}
+
+pub struct 1T1B {
+    raw: ...,
+} 
+
+impl Trinary for 1T1B {
+
+}
+
+pub struct Trits<T: Trinary>{
+    inner: T,
+}
+
+impl<T: Trinary> Trits<T> {
+    pub fn new() -> Self {
+        ...
+    }
+    
+    pub fn with_capacity(n: usize) -> Self {
+        ...
+    }
+    
+    pub fn push(&mut self, x: Trits) {
+        ...
+    }
+    
+    pub fn pop(&mut self) -> Option<Trits> {
+        ...
+    }
+}
+
+impl<T: Trinary> From<[u8]> for Trits<T> {
+    fn from(s: [u8]) -> Self {
+        ...
+    }
+}
+```
 
 # Drawbacks
 
