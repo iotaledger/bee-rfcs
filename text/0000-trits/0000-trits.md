@@ -48,8 +48,6 @@ To allow implementing all conversions without having to focus too much on unnece
 ```rust
 pub trait Trinary {
     fn with_capacity(n: usize) -> Self;
-    fn double_in_place(&mut self) -> bool;
-    fn reserve(&mut self, used: usize, needed: usize);
     fn to_trits(ref: &[u8]) -> Self;
     ...
 }
@@ -72,14 +70,6 @@ impl<T: Trinary> Trits<T> {
     }
 
     pub fn with_capacity(n: usize) -> Self {
-        ...
-    }
-
-    pub fn push(&mut self, x: Trits) {
-        ...
-    }
-
-    pub fn pop(&mut self) -> Option<Trits> {
         ...
     }
 }
