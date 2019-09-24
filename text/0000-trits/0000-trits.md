@@ -1,5 +1,5 @@
-+ Feature Name: trits
-+ Start Date: 2019-09-20
++ Feature name: trits
++ Start date: 2019-09-20
 + RFC PR: [iotaledger/bee-rfcs#10](https://github.com/iotaledger/bee-rfcs/pull/10)
 + Bee issue: [iotaledger/bee#45](https://github.com/iotaledger/bee/issues/45)
 
@@ -47,7 +47,7 @@ pub trait Trinary {
 
 pub struct 1T1B {
     raw: ...,
-} 
+}
 
 impl Trinary for 1T1B {
 
@@ -61,15 +61,15 @@ impl<T: Trinary> Trits<T> {
     pub fn new() -> Self {
         ...
     }
-    
+
     pub fn with_capacity(n: usize) -> Self {
         ...
     }
-    
+
     pub fn push(&mut self, x: Trits) {
         ...
     }
-    
+
     pub fn pop(&mut self) -> Option<Trits> {
         ...
     }
