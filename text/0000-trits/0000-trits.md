@@ -93,12 +93,24 @@ impl<T: Trinary> From<[u8]> for Trits<T> {
 
 # Drawbacks
 
-WIP
+We denfine a general interface with different encoded types whithin to make
+consistancy of public usage. But there are some method may needed for one
+encoded type but not others. Take hashing for example, types like ptrits would
+need some ways to do permutations and transformations, while types like 5T1B or
+9T2B are not required because they are mainly used for transfer.
+
+We can implement more methods but it still depends on what trait `Trinary` can
+provide. Or we give more freedom to have method like `into_inner` to manipulate
+the inner structure directly, but this might contradict to the purpose of this
+interface.
 
 # Rationale and alternatives
 
-WIP
+- Just define type alias and some convert functions. This give way more freedom to the users.
+- Each encoded trit is a type of its own intead of interface like above.
 
 # Unresolved questions
 
-WIP
+Which type we should to do first on the initial implementation? And should we
+done all conversion once and for all, or just provide minimum ways to do it
+first?
