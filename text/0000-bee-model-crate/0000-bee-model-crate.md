@@ -11,22 +11,41 @@ This feature is responsible for the creation and interpretation of transactions 
 
 IOTA is a distributed ledger that was designed for payment settlement and data transfer between machines and devices in the Internet of Things (IoT) ecosystem.
 The data packets that are sent through the network are called "transactions".
-Settlements or data transfers can be done with the help of these transactions.
+Settlements or data transfers can be done with the help of these transactions. Payment settlements require the help of multiple transactions.
 
 # Detailed design
 
 ## General
 
-A transaction consists of several fields (e.g. address, value, tag). Each field has a static length.
-A bundle is a collection of specific transactions. They are required to bundle related information.
-For example, if not all data fits into one transaction, it has to be split across multiple transactions.
+A transaction consists of several fields (e.g. address, value, timestamp, tag). Each field is of static length. One transaction consists of 2673 trytes:
 
-It is important to understand that transactions should be final and therefore not modifiable after construction.
-This implies that there is the need for a "Transaction Builder" that can be manipulated as desired.
+- **trunk hash** the hash of the first transaction referenced/approved = 81 trytes
+- **branch hash** the hash of the second transaction referenced/approved = 81 trytes
+- **signature_and_message_fragment** contains the signature of the transfer or user-defined message data = 2187 trytes
+- **value** the transferred amount in IOTA  = 27 trytes
+- **address** receipt (output) address if value > 0, or withdrawal (input) address if value < 0 = 81 trytes
+- **timestamp** the time when the transaction was issued = 9 trytes
+- **attachment_timestamp** the timestamp for when Proof-of-Work is completed = 9 trytes
+- **attachment_timestamp_lowerbound** is a slot for future use = 9 trytes
+- **attachment_timestamp_upperbound** is a slot for future use = 9 trytes
+- **tag** arbitrary user-defined value = 27 trytes
+- **obsolete_tag** another arbitrary user-defined tag = 27 trytes
+- **nonce** is the Proof-of-Work nonce of the transaction = 27 trytes
+- **bundle hash** is the hash of the entire bundle = 81 trytes
+- **current_index** the position of the transaction in its bundle = 9 trytes
+- **last_index** the total number of transactions in the bundle = 9 trytes
 
+A bundle is a collection of specific transactions. Bundles are required to bundle related information.
+For example, if not all data fits into one transaction, it has to be split across multiple transactions. An example would be payment settlements - they require the help of multiple transactions.
+A bundle then represents the collection of these transactions. It should be noted, that each transaction of a bundle will be sent separately through the network.
+
+Each transaction is identified by its hash, the transaction hash. Transactions should be final and therefore not modifiable after construction.
 The same applies to bundles. Bundles are final, and therefore not modifiable after construction.
-Also this implies that there is the need for a "Bundle Builder" that can be manipulated as desired.
-A "Bundle Builder" does process "Transaction Builders".
+Having bundles as well as transactions final helps achieve correctness among the data objects.
+
+Transactions can be built from Transaction Builders.
+Bundles can be built from Bundle Builders. Both builder objects can be manipulated as desired.
+It should be noted, Bundle Builders don't process Transactions (as transactions are final), instead, they process Transaction Builders.
 
 ## Exposed Interface
 
@@ -58,7 +77,7 @@ struct Transaction {
 ```
 
 As mentioned, Transactions are final. Transaction fields therefore should be only accessible by getter functions.
-Besides that, Transactions can be only built by "Transaction Builders", or by the byte sequence of received transactions.
+Besides that, Transactions can be only built by Transaction Builders, or by the bytes of a received transaction.
 
 ```rust
 impl Transaction {
@@ -194,6 +213,53 @@ impl TransactionBuilder {
 
 }
 ```
+
+### Bundle
+
+All transactions in the same bundle have the same value in the bundle field. This field contains the bundle hash, which is derived from a hash of the values of each transaction's address, value, obsoleteTag, currentIndex, lastIndex and timestamp fields.
+- **address**
+- **value**
+- **obsoleteTag**
+- **currentIndex**
+- **lastIndex**
+- **timestamp**
+
+#### Bundle Builder
+
+Similar to Transaction Builder, BundleBuilder makes it possible to create a Bundle. As mentioned, a bundle is a special collection of transactions.
+Bundles are read from head to tail but created from tail to head. This is why it makes sense to have a dedicated class for this purpose.
+The transactions inside a bundle are connected through the trunk. The trunk field of the head transaction (index 0) references the transaction with index 1, and so on.
+
+```rust
+
+struct BundleBuilder<'a> {
+
+    pub tailToHead: Vec<&'a TransactionBuilder>
+    
+}
+
+impl<'a> BundleBuilder<'a> {
+
+    pub fn append(&mut self, transaction_builder: &'a TransactionBuilder) {
+        self.tailToHead.push(transaction_builder);
+    }
+    
+    pub fn build(&self) -> Result<Bundle, BundleBuildError> {
+        
+        if self.tailToHead.size() == 0 {
+            return Err(BundleBuilder("Cannot build: bundle is empty (0 transactions)."))
+        }
+        
+        setFlags();
+        buildTrunkLinkedChainAndReturnHead();
+        
+        Ok(Bundle::new(tailToHead))
+    }
+
+}
+
+```
+
 
 # Drawbacks
 
