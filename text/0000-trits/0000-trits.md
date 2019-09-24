@@ -5,7 +5,7 @@
 
 # Summary
 
-WIP
+This RFC proposes a `trits` interface to standardise the usage of different underlying encodings and their conversions from one to another.
 
 # Motivation
 
