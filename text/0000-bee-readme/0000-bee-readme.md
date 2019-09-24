@@ -78,23 +78,28 @@ and reproduced below:
 > 
 > ## Contributing
 > [Contributing]: #contributing
-> 
-> Please see
+>
+> If you want to discuss Bee or have some questions about it, join us on the
+> [IOTA Discord server](https://discord.iota.org/) in the `#bee-dev` and
+> `#bee-discussion` channels.
+>
+> If you want to contribute bug reports and pull requests or suggest new
+> features, please see
 > [`bee/CONTRIBUTING.md`](https://github.com/iotaledger/bee/blob/master/CONTRIBUTING.md)
 > for guidelines on how to contribute. Please note that we have a Request for
 > Comments (RFC) process in place to propose, discuss, and vote on new features
 > entering the Bee framework. You can find more information at
 > [`iotaledger/bee-rfcs`](https://github.com/iotaledger/bee-rfcs/).
-> 
+>
 > ## Why Rust?
 > [Why Rust?]: #why-rust
-> 
+>
 > The IOTA Foundation aims to allow machines of all performance levels to
 > contribute to the IOTA network: from microcontrollers to phones and servers.
 > Some of these systems will have minimal resources and lack an operating system.
 > Microcontrollers aside, we also aim for energy efficiency, high performance,
 > and a great user and developer experience.
-> 
+>
 > From the available choice of languages, we felt that Rust was the best fit.
 > Rust being a system programming language, it operates at a high level of
 > performance while providing strong memory safety guarantees. Together with its
