@@ -36,6 +36,15 @@ This interface should offer methods like allocations, conversions and manipulati
 
 # Detailed design
 
+Any encoding should be convertible to any encoding. If `N` is the number of encodings available, then the number of possible conversions is `N^2` which could grow quickly. While some of these conversions are heavily used (e.g. `5t/1b` to/from `9t/2b`) and need to be as efficient as possible, some other are rarely or never expected to be used (e.g. `5t/1b` to/from `3t/1b`).
+
+To allow implementing all conversions without having to focus too much on unnecessary work, we propose the following requirements:
+- a conversion from any encoding to the same encoding is done by copy;
+- a conversion from `1t/1b` to any other encoding is efficiently implemented;
+- a conversion from any encoding to `1t/1b` is efficiently implemented;
+- a conversion, proven to be heavily used, from any encoding to any other encoding is efficiently implemented;
+- any other conversion falls back to a trivial conversion with an intermediary `1t/1b` step;
+
 ```rust
 pub trait Trinary {
     fn with_capacity(n: usize) -> Self;
