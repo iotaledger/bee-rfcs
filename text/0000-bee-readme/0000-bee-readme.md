@@ -30,7 +30,7 @@ and reproduced below:
 > 
 > + [Motivation]
 > + [Milestones]
-> + [How to contribute](#contributing)
+> + [Contributing](#contributing)
 > + [Why Rust?]
 > 
 > ## Motivation
@@ -70,7 +70,7 @@ and reproduced below:
 > 
 > Our proposed milestones are:
 > 
-> 1. **Fundamental crates**: Specification and implementation of the Bee fundamental crates `bee-trinary`, `bee-model`, and `bee-crypto`. These are the IOTA essential bricks for IOTA development.
+> 1. **Fundamental crates**: Specification and implementation of the Bee fundamental crates `bee-trinary`, `bee-model`, and `bee-crypto`. These are the essential bricks for IOTA development.
 > 2. **FFI**: Foreign Function Interface to make the Bee crates available to other languages. The first project relying on Bee crates through FFI will be Trinity v2.
 >     + We will also investigate in how far WebAssembly, `wasm`, might be an intermediate milestone.
 > 3. **Rust IRI**: Specification and implementation of the node-specific crates `bee-network`, `bee-tangle`, `bee-api`, `bee-consensus`, and `bee-gossip`. To demonstrate the modularity and robustness of the Bee framework, a node for the current mainnet will be implemented. Some of these crates will be repurposed for the Coordicide node.
