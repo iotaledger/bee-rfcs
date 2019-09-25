@@ -1,7 +1,7 @@
 + Feature name: `trits-t5b1`
 + Start date: 2019-09-25
-+ RFC PR: [iotaledger/bee-rfcs#0000](https://github.com/iotaledger/bee-rfcs/pull/0000)
-+ Bee issue: [iotaledger/bee#0000](https://github.com/iotaledger/bee/issues/0000)
++ RFC PR: [iotaledger/bee-rfcs#13](https://github.com/iotaledger/bee-rfcs/pull/13)
++ Bee issue: [iotaledger/bee#61](https://github.com/iotaledger/bee/issues/61)
 
 # Summary
 
