@@ -24,7 +24,7 @@ At the time this RFC is written, the following encodings are considered. This li
 | Name      | Encoding              | Usage                 | RFC |
 | --------- | --------------------- | --------------------- | - |
 | `t1/b1`   | 1 trit per byte       | Hashing, tests        |   |
-| `t3/b3`   | 3 trits per byte      | API, UX, tests        |   |
+| `t3/b1`   | 3 trits per byte      | API, UX, tests        |   |
 | `t27/b8`  | 27 trits per 8 bytes  | Troika optimization   |   |
 | `t9/b2`   | 9 trits per 2 bytes   | Bee internal encoding |   |
 | `t5/b1`   | 5 trits per byte      | Network communication |   |
