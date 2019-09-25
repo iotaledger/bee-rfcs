@@ -46,25 +46,25 @@ To allow implementing all conversions without having to focus too much on unnece
 - any other conversion falls back to a trivial conversion with an intermediary `t1/b1` step;
 
 ```rust
-pub trait Trinary {
+pub trait EncodedTrits {
     fn with_capacity(n: usize) -> Self;
     fn to_trits(ref: &[u8]) -> Self;
     ...
 }
 
-pub struct 1T1B {
+pub struct T1B1 {
     raw: ...,
 }
 
-impl Trinary for 1T1B {
+impl EncodedTrits for T1B1 {
 
 }
 
-pub struct Trits<T: Trinary>{
+pub struct Trits<T: EncodedTrits>{
     inner: T,
 }
 
-impl<T: Trinary> Trits<T> {
+impl<T: EncodedTrits> Trits<T> {
     pub fn new() -> Self {
         ...
     }
@@ -74,7 +74,7 @@ impl<T: Trinary> Trits<T> {
     }
 }
 
-impl<T: Trinary> From<[u8]> for Trits<T> {
+impl<T: EncodedTrits> From<[u8]> for Trits<T> {
     fn from(s: [u8]) -> Self {
         ...
     }
@@ -89,7 +89,7 @@ encoded type but not others. Take hashing for example, types like ptrits would
 need some ways to do permutations and transformations, while types like 5T1B or
 9T2B are not required because they are mainly used for transfer.
 
-We can implement more methods but it still depends on what trait `Trinary` can
+We can implement more methods but it still depends on what trait `EncodedTrits` can
 provide. Or we give more freedom to have method like `into_inner` to manipulate
 the inner structure directly, but this might contradict to the purpose of this
 interface.
