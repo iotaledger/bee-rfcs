@@ -1,7 +1,7 @@
 + Feature name: `bee-readme`
 + Start date: 2019-09-24
-+ RFC PR: [iotaledger/bee-rfcs#0000](https://github.com/iotaledger/bee-rfcs/pull/0000)
-+ Bee issue: [iotaledger/bee#0000](https://github.com/iotaledger/bee/issues/0000)
++ RFC PR: [iotaledger/bee-rfcs#12](https://github.com/iotaledger/bee-rfcs/pull/12)
++ Bee issue: [iotaledger/bee#56](https://github.com/iotaledger/bee/issues/56)
 
 # Summary
 
