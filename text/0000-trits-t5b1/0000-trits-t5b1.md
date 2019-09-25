@@ -90,6 +90,16 @@ Decoding a `byte` into `5` `trits` with the help of the `LUT` is fairly simple:
 
 WIP
 
+## Usual sizes
+
+For convenience purposes, here are some usual sizes and their encoded equivalents:
+
+- `27` `trits` fit in `6` `bytes`
+- `81` `trits` fit in `17` `bytes`
+- `243` `trits` fit in `49` `bytes`
+- `6561` `trits` fit in `1313` `bytes`
+- `8019` `trits` fit in `1604` `bytes`
+
 # Drawbacks
 
 WIP
