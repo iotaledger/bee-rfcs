@@ -39,16 +39,19 @@ This interface should offer methods like allocations, conversions and manipulati
 Any encoding should be convertible to any encoding. If `N` is the number of encodings available, then the number of possible conversions is `N^2` which could grow quickly. While some of these conversions are heavily used (e.g. `t5/b1` to/from `t9/b2`) and need to be as efficient as possible, some other are rarely or never expected to be used (e.g. `t5/b1` to/from `t3/b1`).
 
 To allow implementing all conversions without having to focus too much on unnecessary work, we propose the following requirements:
-- a conversion from any encoding to the same encoding is done by copy;
-- a conversion from `t1/b1` to any other encoding is efficiently implemented;
-- a conversion from any encoding to `t1/b1` is efficiently implemented;
-- a conversion, proven to be heavily used, from any encoding to any other encoding is efficiently implemented;
-- any other conversion falls back to a trivial conversion with an intermediary `t1/b1` step;
+- a conversion for any encoding should implement trait `From` for `Trits<T1B1>`, so it can convert to `t1/b1` by `from` and `into`;
+- a conversion from any encoding to the same encoding will consume input value since it's implemented by `From`;
+- a conversion, proven to be heavily used, from any encoding to any other encoding is implemented by specialization;
+
+Note that inner structure should not provide any method to public. It should be
+implemented by methods of `Trits<T>` to that specific type. This interface can
+dereference to inner structure and provide more functionality other than general
+methods.
 
 ```rust
 pub trait EncodedTrits {
     fn with_capacity(n: usize) -> Self;
-    fn to_trits(ref: &[u8]) -> Self;
+    fn len(&self) -> usize;
     ...
 }
 
@@ -57,7 +60,7 @@ pub struct T1B1 {
 }
 
 impl EncodedTrits for T1B1 {
-
+    ...
 }
 
 pub struct Trits<T: EncodedTrits>{
@@ -66,18 +69,30 @@ pub struct Trits<T: EncodedTrits>{
 
 impl<T: EncodedTrits> Trits<T> {
     pub fn new() -> Self {
-        ...
+        Self { inner: T::with_capacity(0) }
     }
 
     pub fn with_capacity(n: usize) -> Self {
-        ...
+        Self { inner: T::with_capacity(n) }
+    }
+
+    pub fn len(&self) -> usize {
+        self.inner.len()
+    }
+    
+    ...
+}
+
+impl<T: EncodedTrits> Deref for Trits<T> {
+    type Target = T;
+
+    fn deref(&self) -> &Self::Target {
+        &self.inner
     }
 }
 
-impl<T: EncodedTrits> From<[u8]> for Trits<T> {
-    fn from(s: [u8]) -> Self {
-        ...
-    }
+impl From<Trits<T3B1>> for Trits<T1B1> {
+    ...
 }
 ```
 
