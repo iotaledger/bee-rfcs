@@ -18,7 +18,7 @@ As this is the most memory-efficient way to encode `trits` in `bytes`, `t5b1` is
 
 # Detailed design
 
-For efficient conversions, we can make use of a LookUp Table (LUT), but because this LUT can bee too heavy (`1.2kb`) for some systems with a very limited amount of memory, we also present algorithms that do not use it.
+For efficient conversions, we can make use of a LookUp Table (LUT), but because this LUT can be too heavy (`1.2kb`) for some systems with a very limited amount of memory, we also present algorithms that do not use it.
 
 We give the `t5b1` LUT as a reference, it contains the 243 possible values ordered like this: `0`, `1`, ... `120`, `121`, `-121`, `-120`, ... `-2`, `-1`.
 
