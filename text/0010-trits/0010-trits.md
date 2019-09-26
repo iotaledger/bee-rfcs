@@ -21,14 +21,14 @@ In the IOTA ecosystem, different trits encodings are used in different situation
 
 At the time this RFC is written, the following encodings are considered. This list is not exhaustive, some may be dropped, some may be added.
 
-| Name      | Encoding              | Usage                           | RFC |
-| --------- | --------------------- | ------------------------------- | --- |
-| `t1/b1`   | 1 trit per byte       | Hashing, tests                  |     |
-| `t3/b1`   | 3 trits per byte      | API, UX, tests                  |     |
-| `t27/b8`  | 27 trits per 8 bytes  | Troika optimization             |     |
-| `t9/b2`   | 9 trits per 2 bytes   | Bee internal encoding           |     |
-| `t5/b1`   | 5 trits per byte      | Network communication, storage  |     |
-| `ptrit`   | Hardware dependant    | PCurl batch hashing             |     |
+| Name    | Encoding              | Usage                           | RFC |
+| ------- | --------------------- | ------------------------------- | --- |
+| `t1b1`  | 1 trit per byte       | Hashing, tests                  |     |
+| `t3b1`  | 3 trits per byte      | API, UX, tests                  |     |
+| `t27b8` | 27 trits per 8 bytes  | Troika optimization             |     |
+| `t9b2`  | 9 trits per 2 bytes   | Bee internal encoding           |     |
+| `t5b1`  | 5 trits per byte      | Network communication, storage  |     |
+| `ptrit` | Hardware dependant    | PCurl batch hashing             |     |
 
 Because there are many different trits encodings and switching from one to another is often needed, having a trits interface to have a uniform way to interact with trits, whatever the underlying encoding, could be useful.
 
@@ -36,14 +36,14 @@ This interface should offer methods like allocations, conversions and manipulati
 
 # Detailed design
 
-Any encoding should be convertible to any encoding. If `N` is the number of encodings available, then the number of possible conversions is `N^2` which could grow quickly. While some of these conversions are heavily used (e.g. `t5/b1` to/from `t9/b2`) and need to be as efficient as possible, some other are rarely or never expected to be used (e.g. `t5/b1` to/from `t3/b1`).
+Any encoding should be convertible to any encoding. If `N` is the number of encodings available, then the number of possible conversions is `N^2` which could grow quickly. While some of these conversions are heavily used (e.g. `t5b1` to/from `t9b2`) and need to be as efficient as possible, some other are rarely or never expected to be used (e.g. `t5b1` to/from `t3b1`).
 
 To allow implementing all conversions without having to focus too much on unnecessary work, we propose the following requirements:
 - a conversion from any encoding to the same encoding is done by copy;
-- a conversion from `t1/b1` to any other encoding is efficiently implemented by `From` trait;
-- a conversion from any encoding to `t1/b1` is efficiently implemented by `From` trait;
+- a conversion from `t1b1` to any other encoding is efficiently implemented by `From` trait;
+- a conversion from any encoding to `t1b1` is efficiently implemented by `From` trait;
 - a conversion, proven to be heavily used, from any encoding to any other encoding is efficiently implemented by `From` trait with specialization support;
-- any other conversion falls back to a trivial conversion with an intermediary `t1/b1` step;
+- any other conversion falls back to a trivial conversion with an intermediary `t1b1` step;
 
 Note that inner structure should not provide any method to public. It should be
 implemented by methods of `Trits<T>` to that specific type. This interface can
