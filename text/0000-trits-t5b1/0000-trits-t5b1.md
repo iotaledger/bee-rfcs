@@ -18,9 +18,15 @@ As this is the most memory-efficient way to encode `trits` in `bytes`, `t5b1` is
 
 # Detailed design
 
-For efficient conversions, we can make use of a LookUp Table (`LUT`).
+For efficient conversions, we can make use of LookUp Tables (`LUTs`).
 
-We give the `t5b1` `LUT` as a reference for implementation, it contains the `243` possible values ordered like this: `0`, `1`, ... `120`, `121`, `-121`, `-120`, ... `-2`, `-1`.
+Because the memory footprint (2 times `1.2kb`) of these `LUTs` can be too high for some very limited systems, we also present algorithms that do not use it.
+
+## Decoding 1 signed byte to 5 balanced trits
+
+### With LUT
+
+This LUT contains the `243` possible values ordered like this: `0`, `1`, ... `120`, `121`, `-121`, `-120`, ... `-2`, `-1`.
 
 ```rust
 [
@@ -76,18 +82,182 @@ We give the `t5b1` `LUT` as a reference for implementation, it contains the `243
 ]
 ```
 
-Because the memory footprint (`1.2kb`) of this `LUT` can be too high for some very limited systems, we also present algorithms that do not use it.
+Decoding a `byte` into `5` `trits` with the help of the `LUT` is fairly simple:
+- if the `byte` is positive, use it as an index for the `LUT` e.g. if the byte is `42` `LUT[42] = [ 0, -1, -1, -1, 1 ]` and `0 * 3^0 + (-1) * 3^1 + (-1) * 3^2 + (-1) * 3^3 + 1 * 3^4 = 42`.
 
-## Encoding
+### Without LUT
 
 <!-- TODO -->
 
-## Decoding
+## Encoding 5 balanced trits to 1 signed byte
 
 ### With LUT
 
-Decoding a `byte` into `5` `trits` with the help of the `LUT` is fairly simple:
-- if the `byte` is positive, use it as an index for the `LUT` e.g. if the byte is `42` `LUT[42] = [ 0, -1, -1, -1, 1 ]` and `0 * 3^0 + (-1) * 3^1 + (-1) * 3^2 + (-1) * 3^3 + 1 * 3^4 = 42`.
+<!-- TODO -->
+
+```rust
+[
+    [
+        [
+            [
+                [ -121, -40, 41 ],
+                [ -94, -13, 68 ],
+                [ -67, 14, 95 ],
+            ],
+            [
+                [ -112, -31, 50 ],
+                [ -85, -4, 77 ],
+                [ -58, 23, 104 ],
+            ],
+            [
+                [ -103, -22, 59 ],
+                [ -76, 5, 86 ],
+                [ -49, 32, 113 ],
+            ],
+        ],
+        [
+            [
+                [ -118, -37, 44 ],
+                [ -91, -10, 71 ],
+                [ -64, 17, 98 ],
+            ],
+            [
+                [ -109, -28, 53 ],
+                [ -82, -1, 80 ],
+                [ -55, 26, 107 ],
+            ],
+            [
+                [ -100, -19, 62 ],
+                [ -73, 8, 89 ],
+                [ -46, 35, 116 ],
+            ],
+        ],
+        [
+            [
+                [ -115, -34, 47 ],
+                [ -88, -7, 74 ],
+                [ -61, 20, 101 ],
+            ],
+            [
+                [ -106, -25, 56 ],
+                [ -79, 2, 83 ],
+                [ -52, 29, 110 ],
+            ],
+            [
+                [ -97, -16, 65 ],
+                [ -70, 11, 92 ],
+                [ -43, 38, 119 ],
+            ],
+        ],
+    ],
+    [
+        [
+            [
+                [ -120, -39, 42 ],
+                [ -93, -12, 69 ],
+                [ -66, 15, 96 ],
+            ],
+            [
+                [ -111, -30, 51 ],
+                [ -84, -3, 78 ],
+                [ -57, 24, 105 ],
+            ],
+            [
+                [ -102, -21, 60 ],
+                [ -75, 6, 87 ],
+                [ -48, 33, 114 ],
+            ],
+        ],
+        [
+            [
+                [ -117, -36, 45 ],
+                [ -90, -9, 72 ],
+                [ -63, 18, 99 ],
+            ],
+            [
+                [ -108, -27, 54 ],
+                [ -81, 0, 81 ],
+                [ -54, 27, 108 ],
+            ],
+            [
+                [ -99, -18, 63 ],
+                [ -72, 9, 90 ],
+                [ -45, 36, 117 ],
+            ],
+        ],
+        [
+            [
+                [ -114, -33, 48 ],
+                [ -87, -6, 75 ],
+                [ -60, 21, 102 ],
+            ],
+            [
+                [ -105, -24, 57 ],
+                [ -78, 3, 84 ],
+                [ -51, 30, 111 ],
+            ],
+            [
+                [ -96, -15, 66 ],
+                [ -69, 12, 93 ],
+                [ -42, 39, 120 ],
+            ],
+        ],
+    ],
+    [
+        [
+            [
+                [ -119, -38, 43 ],
+                [ -92, -11, 70 ],
+                [ -65, 16, 97 ],
+            ],
+            [
+                [ -110, -29, 52 ],
+                [ -83, -2, 79 ],
+                [ -56, 25, 106 ],
+            ],
+            [
+                [ -101, -20, 61 ],
+                [ -74, 7, 88 ],
+                [ -47, 34, 115 ],
+            ],
+        ],
+        [
+            [
+                [ -116, -35, 46 ],
+                [ -89, -8, 73 ],
+                [ -62, 19, 100 ],
+            ],
+            [
+                [ -107, -26, 55 ],
+                [ -80, 1, 82 ],
+                [ -53, 28, 109 ],
+            ],
+            [
+                [ -98, -17, 64 ],
+                [ -71, 10, 91 ],
+                [ -44, 37, 118 ],
+            ],
+        ],
+        [
+            [
+                [ -113, -32, 49 ],
+                [ -86, -5, 76 ],
+                [ -59, 22, 103 ],
+            ],
+            [
+                [ -104, -23, 58 ],
+                [ -77, 4, 85 ],
+                [ -50, 31, 112 ],
+            ],
+            [
+                [ -95, -14, 67 ],
+                [ -68, 13, 94 ],
+                [ -41, 40, 121 ],
+            ],
+        ],
+    ],
+]
+```
 
 ### Without LUT
 
