@@ -9,9 +9,9 @@ This RFC proposes a `trits` interface to standardise the usage of different unde
 
 # Motivation
 
-A `trit` is a digit in base `3` and is usually represented by either `-1`, `0` or `1`.
+A `trit` is a digit in base `3` and is usually represented, in balanced ternary, by either `-1`, `0` or `1`.
 
-Even though the most convenient way to encode trits is to map one `trit` to one `byte`, this is obviously not the most memory efficient way nor the most readable way to do it.
+Even though the most convenient way to encode trits is to map one balanced `trit` to one `signed byte`, this is obviously not the most memory efficient way nor the most readable way to do it.
 
 In the IOTA ecosystem, different trits encodings are used in different situations like:
 
