@@ -118,6 +118,6 @@ interface.
 
 # Unresolved questions
 
-Which type we should to do first on the initial implementation? And should we
-done all conversion once and for all, or just provide minimum ways to do it
-first?
+- Do we want to type usual sizes ?
+- Which type we should to do first on the initial implementation?
+- Should we do all conversion once and for all, or just provide minimum ways to do it first?
