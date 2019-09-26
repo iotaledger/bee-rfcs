@@ -103,12 +103,15 @@ For convenience purposes, here are some usual sizes and their encoded equivalent
 
 # Drawbacks
 
-WIP
+<!-- TODO -->
 
 # Rationale and alternatives
 
-WIP
+<!-- TODO -->
 
 # Unresolved questions
 
-WIP
+There are no unresolved questions because:
+- algorithms are well defined and vetted as they have been used by [IRI](https://github.com/iotaledger/iri)/[cIRI](https://github.com/iotaledger/entangled/tree/develop/ciri) for both network communications and storage layers for a long time;
+<!-- TODO Edit link -->
+- it will follow a well-defined interface provided by RFC#10;
