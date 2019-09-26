@@ -100,9 +100,9 @@ impl From<Trits<T3B1>> for Trits<T1B1> {
 
 # Drawbacks
 
-We denfine a general interface with different encoded types whithin to make
-consistancy of public usage. But there are some method may needed for one
-encoded type but not others. Take hashing for example, types like ptrits would
+We define a general interface with different encoded types within to make
+consistency of public usage. But there are some method may needed for one
+encoded type but not others. Take hashing for example, types like `ptrits` would
 need some ways to do permutations and transformations, while types like 5T1B or
 9T2B are not required because they are mainly used for transfer.
 
@@ -114,7 +114,7 @@ interface.
 # Rationale and alternatives
 
 - Just define type alias and some convert functions. This give way more freedom to the users.
-- Each encoded trit is a type of its own intead of interface like above.
+- Each encoded trit is a type of its own instead of interface like above.
 
 # Unresolved questions
 
