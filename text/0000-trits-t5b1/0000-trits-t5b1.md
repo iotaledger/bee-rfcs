@@ -5,15 +5,16 @@
 
 # Summary
 
-This RFC proposes an encoding that packs `5` `trits` to a single `byte`. It may be referred to as `5t/1b`, `5t1b`, `t5/b1`, `t5b1`, `5/1`, `10/2`, ... To comply with most languages identifier rules, we'll prefer using `t5b1`.
+This RFC proposes an encoding that packs `5` `balanced trits` to a single `signed byte`. It may be referred to as `5t/1b`, `5t1b`, `t5/b1`, `t5b1`, `5/1`, `10/2`, ... To comply with most languages identifier rules, we'll prefer using `t5b1`.
 
-This encoding follows the RFC#10.
+<!-- TODO Update with link to RFC#10 -->
+This encoding implements the interface presented by RFC#10.
 
 # Motivation
 
 A `byte` is composed of `8` `bits` that can hold `2^8 = 256` different values. On the other hand, `6` `trits` can hold `3^6 = 729` values while `5` `trits` can hold `3^5 = 243` values. The maximum number of `trits` a `byte` can hold is then `5`.
 
-As this is the most memory-efficient way to encode `trits` in `bytes`, `t5b1` is often used for network communication to increase throughput and for storage to reduce memory consumption.
+As this is the most memory-efficient way to encode `trits` in `bytes`, `t5b1` is often used for network communications to increase throughput and for storage layers to reduce memory consumption.
 
 # Detailed design
 
