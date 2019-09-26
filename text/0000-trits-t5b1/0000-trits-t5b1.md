@@ -18,9 +18,9 @@ As this is the most memory-efficient way to encode `trits` in `bytes`, `t5b1` is
 
 # Detailed design
 
-For efficient conversions, we can make use of a LookUp Table (LUT), but because this LUT can be too heavy (`1.2kb`) for some systems with a very limited amount of memory, we also present algorithms that do not use it.
+For efficient conversions, we can make use of a LookUp Table (`LUT`).
 
-We give the `t5b1` LUT as a reference, it contains the 243 possible values ordered like this: `0`, `1`, ... `120`, `121`, `-121`, `-120`, ... `-2`, `-1`.
+We give the `t5b1` `LUT` as a reference for implementation, it contains the `243` possible values ordered like this: `0`, `1`, ... `120`, `121`, `-121`, `-120`, ... `-2`, `-1`.
 
 ```rust
 [
@@ -76,9 +76,11 @@ We give the `t5b1` LUT as a reference, it contains the 243 possible values order
 ]
 ```
 
+Because the memory footprint (`1.2kb`) of this `LUT` can be too high for some very limited systems, we also present algorithms that do not use it.
+
 ## Encoding
 
-WIP
+<!-- TODO -->
 
 ## Decoding
 
@@ -89,7 +91,7 @@ Decoding a `byte` into `5` `trits` with the help of the `LUT` is fairly simple:
 
 ### Without LUT
 
-WIP
+<!-- TODO -->
 
 ## Usual sizes
 
