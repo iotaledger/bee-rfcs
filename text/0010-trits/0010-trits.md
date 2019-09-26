@@ -21,14 +21,14 @@ In the IOTA ecosystem, different trits encodings are used in different situation
 
 At the time this RFC is written, the following encodings are considered. This list is not exhaustive, some may be dropped, some may be added.
 
-| Name      | Encoding              | Usage                 | RFC |
-| --------- | --------------------- | --------------------- | - |
-| `t1/b1`   | 1 trit per byte       | Hashing, tests        |   |
-| `t3/b1`   | 3 trits per byte      | API, UX, tests        |   |
-| `t27/b8`  | 27 trits per 8 bytes  | Troika optimization   |   |
-| `t9/b2`   | 9 trits per 2 bytes   | Bee internal encoding |   |
-| `t5/b1`   | 5 trits per byte      | Network communication |   |
-| `ptrit`   | Hardware dependant    | PCurl batch hashing   |   |
+| Name      | Encoding              | Usage                           | RFC |
+| --------- | --------------------- | ------------------------------- | --- |
+| `t1/b1`   | 1 trit per byte       | Hashing, tests                  |     |
+| `t3/b1`   | 3 trits per byte      | API, UX, tests                  |     |
+| `t27/b8`  | 27 trits per 8 bytes  | Troika optimization             |     |
+| `t9/b2`   | 9 trits per 2 bytes   | Bee internal encoding           |     |
+| `t5/b1`   | 5 trits per byte      | Network communication, storage  |     |
+| `ptrit`   | Hardware dependant    | PCurl batch hashing             |     |
 
 Because there are many different trits encodings and switching from one to another is often needed, having a trits interface to have a uniform way to interact with trits, whatever the underlying encoding, could be useful.
 
@@ -79,7 +79,7 @@ impl<T: EncodedTrits> Trits<T> {
     pub fn len(&self) -> usize {
         self.inner.len()
     }
-    
+
     ...
 }
 
