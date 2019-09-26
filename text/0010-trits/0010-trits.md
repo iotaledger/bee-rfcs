@@ -51,7 +51,7 @@ dereference to inner structure and provide more functionality other than general
 methods.
 
 ```rust
-pub trait EncodedTrits {
+pub trait Encoding {
     fn with_capacity(n: usize) -> Self;
     fn len(&self) -> usize;
     ...
@@ -61,15 +61,15 @@ pub struct T1B1 {
     raw: ...,
 }
 
-impl EncodedTrits for T1B1 {
+impl Encoding for T1B1 {
     ...
 }
 
-pub struct Trits<T: EncodedTrits>{
+pub struct Trits<T: Encoding>{
     inner: T,
 }
 
-impl<T: EncodedTrits> Trits<T> {
+impl<T: Encoding> Trits<T> {
     pub fn new() -> Self {
         Self { inner: T::with_capacity(0) }
     }
@@ -85,7 +85,7 @@ impl<T: EncodedTrits> Trits<T> {
     ...
 }
 
-impl<T: EncodedTrits> Deref for Trits<T> {
+impl<T: Encoding> Deref for Trits<T> {
     type Target = T;
 
     fn deref(&self) -> &Self::Target {
@@ -106,7 +106,7 @@ encoded type but not others. Take hashing for example, types like `ptrits` would
 need some ways to do permutations and transformations, while types like 5T1B or
 9T2B are not required because they are mainly used for transfer.
 
-We can implement more methods but it still depends on what trait `EncodedTrits` can
+We can implement more methods but it still depends on what trait `Encoding` can
 provide. Or we give more freedom to have method like `into_inner` to manipulate
 the inner structure directly, but this might contradict to the purpose of this
 interface.
