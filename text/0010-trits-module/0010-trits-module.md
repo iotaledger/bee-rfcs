@@ -1,4 +1,4 @@
-+ Feature name: trits
++ Feature name: `trits-module`
 + Start date: 2019-09-20
 + RFC PR: [iotaledger/bee-rfcs#10](https://github.com/iotaledger/bee-rfcs/pull/10)
 + Bee issue: [iotaledger/bee#45](https://github.com/iotaledger/bee/issues/45)
