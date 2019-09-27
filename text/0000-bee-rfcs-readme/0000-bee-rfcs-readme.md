@@ -5,7 +5,7 @@
 
 # Summary
 
-This RFC proposes a change to the RFC process itself. Particularly the `Motivation` section of the RFC template to put more emphasis on the need to write clear requirements and how to write them.
+This RFC proposes extending the "Motivation" section to put more emphasis on the need to write clear requirements and suggest how to write them.
 
 # Motivation
 
@@ -25,7 +25,9 @@ With the following:
 Why are we doing this? What use cases does it support? What is the expected outcome?
 
 1. Write a summary of the motivation.
-2. List all the specific use cases that your proposal is trying to address. Write them from the perspective of the person who will be using the software. We recommend using the "Job story" format, which provides context, motivation, and the desired outcome.
+2. List all the specific use cases that your proposal is trying to address. 
+3. Where applicable, write from the perspective of the person who will be using the software, for example using the "Job story" format:
+
 
 When _____ , I want to _____ , so I can _____ .
 
