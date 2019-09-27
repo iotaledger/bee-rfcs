@@ -20,7 +20,7 @@ As this is the most memory-efficient way to encode `trits` in `bytes`, `t5b1` is
 
 For efficient conversions, we can make use of LookUp Tables (`LUTs`).
 
-Because the memory footprint (2 times `1.2kb`) of these `LUTs` can be too high for some very limited systems, we also present algorithms that do not use it.
+Because the memory footprint (2 times ~`1.2kb`) of these `LUTs` can be too high for some very limited systems, we also present algorithms that do not use it.
 
 ## Decoding 1 signed byte to 5 balanced trits
 
@@ -82,12 +82,22 @@ This LUT contains the `243` possible values ordered like this: `0`, `1`, ... `12
 ]
 ```
 
-Decoding a `byte` into `5` `trits` with the help of the `LUT` is fairly simple:
-- if the `byte` is positive, use it as an index for the `LUT` e.g. if the byte is `42` `LUT[42] = [ 0, -1, -1, -1, 1 ]` and `0 * 3^0 + (-1) * 3^1 + (-1) * 3^2 + (-1) * 3^3 + 1 * 3^4 = 42`.
+Decoding a `signed byte` into `5` `balanced` `trits` with the help of the `LUT` is fairly simple:
+- `byte >= 0`: use `byte` as an index for the `LUT` e.g. if the `byte = 42` then `LUT[42] = [ 0, -1, -1, -1, 1 ]` and `0 * 3^0 + (-1) * 3^1 + (-1) * 3^2 + (-1) * 3^3 + 1 * 3^4 = 42`;
+- `byte < 0`: use `byte + 243` as an index for the `LUT` e.g. if the `byte = -42` then `LUT[201] = [ 0, 1, 1, 1, -1 ]` and `0 * 3^0 + 1 * 3^1 + 1 * 3^2 + 1 * 3^3 + (-1) * 3^4 = -42`;
+
+Even though this RFC won't cover every little implementation details, it can be noted that the `LUT` could cover all `256` possible values of a `byte` to avoid invalid accesses. To the missing `byte` values we can simply assign some default mapping to `5` `trits`, eg. `[ 0, 0, 0, 0, 0 ]`. This way runtime checks can be avoided as branching on each iteration of a loop can degrade performance in case of false branch prediction.
+
+Additionally, there could be two variants of the decoding function:
+- checked & slow;
+- unchecked & fast;
+
+The overhead of the `13` additional values is only +~5% to the size of `LUT`.
 
 ### Without LUT
 
 <!-- TODO -->
+<!-- TODO % speed -->
 
 ## Encoding 5 balanced trits to 1 signed byte
 
@@ -287,3 +297,5 @@ There are no unresolved questions because:
 - algorithms are well defined and vetted as they have been used by [IRI](https://github.com/iotaledger/iri)/[cIRI](https://github.com/iotaledger/entangled/tree/develop/ciri) for both network communications and storage layers for a long time;
 <!-- TODO Edit link -->
 - it will follow a well-defined interface provided by RFC#10;
+
+It should only be noted, as previously stated, that different implementations are possible and some may raise security concerns.
