@@ -288,7 +288,7 @@ For convenience purposes, here are some usual sizes and their encoded equivalent
 
 # Drawbacks
 
-<!-- TODO -->
+In the current state of the IOTA ecosystem, specifically the network, this encoding is absolutely necessary. There are no intrinsic drawbacks with this encoding, a user should just be careful when choosing it for his own application because it can't be used or is not recommended for every situation.
 
 # Rationale and alternatives
 
