@@ -18,6 +18,8 @@ As this is the most memory-efficient way to encode `trits` in `bytes`, `t5b1` is
 
 # Detailed design
 
+This RFC assumes the reader has minimum knowledge on base conversions.
+
 For efficient conversions, we can make use of LookUp Tables (`LUTs`).
 
 Because the memory footprint (2 times ~`1.2kb`) of these `LUTs` can be too high for some very limited systems, we also present algorithms that do not use it.
@@ -269,12 +271,24 @@ This LUT contains the `243` possible values ordered by all combinations of `trit
 ]
 ```
 
-Encoding up to `5` `balanced` `trits` to a `signed byte` with the help of the `LUT` is fairly simple: add `1` to the individual `trits` to map them to array indexes (`-1` -> `0`, `0` -> `1` and `1` -> `2`) and use them to access the `LUT`. If you're encoding less than `5` `trits`, just fill with `0`s e.g. encoding `[-1, 1, 1]` -> `[-1, 1, 1, 0, 0]` -> `[0, 2, 2, 1, 1]` -> `LUT[0][2][2][1][1] = 11`.
+Encoding up to `5` `balanced` `trits` to a `signed byte` with the help of the `LUT` is fairly simple: add `1` to the individual `trits` to map them to array indexes (`-1` -> `0`, `0` -> `1` and `1` -> `2`) and use them to access the `LUT`. If you're encoding less than `5` `trits`, just fill with `0`s.
+
+For example:
+- encoding `[-1, 1, 1]`;
+- filling with `0`s `[-1, 1, 1, 0, 0]`;
+- adding `1` `[0, 2, 2, 1, 1]`;
+- accessing `LUT[0][2][2][1][1] = 11`;
+- checking `-1 * 3^0 + 1 * 3^1 + 1 * 3^2 = 11`;
+
+A quick benchmark yielded a ~18% performance improvement compared  to the version without `LUT`.
 
 ### Without LUT
 
-<!-- TODO -->
-<!-- TODO %speed -->
+Encoding up to `5` `balanced` `trits` to a `signed byte` is a simple conversion from balanced ternary to decimal: the resulting `byte` is the sum of all the digits being multiplied by `3` to the rank.
+
+For example:
+- encoding `[ 0, -1, -1, -1, 1 ]`;
+- computing `0 * 3^0 + (-1) * 3^1 + (-1) * 3^2 + (-1) * 3^3 + 1 * 3^4 = 42`;
 
 ## Usual sizes
 
