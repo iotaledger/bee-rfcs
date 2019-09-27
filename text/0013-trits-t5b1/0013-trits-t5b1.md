@@ -103,7 +103,7 @@ The overhead of the `13` additional values is only +~5% to the size of `LUT`.
 
 ### With LUT
 
-<!-- TODO -->
+This LUT contains the `243` possible values ordered by all combinations of `trits` `-1`, `0` and `1` like `LUT[-1][-1][-1][-1][-1] = -121`, `LUT[-1][-1][-1][-1][0] = -40`, `LUT[-1][-1][-1][-1][1] = 41`, ..., `LUT[1][1][1][1][-1] = -41`, `LUT[1][1][1][1][0] = 40`, `LUT[1][1][1][1][1] = 121`
 
 ```rust
 [
@@ -269,9 +269,12 @@ The overhead of the `13` additional values is only +~5% to the size of `LUT`.
 ]
 ```
 
+Encoding up to `5` `balanced` `trits` to a `signed byte` with the help of the `LUT` is fairly simple: add `1` to the individual `trits` to map them to array indexes (`-1` -> `0`, `0` -> `1` and `1` -> `2`) and use them to access the `LUT`. If you're encoding less than `5` `trits`, just fill with `0`s e.g. encoding `[-1, 1, 1]` -> `[-1, 1, 1, 0, 0]` -> `[0, 2, 2, 1, 1]` -> `LUT[0][2][2][1][1] = 11`.
+
 ### Without LUT
 
 <!-- TODO -->
+<!-- TODO %speed -->
 
 ## Usual sizes
 
