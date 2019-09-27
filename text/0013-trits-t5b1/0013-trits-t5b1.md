@@ -292,7 +292,7 @@ In the current state of the IOTA ecosystem, specifically the network, this encod
 
 # Rationale and alternatives
 
-<!-- TODO -->
+If the intended purpose of using this encoding is saving memory or increasing communication throughput, then there is no better alternative since it is proven to be the most memory-efficient.
 
 # Unresolved questions
 
