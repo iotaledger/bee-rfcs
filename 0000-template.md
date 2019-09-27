@@ -26,8 +26,6 @@ When I configure a node, I want to be able to control how much transaction histo
 
 ```
 
-The suggested format is an evolution on a user story format. It may not apply to all RFCs, but I'd encourage everyone to try and think of any functionality with this framing.
-
 # Detailed design
 
 This is the bulk of the RFC. Explain the design in enough detail for somebody
