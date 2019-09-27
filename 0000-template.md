@@ -11,6 +11,23 @@ One paragraph explanation of the feature.
 
 Why are we doing this? What use cases does it support? What is the expected outcome?
 
+1. Write a summary of the motivation.
+2. List all the specific use cases that your proposal is trying to address. 
+3. Where applicable, write from the perspective of the person who will be using the software, for example using the "Job story" format:
+
+
+When _____ , I want to _____ , so I can _____ .
+
+Example 1:
+When I query a node for a list of transactions, I want to be able to sort them by date, so I can work with the most relevant ones.
+
+Example 2:
+When I configure a node, I want to be able to control how much transaction history the node stores, so I can make sure I only store the data I need without incurring additional operational costs.
+
+```
+
+The suggested format is an evolution on a user story format. It may not apply to all RFCs, but I'd encourage everyone to try and think of any functionality with this framing.
+
 # Detailed design
 
 This is the bulk of the RFC. Explain the design in enough detail for somebody
