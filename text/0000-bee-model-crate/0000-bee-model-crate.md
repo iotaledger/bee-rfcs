@@ -23,7 +23,7 @@ A transaction consists of several fields (e.g. address, value, timestamp, tag). 
 - **branch hash** the hash of the second transaction referenced/approved = 81 trytes
 - **signature_and_message_fragment** contains the signature of the transfer or user-defined message data = 2187 trytes
 - **value** the transferred amount in IOTA  = 27 trytes
-- **address** receipt (output) address if value > 0, or withdrawal (input) address if value < 0 = 81 trytes
+- **address** receiver (output) if value > 0, or sender (input) if value < 0 = 81 trytes
 - **timestamp** the time when the transaction was issued = 9 trytes
 - **attachment_timestamp** the timestamp for when Proof-of-Work is completed = 9 trytes
 - **attachment_timestamp_lowerbound** is a slot for future use = 9 trytes
@@ -56,7 +56,6 @@ It should be noted, Bundle Builders don't process Transactions (as transactions 
 ```rust
 struct Transaction {
 
-    transaction_hash: String,
     signature_fragments: String,
     address: String,
     value: i64,
@@ -77,7 +76,7 @@ struct Transaction {
 ```
 
 As mentioned, Transactions are final. Transaction fields therefore should be only accessible by getter functions.
-Besides that, Transactions can be only built by Transaction Builders, or by the bytes of a received transaction.
+Besides that, a transaction can only be created from a Transaction Builder, or from a constructor function which expects encoded bytes as received e.g. from a network socket.
 
 ```rust
 impl Transaction {
@@ -92,7 +91,6 @@ impl Transaction {
         let (transaction_hash, nonce, timestamp) = Pow::compute(&transaction_builder);
 
         Ok(Transaction {
-            transaction_hash,
             signature_fragments: transaction_builder.signature_fragments.clone(),
             address: transaction_builder.address.clone(),
             value: transaction_builder.value.clone(),
@@ -114,10 +112,6 @@ impl Transaction {
     
     pub fn from_bytes(bytes: &Vec<u8>) -> Result<Transaction, TransactionBuilderValidationError> {
         unimplemented!()
-    }
-
-    pub fn transaction_hash(&self) -> &String {
-        &self.transaction_hash
     }
 
     pub fn signature_fragments(&self) -> &String {
