@@ -109,7 +109,7 @@ For example:
 - Rank  1: `|1| < 3 / 2` can be balanced so `0` is produced and `1` is not updated;
 - Rank  0: `|1| > 1 / 2` can't be balanced so `1` is produced and `1 - 1 = 0` is updated;
 
-The resulting trits are then `[1, 0, -1,  -1, 1]`.
+The resulting trits are then `[1, 0, -1,  -1, 1]` and we can verify that `1 * 3^0 + 0 * 3^1 + (-1) * 3^2 + (-1) * 3^3 + 1 * 3^4 = 46`.
 
 ## Encoding 5 balanced trits to 1 signed byte
 
