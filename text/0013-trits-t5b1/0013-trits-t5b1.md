@@ -308,6 +308,8 @@ For convenience purposes, here are some usual sizes and their encoded equivalent
 - `6561` `trits` fit in `1313` `bytes`
 - `8019` `trits` fit in `1604` `bytes`
 
+These sizes are computed with the formula `num_bytes = floor((num_trits + 5 - 1) / 5)`.
+
 # Drawbacks
 
 In the current state of the IOTA ecosystem, specifically the network, this encoding is absolutely necessary. There are no intrinsic drawbacks with this encoding, a user should just be careful when choosing it for his own application because it can't be used or is not recommended for every situation.
