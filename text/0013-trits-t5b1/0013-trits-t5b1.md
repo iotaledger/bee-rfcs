@@ -98,8 +98,18 @@ The overhead of the `13` additional values is only +~5% to the size of `LUT`.
 
 ### Without LUT
 
-<!-- TODO -->
-<!-- TODO % speed -->
+For this method, we use the fact that `3^n+1 = 2 * (3^0 + 3^1 + ... 3^n-2 * 3^n-1) + 1` (e.g. `81 = 2 * (1 + 3 + 9 + 27) + 1`) meaning that half a power of `3` can be balanced by the sum of the lower powers of `3`.
+
+For every rank from `4` to `0`, we try to fit a power of `3` taking into account that half of it can be balanced by the sum of lower ranks. If the byte can't be balanced, a `-1` or `1` trit is produced depending on its sign and it is updated. If the byte can be balanced, a `0` trit is produced and it is not updated.
+
+For example:
+- Rank  4: `|46| > 81 / 2` can't be balanced so `1` is produced and `46 - 81 = -35` is updated;
+- Rank  3: `|-35| > 27 / 2` can't be balanced so `-1` is produced and `-35 + 27 = -8` is updated;
+- Rank  2: `|-8| > 9 / 2` can't be balanced so `-1` is produced and `-8 + 9 = 1` is updated;
+- Rank  1: `|1| < 3 / 2` can be balanced so `0` is produced and `1` is not updated;
+- Rank  0: `|1| > 1 / 2` can't be balanced so `1` is produced and `1 - 1 = 0` is updated;
+
+The resulting trits are then `[1, 0, -1,  -1, 1]`.
 
 ## Encoding 5 balanced trits to 1 signed byte
 
@@ -279,8 +289,6 @@ For example:
 - adding `1` `[0, 2, 2, 1, 1]`;
 - accessing `LUT[0][2][2][1][1] = 11`;
 - checking `-1 * 3^0 + 1 * 3^1 + 1 * 3^2 = 11`;
-
-A quick benchmark yielded a ~18% performance improvement compared  to the version without `LUT`.
 
 ### Without LUT
 
