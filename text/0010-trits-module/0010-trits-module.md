@@ -9,37 +9,39 @@ This RFC proposes a `trits` interface to standardise the usage of different unde
 
 # Motivation
 
-A `trit` is a digit in base `3` and is usually represented, in balanced ternary, by either `-1`, `0` or `1`.
+A `trit` is a digit in base `3` and is often represented by the set `{-1, 0, +1}`. This representation is called balanced ternary and the object represented in such a way a `balanced trit`. Further reading: http://homepage.divms.uiowa.edu/~jones/ternary/bct.shtml.
 
-Even though the most convenient way to encode trits is to map one balanced `trit` to one `signed byte`, this is obviously not the most memory efficient way nor the most readable way to do it.
+To work with trits on a binary machine, the most apparent solution is to encode them with the mapping `one balanced trit -> one signed byte`. This, however, is not very memory efficient, because a `byte` can represent `256` different values, while a `trit` only represents `3`.
 
-In the IOTA ecosystem, different trits encodings are used in different situations like:
+In the IOTA ecosystem, different trit encodings are used in different situations like:
 
 - hashing is done on raw trits because IOTA uses ternary hash functions like `Curl` or `Troika`;
 - sending trits on the network is done by encoding `5` trits to a single byte for throughput efficiency;
 - for UX purposes, we usually encode `3` trits to a single byte because of the nice readable mapping it offers (`9ABCDEFGHIJKLMNOPQRSTUVWXYZ`);
 
 At the time this RFC is written, the following encodings are considered. This list is not exhaustive, some may be dropped, some may be added.
+The naming convention `tmbn` means `m trits` represented by `n bytes`.
 
-| Name    | Encoding              | Usage                           | RFC |
-| ------- | --------------------- | ------------------------------- | --- |
-| `t1b1`  | 1 trit per byte       | Hashing, tests                  |     |
-| `t3b1`  | 3 trits per byte      | API, UX, tests                  |     |
-| `t27b8` | 27 trits per 8 bytes  | Troika optimization             |     |
-| `t9b2`  | 9 trits per 2 bytes   | Bee internal encoding           |     |
-| `t5b1`  | 5 trits per byte      | Network communication, storage  |     |
-| `ptrit` | Hardware dependant    | PCurl batch hashing             |     |
+| Name    | Encoding              | Usage                                         | RFC |
+| ------- | --------------------- | --------------------------------------------- | --- |
+| `t1b1`  | 1 trit per byte       | Hashing, tests                                |     |
+| `t3b1`  | 3 trits per byte      | API, UX, tests                                |     |
+| `t27b8` | 27 trits per 8 bytes  | Troika optimization                           |     |
+| `t9b2`  | 9 trits per 2 bytes   | Bee internal encoding                         |     |
+| `t5b1`  | 5 trits per byte      | Network communication, storage                |     |
+| `ptrit` | Hardware dependant    | PCurl batch hashing (`p` stands for parallel) |     |
 
-Because there are many different trits encodings and switching from one to another is often needed, having a trits interface to have a uniform way to interact with trits, whatever the underlying encoding, could be useful.
+Because there are many different trit encodings and switching from one to another is needed often, defining a trits interface to have a uniform way to interact with trits, whatever the underlying encoding, could be useful.
 
 This interface should offer methods like allocations, conversions and manipulations.
 
 # Detailed design
 
-Any encoding should be convertible to any encoding. If `N` is the number of encodings available, then the number of possible conversions is `N^2` which could grow quickly. While some of these conversions are heavily used (e.g. `t5b1` to/from `t9b2`) and need to be as efficient as possible, some other are rarely or never expected to be used (e.g. `t5b1` to/from `t3b1`).
+Any encoding should be convertible to any encoding. If `N` is the number of encodings available, then the number of possible conversions grows like `N^2`. While some of these conversions are heavily used (e.g. `t5b1` to/from `t9b2`) and need to be as efficient as possible, some other are rarely or never expected to be used (e.g. `t5b1` to/from `t3b1`).
 
 To allow implementing all conversions without having to focus too much on unnecessary work, we propose the following requirements:
-- a conversion from any encoding to the same encoding is done by copy;
+
+- a conversion from any encoding to the same encoding is done by clone;
 - a conversion from `t1b1` to any other encoding is efficiently implemented by `From` trait;
 - a conversion from any encoding to `t1b1` is efficiently implemented by `From` trait;
 - a conversion, proven to be heavily used, from any encoding to any other encoding is efficiently implemented by `From` trait with specialization support;
