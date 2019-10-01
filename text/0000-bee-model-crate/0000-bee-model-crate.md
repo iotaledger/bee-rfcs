@@ -25,7 +25,7 @@ A transaction consists of several fields (e.g. address, value, timestamp, tag). 
 - **obsolete_tag** another arbitrary user-defined tag = 27 trytes
 - **timestamp** the time when the transaction was issued = 9 trytes
 - **current_index** the position of the transaction in its bundle = 9 trytes
-- **last_index** the total number of transactions in the bundle = 9 trytes
+- **last_index** the index of the last transaction in the bundle = 9 trytes
 - **bundle hash** is the hash of the entire bundle = 81 trytes
 - **trunk hash** the hash of the first transaction referenced/approved = 81 trytes
 - **branch hash** the hash of the second transaction referenced/approved = 81 trytes
@@ -57,7 +57,7 @@ struct Transaction {
 
     signature_fragments: String,
     address: String,
-    value: u64,
+    value: i64,
     obsolete_tag: String,
     timestamp: u64,
     current_index: usize,
@@ -118,9 +118,9 @@ pub struct TransactionBuilder {
     pub trunk: String,
     pub branch: String,
     pub tag: String,
-    pub attachment_timestamp: i64,
-    pub attachment_timestamp_lower_bound: i64,
-    pub attachment_timestamp_upper_bound: i64,
+    pub attachment_timestamp: u64,
+    pub attachment_timestamp_lower_bound: u64,
+    pub attachment_timestamp_upper_bound: u64,
 }
 
 impl TransactionBuilder {
