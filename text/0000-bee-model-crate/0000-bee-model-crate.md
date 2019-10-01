@@ -41,7 +41,6 @@ A bundle then represents the collection of these transactions. It should be note
 
 Each transaction is identified by its hash, the transaction hash. Transactions should be final and therefore not modifiable after construction.
 The same applies to bundles. Bundles are final, and therefore not modifiable after construction.
-Having bundles as well as transactions final helps achieve correctness among the data objects.
 
 Transactions can be built from Transaction Builders.
 Bundles can be built from Bundle Builders. Both builder objects can be manipulated as desired.
@@ -80,35 +79,6 @@ Besides that, a transaction can only be created from a Transaction Builder, or f
 
 ```rust
 impl Transaction {
-
-    pub fn from_transaction_builder(transaction_builder: &TransactionBuilder) -> Result<Transaction, TransactionBuilderValidationError> {
-                
-        match TransactionBuilderValidator::validate(&transaction_builder) {
-            Ok(()) => { ; }
-            Err(e) => { return Err(e) }
-        }
-
-        let (transaction_hash, nonce, timestamp) = Pow::compute(&transaction_builder);
-
-        Ok(Transaction {
-            signature_fragments: transaction_builder.signature_fragments.clone(),
-            address: transaction_builder.address.clone(),
-            value: transaction_builder.value.clone(),
-            obsolete_tag: transaction_builder.obsolete_tag.clone(),
-            timestamp,
-            current_index: transaction_builder.current_index.clone(),
-            last_index: transaction_builder.last_index.clone(),
-            bundle_hash: transaction_builder.bundle_hash.clone(),
-            trunk: transaction_builder.trunk.clone(),
-            branch: transaction_builder.branch.clone(),
-            nonce,
-            tag: transaction_builder.tag.clone(),
-            attachment_timestamp: transaction_builder.attachment_timestamp.clone(),
-            attachment_timestamp_lower_bound: transaction_builder.attachment_timestamp_lower_bound.clone(),
-            attachment_timestamp_upper_bound: transaction_builder.attachment_timestamp_upper_bound.clone(),
-        })
-                
-    }
     
     pub fn from_bytes(bytes: &Vec<u8>) -> Result<Transaction, TransactionBuilderValidationError> {
         unimplemented!()
@@ -179,7 +149,7 @@ impl Transaction {
 
 The Transcation_Builder struct contains public accessible fields. 
 The set values can be validated in the build() function which then returns the constructed transaction.
-Moreover, also the Proof-Of-Work will be part of the build() function.
+Moreover, also the Proof-Of-Work will be called in the build() function.
 
 ```rust
 #[derive(Default)]
@@ -201,12 +171,103 @@ pub struct TransactionBuilder {
 
 impl TransactionBuilder {
 
-    pub fn build(&self) -> Result<Transaction, TransactionBuilderValidationError> {
-        Transaction::from_transaction_builder(self)
+    pub fn build(self) -> Result<(Transaction, TranscationMetadata), TransactionBuilderValidationError> {
+
+        match TransactionBuilderValidator::validate(&self) {
+            Ok(()) => { ; }
+            Err(e) => { return Err(e) }
+        }
+
+        Ok(Pow::compute(&self))
+
     }
 
 }
 ```
+
+The Pow object takes the Transaction Builder as argument and returns the built transaction together with its metadata.
+Every transaction contains a mutable metadata which consists of following attributes:
+```rust
+pub struct TransactionMetadata {
+    pub transaction_hash: String,
+    pub is_solid: bool,
+    pub usize: snapshotIndex
+}
+```
+
+Even though Proof-Of-Work should be handled in its own RFC, this example shows how it could interact with the TransactionBuilder and how Transactions could be built.
+This example assumes that the actual Transaction building takes place here.
+
+
+```rust
+pub struct Pow;
+
+impl Pow {
+
+    // operates on String encoding, should be replaced with trits interface once ready
+    pub fn compute(transaction_builder: &TransactionBuilder) -> (Transaction, TranscationMetadata) {
+
+        const CHARSET: &[u8] = b"ABCDEFGHIJKLMNOPQRSTUVWXYZ9";
+
+        let iv: String = (0..27)
+            .map(|_| {
+                let mut rng = rand::thread_rng();
+                let idx = rng.gen_range(0, CHARSET.len());
+                char::from(unsafe { *CHARSET.get_unchecked(idx) })
+            })
+            .collect();
+
+        let trytes_backup = transaction_builder.signature_fragments.clone(); // + value + all other fields
+        let mut hash;
+        let mut nonce = iv.clone();
+        let mut timestamp = 0;
+        let mut transaction_metadata: TranscationMetadata = TranscationMetadata::default();
+
+        loop {
+
+            let mut trytes = trytes_backup.clone();
+            trytes.push_str(&nonce);
+
+            hash = HashFunction::hash(&trytes);
+            nonce = String::from(&hash[..27]);
+            // timestamp = ... (update timestamp)
+
+            if hash.ends_with(MIN_WEIGHT_MAGNITUDE_AS_STRING){
+                transaction_metadata.hash = hash.clone();
+                break
+            }
+
+        }
+
+        (
+            Transaction {
+                signature_fragments: transaction_builder.signature_fragments.clone(),
+                address: transaction_builder.address.clone(),
+                value: transaction_builder.value.clone(),
+                obsolete_tag: transaction_builder.obsolete_tag.clone(),
+                timestamp,
+                current_index: transaction_builder.current_index.clone(),
+                last_index: transaction_builder.last_index.clone(),
+                bundle_hash: transaction_builder.bundle_hash.clone(),
+                trunk: transaction_builder.trunk.clone(),
+                branch: transaction_builder.branch.clone(),
+                nonce,
+                tag: transaction_builder.tag.clone(),
+                attachment_timestamp: transaction_builder.attachment_timestamp.clone(),
+                attachment_timestamp_lower_bound: transaction_builder.attachment_timestamp_lower_bound.clone(),
+                attachment_timestamp_upper_bound: transaction_builder.attachment_timestamp_upper_bound.clone(),
+            },
+
+            transaction_metadata
+
+        )
+
+    }
+
+}
+
+```
+
 
 ### Bundle
 
