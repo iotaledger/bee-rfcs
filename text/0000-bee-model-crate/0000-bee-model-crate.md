@@ -6,24 +6,21 @@
 # Summary
 
 IOTA is a distributed ledger that was designed for payment settlement and data transfer between machines and devices in the Internet of Things (IoT) ecosystem.
-The data packets that are sent through the network are called "transactions".
-Settlements or data transfers can be done with the help of these transactions. Payment settlements require the help of multiple transactions.
+The messages that are sent through the network are called "transactions".
+Payment settlements or data transfers can be done with the help of these transactions. 
 
-This feature is responsible for the creation of outgoing transactions and for the interpretation of incoming transactions.
-
-
+This feature is responsible for the creation and interpretation of transactions.
 
 # Motivation
 [...]
-
 
 # Detailed design
 
 ## General
 
-A transaction consists of several fields (e.g. address, value, timestamp, tag). Each field is of static length. One transaction consists of 2673 trytes:
+A transaction can be understood as a tuple of 15 elements, also called fields:
 
-| Name  | Description | Size|
+| Name  | Description | Size |
 | ------------- | ------------- | ------------- |
 | **signature_or_message_fragment** | contains the signature of the transfer or user-defined message data | 2187 trytes |
 | **address**  | receiver (output) if value > 0, or sender (input) if value < 0  | 81 trytes |
@@ -41,23 +38,14 @@ A transaction consists of several fields (e.g. address, value, timestamp, tag). 
 | **attachment_timestamp_lowerbound**  |  *not specified* | 9 trytes |
 | **attachment_timestamp_upperbound**  |  *not specified* | 9 trytes |
 
-
-A bundle is a collection of specific transactions. Bundles are required to bundle related information.
-For example, if not all data fits into one transaction, it has to be split across multiple transactions. An example would be payment settlements - they require the help of multiple transactions.
-A bundle then represents the collection of these transactions. It should be noted, that each transaction of a bundle will be sent separately through the network.
-
-Each transaction is identified by its hash, the transaction hash. Transactions should be final and therefore not modifiable after construction.
-The same applies to bundles. Bundles are final, and therefore not modifiable after construction.
-
-Transactions can be built from Transaction Builders.
-Bundles can be built from Bundle Builders. Both builder objects can be manipulated as desired.
-It should be noted, Bundle Builders don't process Transactions (as transactions are final), instead, they process Transaction Builders.
+As reflected in the table, each field is of constant length. Totally, one transaction consists of **2673 trytes**.
+Transactions should not be **modifiable** after construction. Transaction fields therefore only should be accessible by getter functions.
 
 ## Exposed Interface
 
 ### Transaction
 
- A transaction consists of following fields:
+The structure of a transaction is defined as follows:
 
 ```rust
 struct Transaction {
@@ -81,8 +69,7 @@ struct Transaction {
 }
 ```
 
-As mentioned, Transactions are final. Transaction fields therefore should be only accessible by getter functions.
-Besides that, a transaction can only be created from a Transaction Builder, or from a constructor function which expects encoded bytes as received e.g. from a network socket.
+The type implementation is defined as follows:
 
 ```rust
 impl Transaction {
@@ -108,9 +95,12 @@ impl Transaction {
 }
 ```
 
-The TranscationBuilder struct contains public accessible fields. 
-The set values can be validated in the build() function which then returns the constructed transaction.
-Moreover, also the Proof-Of-Work will be called in the build() function.
+The **from_bytes(bytes: &Vec)** is striking here. It serves as constructor and allows to build transactions from received bytes, e.g. from the network socket.
+It's one way to build transactions. Another way to build transactions would be via **TransactionBuilder**.
+
+### TransactionBuilder
+
+The TransactionBuilder offers a **simple and convenient** way to built transactions. It's defined as follows:
 
 ```rust
 #[derive(Default)]
@@ -146,19 +136,33 @@ impl TransactionBuilder {
 }
 ```
 
-The Pow object takes the Transaction Builder as argument and returns the built transaction together with its metadata.
-Every transaction contains a mutable metadata which consists of following attributes:
+In comparison to the Transaction model, the TransactionBuilder can be manipulated as desired. It consists of public accessible fields.
+Once *build()* is called, the set fields will be validated. Validation happens via the *TransactionBuilderValidator*. It checks if fields don't contain any invalid characters. Besides that, if not the full size of fields (e.g. signature_or_message_fragment) is used, it will pad the empty space up.
+
+Once the validation of the transaction fields was successful, Proof-of-Work (PoW) will be next.
+**PoW will return a tuple (Transaction, TranscationMetadata).**
+
+### TransactionMetadata
+
+Each transaction contains a mutable metadata which is defined as following:
+
 ```rust
 pub struct TransactionMetadata {
     pub transaction_hash: String,
-    pub is_solid: bool,
-    pub snapshot_index: usize
+    ...
 }
 ```
 
-Even though Proof-Of-Work should be handled in its own RFC, this example shows how it could interact with the TransactionBuilder and how Transactions could be built.
-This example assumes that the actual Transaction building takes place here.
+The TransactionMetadata contains important information about a specific transaction.
 
+### Proof-of-Work (PoW)
+
+Even though PoW should be handled in its own RFC, it interacts with TransactionBuilder (in the current moment of time) and therefore deserves some review:
+
+*pub fn compute(transaction_builder: &TransactionBuilder)*
+
+The following example shows how PoW interacts with the **TransactionBuilder**  and how Transactions finally are built.
+This example assumes that the *actual Transaction building* (initialization of the Transaction struct that is to be returned) takes place in PoW.
 
 ```rust
 pub struct Pow;
@@ -229,6 +233,10 @@ impl Pow {
 
 ```
 
+As reflected by the code above, the Transaction struct (that is to be returned) gets initialized directly in PoW.
+This has some advantages, like the *timestamp* and the *nonce* can directly be passed to the struct.
+A disadvantage is, the building of transactions takes place in the PoW model.
+
 # Drawbacks
 
 Without any bee-model crate, nodes can not exchange transactions. Therefore this crate seems necessary.
@@ -247,4 +255,10 @@ Without any bee-model crate, nodes can not exchange transactions. Therefore this
 
 - How to handle deserialization of the incoming, encoded transaction?
 
-- Where should the actual Transaction struct be initialized/returned? A option would be in the build() of the TransactionBuilder or as it currently is in the compute() of Pow. 
+- Where should the actual Transaction struct be initialized/returned? Current ideas are to put it in the build() of the TransactionBuilder or as it currently is in the compute() of Pow.
+
+- Where should Transaction fields get validated? One-time validation once build() is called by the separate *TransactionBuilderValidator* as it currently is, or use **setters** in the TransactionBuilder and validate in each setter separately?
+
+- Should we use setters for the TransactionBuilder?
+
+- Introducing a fluent API to the TransactionBuilder?
