@@ -191,7 +191,7 @@ Every transaction contains a mutable metadata which consists of following attrib
 pub struct TransactionMetadata {
     pub transaction_hash: String,
     pub is_solid: bool,
-    pub usize: snapshotIndex
+    pub snapshot_index: usize
 }
 ```
 
