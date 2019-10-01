@@ -1,17 +1,21 @@
-+ Feature name: `bee-model-crate`
++ Feature name: `bee-transaction-crate`
 + Start date: 2019-09-06
 + RFC PR: [iotaledger/bee-rfcs#3](https://github.com/iotaledger/bee-rfcs/pull/3)
 + Bee issue: [iotaledger/bee#43](https://github.com/iotaledger/bee/issues/43)
 
 # Summary
 
-This feature is responsible for the creation and interpretation of transactions and bundles.
-
-# Motivation
-
 IOTA is a distributed ledger that was designed for payment settlement and data transfer between machines and devices in the Internet of Things (IoT) ecosystem.
 The data packets that are sent through the network are called "transactions".
 Settlements or data transfers can be done with the help of these transactions. Payment settlements require the help of multiple transactions.
+
+This feature is responsible for the creation of outgoing transactions and for the interpretation of incoming transactions.
+
+
+
+# Motivation
+[...]
+
 
 # Detailed design
 
@@ -19,21 +23,24 @@ Settlements or data transfers can be done with the help of these transactions. P
 
 A transaction consists of several fields (e.g. address, value, timestamp, tag). Each field is of static length. One transaction consists of 2673 trytes:
 
-- **signature_or_message_fragment** contains the signature of the transfer or user-defined message data = 2187 trytes
-- **address** receiver (output) if value > 0, or sender (input) if value < 0 = 81 trytes
-- **value** the transferred amount in IOTA  = 27 trytes
-- **obsolete_tag** another arbitrary user-defined tag = 27 trytes
-- **timestamp** the time when the transaction was issued = 9 trytes
-- **current_index** the position of the transaction in its bundle = 9 trytes
-- **last_index** the index of the last transaction in the bundle = 9 trytes
-- **bundle hash** is the hash of the entire bundle = 81 trytes
-- **trunk hash** the hash of the first transaction referenced/approved = 81 trytes
-- **branch hash** the hash of the second transaction referenced/approved = 81 trytes
-- **nonce** is the Proof-of-Work nonce of the transaction = 27 trytes
-- **tag** arbitrary user-defined value = 27 trytes
-- **attachment_timestamp** the timestamp for when Proof-of-Work is completed = 9 trytes
-- **attachment_timestamp_lowerbound** is a slot for future use = 9 trytes
-- **attachment_timestamp_upperbound** is a slot for future use = 9 trytes
+| Name  | Description | Size|
+| ------------- | ------------- | ------------- |
+| **signature_or_message_fragment** | contains the signature of the transfer or user-defined message data | 2187 trytes |
+| **address**  | receiver (output) if value > 0, or sender (input) if value < 0  | 81 trytes |
+| **value**  | the transferred amount in IOTA  | 27 trytes |
+| **obsolete_tag**  | another arbitrary user-defined tag  | 27 trytes |
+| **timestamp**  | the time when the transaction was issued  | 9 trytes |
+| **current_index**  | the position of the transaction in its bundle  | 9 trytes |
+| **last_index**  | the index of the last transaction in the bundle  | 9 trytes |
+| **bundle hash**  | the hash of the bundle essence | 81 trytes |
+| **trunk hash**  | the hash of the first transaction referenced/approved | 81 trytes |
+| **branch hash**  | the hash of the second transaction referenced/approved | 81 trytes |
+| **nonce**  | is the Proof-of-Work nonce of the transaction | 27 trytes |
+| **tag**  | arbitrary user-defined value | 27 trytes |
+| **attachment_timestamp**  |  the timestamp for when Proof-of-Work is completed | 9 trytes |
+| **attachment_timestamp_lowerbound**  |  *not specified* | 9 trytes |
+| **attachment_timestamp_upperbound**  |  *not specified* | 9 trytes |
+
 
 A bundle is a collection of specific transactions. Bundles are required to bundle related information.
 For example, if not all data fits into one transaction, it has to be split across multiple transactions. An example would be payment settlements - they require the help of multiple transactions.
@@ -222,69 +229,22 @@ impl Pow {
 
 ```
 
-
-### Bundle
-
-All transactions in the same bundle have the same value in the bundle field. This field contains the bundle hash, which is derived from a hash of the values of each transaction's address, value, obsoleteTag, currentIndex, lastIndex and timestamp fields.
-- **address**
-- **value**
-- **obsoleteTag**
-- **currentIndex**
-- **lastIndex**
-- **timestamp**
-
-#### Bundle Builder
-
-Similar to Transaction Builder, BundleBuilder makes it possible to create a Bundle. As mentioned, a bundle is a special collection of transactions.
-Bundles are read from head to tail but created from tail to head. This is why it makes sense to have a dedicated class for this purpose.
-The transactions inside a bundle are connected through the trunk. The trunk field of the head transaction (index 0) references the transaction with index 1, and so on.
-
-```rust
-
-struct BundleBuilder<'a> {
-
-    pub tailToHead: Vec<&'a TransactionBuilder>
-    
-}
-
-impl<'a> BundleBuilder<'a> {
-
-    pub fn append(&mut self, transaction_builder: &'a TransactionBuilder) {
-        self.tailToHead.push(transaction_builder);
-    }
-    
-    pub fn build(&self) -> Result<Bundle, BundleBuildError> {
-        
-        if self.tailToHead.size() == 0 {
-            return Err(BundleBuilder("Cannot build: bundle is empty (0 transactions)."))
-        }
-        
-        setFlags();
-        buildTrunkLinkedChainAndReturnHead();
-        
-        Ok(Bundle::new(tailToHead))
-    }
-
-}
-
-```
-
-
 # Drawbacks
 
 Without any bee-model crate, nodes can not exchange transactions. Therefore this crate seems necessary.
 
 # Rationale and alternatives
 
-- The distinction between Transaction and Transaction Builder as well as Bundle and Bundle Builder makes the code cleaner 
-and helps achieve correctness among the data objects. Properties are clearly assigned to specific data objects and not mixed up.
+- The distinction between Transaction and Transaction Builder as well as Bundle and Bundle Builder makes the code cleaner. Properties are clearly assigned to specific data objects and not mixed up.
 
-- The proposed crate interface is intuitive. Completely different alternatives did not naturally come to mind.
+- The proposed crate interface is relatively intuitive. Completely different alternatives did not naturally come to mind.
 
-- The validation logic could be done in a separate validator class, which then will be called in the build() function.
+- The validation logic could be done in setter functions instead of the separate validator class.
 
 - This kind of interface is relatively minimal and easily extended upon in a future iteration.
 
 # Unresolved questions
 
 - How to handle deserialization of the incoming, encoded transaction?
+
+- Where should the actual Transaction struct be initialized/returned? A option would be in the build() of the TransactionBuilder or as it currently is in the compute() of Pow. 
