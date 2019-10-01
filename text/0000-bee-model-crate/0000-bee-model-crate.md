@@ -1,6 +1,6 @@
 + Feature name: `bee-model-crate`
 + Start date: 2019-09-06
-+ RFC PR: [iotaledger/bee-rfcs#0000](https://github.com/iotaledger/bee-rfcs/pull/0000)
++ RFC PR: [iotaledger/bee-rfcs#3](https://github.com/iotaledger/bee-rfcs/pull/3)
 + Bee issue: [iotaledger/bee#43](https://github.com/iotaledger/bee/issues/43)
 
 # Summary
