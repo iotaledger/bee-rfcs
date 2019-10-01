@@ -7,9 +7,6 @@
 
 This RFC proposes an encoding that packs `5` `balanced trits` to a single `signed byte`. It may be referred to as `5t/1b`, `5t1b`, `t5/b1`, `t5b1`, `5/1`, `10/2`, ... To comply with most languages identifier rules, we'll prefer using `t5b1`.
 
-<!-- TODO Update with link to RFC#10 -->
-This encoding implements the interface presented by RFC#10.
-
 # Motivation
 
 A `byte` is composed of `8` `bits` that can hold `2^8 = 256` different values. On the other hand, `6` `trits` can hold `3^6 = 729` values while `5` `trits` can hold `3^5 = 243` values. The maximum number of `trits` a `byte` can hold is then `5`.
@@ -320,9 +317,6 @@ If the intended purpose of using this encoding is saving memory or increasing co
 
 # Unresolved questions
 
-There are no unresolved questions because:
-- algorithms are well defined and vetted as they have been used by [IRI](https://github.com/iotaledger/iri)/[cIRI](https://github.com/iotaledger/entangled/tree/develop/ciri) for both network communications and storage layers for a long time;
-<!-- TODO Edit link -->
-- it will follow a well-defined interface provided by RFC#10;
+There are no unresolved questions because algorithms are well defined and vetted as they have been used by [IRI](https://github.com/iotaledger/iri)/[cIRI](https://github.com/iotaledger/entangled/tree/develop/ciri) for both network communications and storage layers for a long time.
 
 It should only be noted, as previously stated, that different implementations are possible and some may raise security concerns.
