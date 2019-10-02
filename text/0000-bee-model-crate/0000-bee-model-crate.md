@@ -29,14 +29,14 @@ A transaction can be understood as a tuple of 15 elements, also called fields:
 | **timestamp**  | the time when the transaction was issued  | 9 trytes |
 | **current_index**  | the position of the transaction in its bundle  | 9 trytes |
 | **last_index**  | the index of the last transaction in the bundle  | 9 trytes |
-| **bundle hash**  | the hash of the bundle essence | 81 trytes |
-| **trunk hash**  | the hash of the first transaction referenced/approved | 81 trytes |
-| **branch hash**  | the hash of the second transaction referenced/approved | 81 trytes |
-| **nonce**  | is the Proof-of-Work nonce of the transaction | 27 trytes |
+| **bundle**  | the hash of the bundle essence | 81 trytes |
+| **trunk**  | the hash of the first transaction referenced/approved | 81 trytes |
+| **branch**  | the hash of the second transaction referenced/approved | 81 trytes |
 | **tag**  | arbitrary user-defined value | 27 trytes |
 | **attachment_timestamp**  |  the timestamp for when Proof-of-Work is completed | 9 trytes |
 | **attachment_timestamp_lowerbound**  |  *not specified* | 9 trytes |
 | **attachment_timestamp_upperbound**  |  *not specified* | 9 trytes |
+| **nonce**  | is the Proof-of-Work nonce of the transaction | 27 trytes |
 
 As reflected in the table, each field is of constant length. Totally, one transaction consists of **2673 trytes**.
 Transactions should not be **modifiable** after construction. Transaction fields therefore only should be accessible by getter functions.
@@ -49,7 +49,6 @@ The structure of a transaction is defined as follows:
 
 ```rust
 struct Transaction {
-
     signature_fragments: String,
     address: String,
     value: i64,
@@ -60,12 +59,11 @@ struct Transaction {
     bundle_hash: String,
     trunk: String,
     branch: String,
-    nonce: String,
     tag: String,
     attachment_timestamp: u64,
     attachment_timestamp_lower_bound: u64,
     attachment_timestamp_upper_bound: u64,
-
+    nonce: String
 }
 ```
 
