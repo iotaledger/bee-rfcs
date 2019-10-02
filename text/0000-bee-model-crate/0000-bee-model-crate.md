@@ -100,7 +100,7 @@ It's one way to build transactions. Another way to build transactions would be v
 
 ### TransactionBuilder
 
-The TransactionBuilder offers a **simple and convenient** way to built transactions. It's defined as follows:
+The TransactionBuilder offers a **simple and convenient** way to build transactions. It's defined as follows:
 
 ```rust
 #[derive(Default)]
