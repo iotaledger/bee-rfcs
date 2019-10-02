@@ -15,7 +15,6 @@ Why are we doing this? What use cases does it support? What is the expected outc
 2. List all the specific use cases that your proposal is trying to address. 
 3. Where applicable, write from the perspective of the person who will be using the software, for example using the "Job story" format:
 
-
 When _____ , I want to _____ , so I can _____ .
 
 Example 1:
@@ -23,8 +22,6 @@ When I query a node for a list of transactions, I want to be able to sort them b
 
 Example 2:
 When I configure a node, I want to be able to control how much transaction history the node stores, so I can make sure I only store the data I need without incurring additional operational costs.
-
-```
 
 # Detailed design
 
