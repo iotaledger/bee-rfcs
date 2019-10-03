@@ -9,13 +9,13 @@ This RFC proposes a dedicated crate to perform proof-of-work (PoW) for a single 
 
 # Motivation
 
-In order to protect the network from spam each device that wishes to get a message (e.g. a value transaction) propagated by all the nodes needs a way to proove to the network, that it has invested the necessary amount of computational work. 
+In order to protect the network from spam each device that wishes to get a message (e.g. a value transaction) propagated by all the nodes needs a way to proove to the network, that it has invested the necessary amount of computational work either by doing the computation by itself, or by externalizing it using some PoW service provider. 
 
 ### Background info on PoW
-Cryptographic hash functions are one-way-functions. That means in simple terms that given the output you cannot calculate the input from it. Proof-of-Work works by setting some constraint on the output like a certain number of zeros at the end or the beginning of the hash. It's completely arbitrary. It could be ten `1`s or the sequence `1234567890` because any particular sequence is equally likely. What matters is that your only chance to find an input that satisfies the constraint is guessing/brute-forcing it. You can also easily set the difficulty by making the constraint harder to satisfy (extend the sequence). So to check if PoW was correctly done all a validating node has to do is hash the given message which includes the nonce, and see if the constraint is satisfied. On the other hand the message publisher has to repeat the following cycle many times until he has found a valid nonce:
-* Pick a (random) nonce value
+Cryptographic hash functions are one-way-functions. That means in simple terms that given the output you cannot calculate the input from it. Proof-of-Work works by setting some constraint on the output like a certain number of zeros at the end or the beginning of the hash. It's completely arbitrary. It could be ten `1`s or the sequence `1234567890` because any particular sequence is equally likely. What matters is that your only chance to find an input that satisfies the constraint is guessing/brute-forcing it. You can also easily set the difficulty by making the constraint harder to satisfy (extend the sequence). So to check if PoW was correctly done all a validating node has to do is hash the given message which includes the nonce, and see if the constraint is satisfied. On the other hand the message publisher has to repeat the following cycle many times until it has found a valid nonce:
+* Pick a nonce value (e.g. by simply increasing it, or choose it randomly)
 * Hash the message together with selected nonce
-* Compare if the hash satisfies the constraint given by the majority of the nodes
+* Compare if the hash satisfies the constraint given by the majority of the network
 
 This process is called `Mining` and in this analogy the nonce is the nugget.
 
@@ -26,16 +26,18 @@ outcome?
 
 1. Write a summary of the motivation.
 2. List all the specific use cases that your proposal is trying to address. 
-3. Where applicable, write from the perspective of the person who will be using
    the software, for example using the "Job story" format:
 
-When ＿＿＿ , I want to ＿＿＿, so I can ＿＿＿.
+TODO
 
-+ **Example 1:** When I query a node for a list of transactions, I want to be
-  able to sort them by date, so I can work with the most relevant ones.
-+ **Example 2:** When I configure a node, I want to be able to control how much
-  transaction history the node stores, so I can make sure I only store the data
-  I need without incurring additional operational costs.
+### Job stories:
+When I create a gossip message (e.g. a transaction), I want to be able to find a nonce, so that hashing the message and the nonce creates a hash that satisfies the constraint set by the network.
+
+When I receive a gossip message, I want to be able to verify, that the contained nonce is valid, so that I know that the publisher of that message has at least invested some resource to find it.
+
+
+`IMPORTANT NOTE`
+It is important that this crate is independent from the particular hashfunction. Ideally it would not even depend on whether a trinary or a binary hashfunction is used. In both cases a 
 
 # Detailed design
 
