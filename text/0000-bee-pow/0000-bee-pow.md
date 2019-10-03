@@ -5,7 +5,7 @@
 
 # Summary
 
-This RFC proposes a dedicated crate to perform proof-of-work (PoW) for a single gossip message, that achieves to be accepted and propagated by the network. 
+This RFC proposes a dedicated crate to perform proof-of-work (PoW) for a single gossip message, that attempts to become accepted and propagated by the network. 
 
 # Motivation
 
@@ -37,14 +37,16 @@ When I receive a gossip message, I want to be able to verify, that the contained
 
 
 `IMPORTANT NOTE`
-It is important that this crate is independent from the particular hashfunction. Ideally it would not even depend on whether a trinary or a binary hashfunction is used. In both cases a 
+It is important that this crate is independent from the particular hashfunction. Ideally it would not even depend on whether a trinary or a binary hashfunction is used.
 
 # Detailed design
 
-This is the bulk of the RFC. Explain the design in enough detail for somebody
+`This is the bulk of the RFC. Explain the design in enough detail for somebody
 familiar with the IOTA and to understand, and for somebody familiar with Rust
 to implement. This should get into specifics and corner-cases, and include
-examples of how the feature is used.
+examples of how the feature is used.`
+
+For a prototype implementation please checkout [bee-pow-preview](https://github.com/Alex6323/bee-pow-preview).
 
 # Drawbacks
 
