@@ -92,6 +92,8 @@ impl Encoding for T3B1 {
 }
 ```
 
+For more details checkout [this prototype](https://github.com/Alex6323/trits-module-preview) of a trits-module, that implements and abstracts over several different trit encodings.
+
 # Drawbacks
 
 This encoding is very inefficient in terms of memory as it only uses 27 values out of 256 available in a (signed) byte and therefore should not be used for storing or transmitting trinary data. 
