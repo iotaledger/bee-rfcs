@@ -48,7 +48,21 @@ bundleHash(bundle)
 
 ## Bundle finalisation
 
-<!-- TODO -->
+Finalising a bundle means computing the bundle hash, verifying that it matches the security requirement and setting it to all the transactions.
+
+Pseudocode:
+
+```
+bundleFinalise(bundle)
+| hash = bundleHash(bundle)
+| while hash.normalise().find('M')
+| | bundle.at(0).obsolete_tag++
+| | hash = bundleHash(bundle)
+| for transaction in bundle
+| | transaction.setBundleHash(hash)
+```
+
+*Security requirement: due to the implementation of the signature process, the normalised bundle hash can't contain a `M` or `13` because it could expose a significant part of the private key, weakening the signature. The bundle hash is then repetitively generated with a slight modification until its normalisation doesn't contain a `M`.*
 
 ## Bundle validation
 
@@ -65,3 +79,6 @@ bundleHash(bundle)
 # Unresolved questions
 
 <!-- TODO -->
+
+- Should this RFC include explanation and/or pseudocode for bundle hash normalisation ?
+- Should this RFC expands a bit more on the M-Bug ? Or give a link ?
