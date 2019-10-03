@@ -39,8 +39,10 @@ Pseudocode:
 ```
 bundleHash(bundle)
 | sponge = Sponge(HASH_FUNCTION)
+|
 | for transaction in bundle
 | | sponge.absorb(transaction.essence())
+|
 | return sponge.squeeze()
 ```
 
@@ -55,9 +57,11 @@ Pseudocode:
 ```
 bundleFinalise(bundle)
 | hash = bundleHash(bundle)
+|
 | while hash.normalise().find('M')
 | | bundle.at(0).obsolete_tag++
 | | hash = bundleHash(bundle)
+|
 | for transaction in bundle
 | | transaction.setBundleHash(hash)
 ```
@@ -66,7 +70,57 @@ bundleFinalise(bundle)
 
 ## Bundle validation
 
-<!-- TODO -->
+Validating a bundle means checking the syntactic and semantic integrity of a bundle as a whole and of its constituent transactions. As bundles are atomic transfers, either all or none of the transactions will be accepted by the network.
+
+The following assertions must be true:
+
+- bundle has announced size;
+- transactions share the same bundle hash;
+- transactions absolute value doesn't exceed total IOTA supply;
+- bundle absolute sum never exceeds total IOTA supply;
+- transactions appear in the announced order;
+- value transactions have an address ending in `0` i.e. has been generated with Kerl;
+- bundle inputs and outputs are balanced i.e. the bundle sum equals `0`;
+- announced bundle hash matches the computed bundle hash;
+- for spending transactions, the signature is valid;
+
+Pseudocode:
+
+```
+bundleValidate(bundle):
+| value = 0
+| current_index = 0
+|
+| if bundle.length() != bundle.at(0).last_index + 1
+| | return BUNDLE_INVALID_LENGTH
+|
+| bundle_hash = bundle.at(0).bundle_hash
+| last_index = bundle.at(0).last_index
+|
+| for transaction in bundle
+| | if transaction.bundle_hash != bundle_hash
+| | | return BUNDLE_INVALID_HASH
+| | if abs(transaction.value) > IOTA_SUPPLY
+| | | return BUNDLE_INVALID_TRANSACTION_VALUE
+| | value = value + transaction.value
+| | if abs(value) > IOTA_SUPPLY
+| | | return BUNDLE_INVALID_VALUE
+| | if transaction.current_index != current_index++
+| | | return BUNDLE_INVALID_INDEX
+| | if transaction.last_index != last_index
+| | | return BUNDLE_INVALID_INDEX
+| | if transaction.value != 0 && transaction.address.last != 0
+| | | return BUNDLE_INVALID_ADDRESS
+|
+| if value != 0
+| | return BUNDLE_INVALID_VALUE
+| if bundle_hash != bundleHash(bundle)
+| | return BUNDLE_INVALID_HASH
+| if !bundleSignaturesValidate(bundle)
+| | return BUNDLE_INVALID_SIGNATURE
+|
+| return BUNDLE_VALID
+```
 
 # Drawbacks
 
