@@ -5,9 +5,21 @@
 
 # Summary
 
-One paragraph explanation of the feature.
+This RFC proposes a dedicated crate to perform proof-of-work (PoW) for a single gossip message, that achieves to be accepted and propagated by the network. 
 
 # Motivation
+
+In order to protect the network from spam each device that wishes to get a message (e.g. a value transaction) propagated by all the nodes needs a way to proove to the network, that it has invested the necessary amount of computational work. 
+
+### Background info on PoW
+Cryptographic hash functions are one-way-functions. That means in simple terms that given the output you cannot calculate the input from it. Proof-of-Work works by setting some constraint on the output like a certain number of zeros at the end or the beginning of the hash. It's completely arbitrary. It could be ten `1`s or the sequence `1234567890` because any particular sequence is equally likely. What matters is that your only chance to find an input that satisfies the constraint is guessing/brute-forcing it. You can also easily set the difficulty by making the constraint harder to satisfy (extend the sequence). So to check if PoW was correctly done all a validating node has to do is hash the given message which includes the nonce, and see if the constraint is satisfied. On the other hand the message publisher has to repeat the following cycle many times until he has found a valid nonce:
+* Pick a (random) nonce value
+* Hash the message together with selected nonce
+* Compare if the hash satisfies the constraint given by the majority of the nodes
+
+This process is called `Mining` and in this analogy the nonce is the nugget.
+
+TODO
 
 Why are we doing this? What use cases does it support? What is the expected
 outcome?
