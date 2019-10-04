@@ -5,13 +5,19 @@
 
 # Summary
 
+The smallest communication unit in the IOTA protocol is the `Transaction`. Everything, including payment settlements and/or plain data, is propagated through the IOTA network in `Transactions`.
+
+A `Transaction` is `2673` trytes and the part available to the user is `2187` trytes. This part holds a signature in case of a payment settlement and plain data otherwise. Since it has a limited size, a user often needs more than one `Transaction` to fulfil his operation, for example signatures with security level `2` or `3` don't fit in a single `Transaction` and user-provided data may exceed the allowance so they need to be fragmented across multiple `Transactions`. Moreover, a `Transaction` may not make sense on its own, for example an input/output `Transaction` alone would change the total amount of the ledger so it has to be paired with another complementary input/output.
+
+For these reasons, `Transactions` have to be processed as a whole, in groups called `Bundles`. A `Bundle` is an atomic operation in the sense that either all or none of its `Transactions` are accepted by the network. Even single `Transactions` are propagated through the network within a `Bundle` making it the only confirmable communication unit of the IOTA protocol.
+
+This RFC proposes ways to create and manipulate a `Bundle` and describe the associated algorithms.
+
 Useful links:
-- [Bundles and transactions
-](https://docs.iota.org/docs/dev-essentials/0.1/concepts/bundles-and-transactions)
 - [What is a bundle?
 ](https://docs.iota.org/docs/getting-started/0.1/introduction/what-is-a-bundle)
-
-<!-- TODO -->
+- [Bundles and transactions
+](https://docs.iota.org/docs/dev-essentials/0.1/concepts/bundles-and-transactions)
 
 # Motivation
 
