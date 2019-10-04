@@ -29,6 +29,8 @@ In this section, we present the main algorithms needed to process bundles, serve
 
 ## Algorithms
 
+<!-- TODO -->
+
 ### Bundle hash generation
 
 The hash of a bundle is based on the bundle essence of each of its transactions. The bundle essence of a transaction is composed of the following fields.
@@ -132,6 +134,8 @@ bundleValidate(bundle):
 | return BUNDLE_VALID
 ```
 
+<!-- TODO -->
+
 ## Bundle and BundleBuilder
 
 <!-- TODO -->
@@ -156,5 +160,4 @@ bundleValidate(bundle):
 
 <!-- TODO -->
 
-- Should this RFC include explanation and/or pseudocode for bundle hash normalisation ?
 - Should this RFC expands a bit more on the M-Bug ? Or give a link ?
