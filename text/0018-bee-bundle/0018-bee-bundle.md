@@ -19,7 +19,11 @@ Useful links:
 
 # Detailed design
 
-## Bundle hash generation
+In this section, we present the main algorithms needed to process bundles, server side and client side, as well as `Bundle` and `BundleBuilder` objects.
+
+## Algorithms
+
+### Bundle hash generation
 
 The hash of a bundle is based on the bundle essence of each of its transactions. The bundle essence of a transaction is composed of the following fields.
 
@@ -48,7 +52,7 @@ bundleHash(bundle)
 
 *In the current mainnet, the hash function of the sponge used to generate bundle hashes is Kerl.*
 
-## Bundle finalisation
+### Bundle finalisation
 
 Finalising a bundle means computing the bundle hash, verifying that it matches the security requirement and setting it to all the transactions.
 
@@ -68,7 +72,7 @@ bundleFinalise(bundle)
 
 *Security requirement: due to the implementation of the signature process, the normalised bundle hash can't contain a `M` or `13` because it could expose a significant part of the private key, weakening the signature. The bundle hash is then repetitively generated with a slight modification until its normalisation doesn't contain a `M`.*
 
-## Bundle validation
+### Bundle validation
 
 Validating a bundle means checking the syntactic and semantic integrity of a bundle as a whole and of its constituent transactions. As bundles are atomic transfers, either all or none of the transactions will be accepted by the network.
 
@@ -121,6 +125,18 @@ bundleValidate(bundle):
 |
 | return BUNDLE_VALID
 ```
+
+## Bundle and BundleBuilder
+
+<!-- TODO -->
+
+### Bundle
+
+<!-- TODO -->
+
+### BundleBuilder
+
+<!-- TODO -->
 
 # Drawbacks
 
