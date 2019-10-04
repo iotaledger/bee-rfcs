@@ -68,7 +68,7 @@ bundleHash(bundle)
 
 *Client side operation.*
 
-Finalising a bundle means computing the bundle hash, verifying that it matches the security requirement and setting it to all the transactions.
+Finalising a bundle means computing the bundle hash, verifying that it matches the security requirement and setting it to all the transactions of the bundle. After finalisation, transactions of a bundle are ready to be safely attached to the tangle.
 
 Pseudocode:
 
