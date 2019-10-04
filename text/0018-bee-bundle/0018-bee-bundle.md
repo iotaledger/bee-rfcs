@@ -33,6 +33,8 @@ Useful links:
 
 ### Bundle hash generation
 
+*Client side and server side operation.*
+
 A bundle hash ties different transactions together. By having this common hash in their `bundle` field, it makes it clear that these transactions should be processed as a whole.
 
 The hash of a bundle is derived from the bundle essence of each of its transactions. The bundle essence of a transaction is composed of the following fields.
@@ -64,6 +66,8 @@ bundleHash(bundle)
 
 ### Bundle finalisation
 
+*Client side operation.*
+
 Finalising a bundle means computing the bundle hash, verifying that it matches the security requirement and setting it to all the transactions.
 
 Pseudocode:
@@ -83,6 +87,8 @@ bundleFinalise(bundle)
 *Security requirement: due to the implementation of the signature process, the normalised bundle hash can't contain a `M` or `13` because it could expose a significant part of the private key, weakening the signature. The bundle hash is then repetitively generated with a slight modification until its normalisation doesn't contain a `M`.*
 
 ### Bundle validation
+
+*Server side operation.*
 
 Validating a bundle means checking the syntactic and semantic integrity of a bundle as a whole and of its constituent transactions. As bundles are atomic transfers, either all or none of the transactions will be accepted by the network.
 
