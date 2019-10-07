@@ -309,7 +309,9 @@ These sizes are computed with the formula `num_bytes = floor((num_trits + 5 - 1)
 
 # Drawbacks
 
-In the current state of the IOTA ecosystem, specifically the network, this encoding is absolutely necessary. There are no intrinsic drawbacks with this encoding, a user should just be careful when choosing it for his own application because it can't be used or is not recommended for every situation.
+In the current state of the IOTA ecosystem, specifically the network, this encoding is absolutely necessary.
+
+The main drawback of this encoding is that usual sizes doesn't end up on integer boundaries, making it a bit more complex to extract slices of trits. For example, a slice of `243` trits needs `48.6` bytes, meaning that `0.6` bytes are the end of the slice and the remaining `0.4` bytes are the beginning of another slice.
 
 # Rationale and alternatives
 
