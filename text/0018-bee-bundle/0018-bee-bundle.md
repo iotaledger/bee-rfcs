@@ -32,9 +32,7 @@ Useful links:
 
 ## Bundle and BundleBuilder
 
-Transactions are final and bundles are essentially arrays of transactions so  they are also final. Once a bundle is created and validated, it shouldn't be tempered. For this reason we have `Bundle` type and `BundleBuilder` type.
-
-<!-- TODO -->
+Transactions are final and bundles, essentially being arrays of transactions, are also final. Once a bundle is created and validated, it shouldn't be tempered. For this reason we have a `Bundle` type and a `BundleBuilder` type. An instantiated `Bundle` object represents a syntactically and semantically valid IOTA bundle and a `BundleBuilder` is the only gateway to a `Bundle` object.
 
 ### Bundle
 
