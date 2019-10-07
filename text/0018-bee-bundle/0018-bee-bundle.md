@@ -90,9 +90,9 @@ bundleFinalise(bundle)
 
 *Server side operation.*
 
-Validating a bundle means checking the syntactic and semantic integrity of a bundle as a whole and of its constituent transactions. As bundles are atomic transfers, either all or none of the transactions will be accepted by the network.
+Validating a bundle means checking the syntactic and semantic integrity of a bundle as a whole and of its constituent transactions. As bundles are atomic transfers, either all or none of the transactions will be accepted by the network. After validation, transactions of a bundle are candidates to be included to the ledger.
 
-The following assertions must be true:
+For a bundle to be considered valid, the following assertions must be true:
 
 - bundle has announced size;
 - transactions share the same bundle hash;
