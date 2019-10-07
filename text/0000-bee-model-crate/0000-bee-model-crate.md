@@ -170,9 +170,24 @@ Each transaction contains a mutable metadata which is defined as following:
 
 ```rust
 pub struct TransactionMetadata {
-    pub transaction_hash: TransactinHash,
+    transaction_hash: TransactinHash,
     ...
 }
+
+impl TransactionMetadata {
+
+    pub fn set_transaction_hash(&mut self, transaction_hash: TransactionHash) {
+        self.transaction_hash = transaction_hash;
+    }
+    
+    pub fn transaction_hash(&self) -> TransactionHash {
+        self.transaction_hash
+    }
+    
+    ...
+    
+}
+
 ```
 
 The TransactionMetadata contains important information about a specific transaction.
