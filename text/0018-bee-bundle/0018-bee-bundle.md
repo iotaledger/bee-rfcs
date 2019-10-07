@@ -119,6 +119,28 @@ finalise(bundle)
 
 *Security requirement: due to the implementation of the signature process, the normalised bundle hash can't contain a `M` or `13` because it could expose a significant part of the private key, weakening the signature. The bundle hash is then repetitively generated with a slight modification until its normalisation doesn't contain a `M`.*
 
+### Sign
+
+Pseudocode:
+
+```
+sign(bundle, seed, inputs)
+| current_index = 0
+|
+| for transaction in bundle
+| | if transaction.value < 0
+| | | if transaction.current_index >= current_index
+| | | | input = inputs[transaction.address]
+| | | | fragments = sign(seed, input.index, input.security, transaction.bundle)
+| | | | for fragment in fragments
+| | | | | bundle[current_index].signature = fragment
+| | | | | current_index = current_index + 1
+| | else
+| | | current_index = current_index + 1
+```
+
+<!-- TODO -->
+
 ### Validate
 
 *Server side operation.*
