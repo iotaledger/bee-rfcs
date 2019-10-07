@@ -60,7 +60,9 @@ impl Bundle {
 
 ## Algorithms
 
-<!-- TODO -->
+In this section, we describe the algorithms needed to build a `Bundle`. The lifecycle of a `BundleBuilder` depends on if it's being used in client side or server side:
+- client side: `finalise` -> [`sign` ->] `validate` -> `build`
+- server side: `addTransaction`/`addTransactionBuilder` -> `validate` -> `build`
 
 ### Bundle hash generation
 
