@@ -64,7 +64,7 @@ In this section, we describe the algorithms needed to build a `Bundle`. The life
 - client side: `finalise` -> [`sign` ->] `validate` -> `build`
 - server side: `addTransaction`/`addTransactionBuilder` -> `validate` -> `build`
 
-### Bundle hash generation
+### Hash
 
 *Client side and server side operation.*
 
@@ -86,7 +86,7 @@ The bundle hash is generated with a sponge by iterating through the bundle, from
 Pseudocode:
 
 ```
-bundleHash(bundle)
+hash(bundle)
 | sponge = Sponge(HASH_FUNCTION)
 |
 | for transaction in bundle
@@ -97,7 +97,7 @@ bundleHash(bundle)
 
 *In the current mainnet, the hash function of the sponge used to generate bundle hashes is Kerl.*
 
-### Bundle finalisation
+### Finalise
 
 *Client side operation.*
 
@@ -106,7 +106,7 @@ Finalising a bundle means computing the bundle hash, verifying that it matches t
 Pseudocode:
 
 ```
-bundleFinalise(bundle)
+finalise(bundle)
 | hash = bundleHash(bundle)
 |
 | while hash.normalise().find('M')
@@ -119,7 +119,7 @@ bundleFinalise(bundle)
 
 *Security requirement: due to the implementation of the signature process, the normalised bundle hash can't contain a `M` or `13` because it could expose a significant part of the private key, weakening the signature. The bundle hash is then repetitively generated with a slight modification until its normalisation doesn't contain a `M`.*
 
-### Bundle validation
+### Validate
 
 *Server side operation.*
 
@@ -140,7 +140,7 @@ For a bundle to be considered valid, the following assertions must be true:
 Pseudocode:
 
 ```
-bundleValidate(bundle):
+validate(bundle):
 | value = 0
 | current_index = 0
 |
