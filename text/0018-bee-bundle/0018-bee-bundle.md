@@ -30,6 +30,36 @@ Useful links:
 
 <!-- TODO -->
 
+## Bundle and BundleBuilder
+
+Transactions are final and bundles are essentially arrays of transactions so  they are also final. Once a bundle is created and validated, it shouldn't be tempered. For this reason we have `Bundle` type and `BundleBuilder` type.
+
+<!-- TODO -->
+
+### Bundle
+
+A bundle can simply be represented as an array of transactions. As bundles are final, they shouldn't be modifiable outside of the scope of the bundle module.
+
+```rust
+struct Bundle {
+    transactions: Vec<Transaction>
+}
+```
+
+```rust
+impl Bundle {    
+    pub fn transactions(&self) -> &Vec<Transaction> {
+        &self.transactions
+    }
+}
+```
+
+<!-- TODO -->
+
+### BundleBuilder
+
+<!-- TODO -->
+
 ## Algorithms
 
 <!-- TODO -->
@@ -144,36 +174,6 @@ bundleValidate(bundle):
 |
 | return BUNDLE_VALID
 ```
-
-## Bundle and BundleBuilder
-
-Transactions are final and bundles are essentially arrays of transactions so  they are also final. Once a bundle is created and validated, it shouldn't be tempered. For this reason we have `Bundle` type and `BundleBuilder` type.
-
-<!-- TODO -->
-
-### Bundle
-
-A bundle can simply be represented as an array of transactions. As bundles are final, they shouldn't be modifiable outside of the scope of the bundle module.
-
-```rust
-struct Bundle {
-    transactions: Vec<Transaction>
-}
-```
-
-```rust
-impl Bundle {    
-    pub fn transactions(&self) -> &Vec<Transaction> {
-        &self.transactions
-    }
-}
-```
-
-<!-- TODO -->
-
-### BundleBuilder
-
-<!-- TODO -->
 
 # Drawbacks
 
