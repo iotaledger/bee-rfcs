@@ -85,7 +85,7 @@ Decoding a `signed byte` into `5` `balanced` `trits` with the help of the `LUT` 
 - `byte >= 0`: use `byte` as an index for the `LUT` e.g. if the `byte = 42` then `LUT[42] = [ 0, -1, -1, -1, 1 ]` and `0 * 3^0 + (-1) * 3^1 + (-1) * 3^2 + (-1) * 3^3 + 1 * 3^4 = 42`;
 - `byte < 0`: use `byte + 243` as an index for the `LUT` e.g. if the `byte = -42` then `LUT[201] = [ 0, 1, 1, 1, -1 ]` and `0 * 3^0 + 1 * 3^1 + 1 * 3^2 + 1 * 3^3 + (-1) * 3^4 = -42`;
 
-Even though this RFC won't cover every little implementation details, it can be noted that the `LUT` could cover all `256` possible values of a `byte` to avoid invalid accesses. To the missing `byte` values we can simply assign some default mapping to `5` `trits`, eg. `[ 0, 0, 0, 0, 0 ]`. This way runtime checks can be avoided as branching on each iteration of a loop can degrade performance in case of false branch prediction.
+Even though this RFC won't cover every little implementation detail, it can be noted that the `LUT` could cover all `256` possible values of a `byte` to avoid invalid accesses. To the missing `byte` values we can simply assign some default mapping to `5` `trits`, eg. `[ 0, 0, 0, 0, 0 ]`. This way runtime checks can be avoided as branching on each iteration of a loop can degrade performance in case of false branch prediction.
 
 Additionally, there could be two variants of the decoding function:
 - checked & slow;
