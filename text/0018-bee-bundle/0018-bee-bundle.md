@@ -10,7 +10,7 @@ This RFC is based on [`transaction-module`]().
 
 The smallest communication unit in the IOTA protocol is the transaction. Everything, including payment settlements and/or plain data, is propagated through the IOTA network in transactions.
 
-A transaction is `2673` trytes and the part available to the user is `2187` trytes. This part holds a signature in case of a payment settlement and plain data otherwise. Since it has a limited size, a user often needs more than one transaction to fulfil his operation, for example signatures with security level `2` or `3` don't fit in a single transaction and user-provided data may exceed the allowance so they need to be fragmented across multiple transactions. Moreover, a transaction may not make sense on its own, for example an input/output transaction alone would change the total amount of the ledger so it has to be paired with another complementary input/output.
+A transaction is `2673` trytes and the part available to the user is `2187` trytes. This part holds a signature in case of a payment settlement and plain data otherwise. Since it has a limited size, a user often needs more than one transaction to fulfil their operation, for example signatures with security level `2` or `3` don't fit in a single transaction and user-provided data may exceed the allowance so they need to be fragmented across multiple transactions. Moreover, a value transaction doesn't make sense on its own because it would change the total amount of the ledger so it has to be paired with other complementary transactions that together will balance the total value to zero.
 
 For these reasons, transactions have to be processed as a whole, in groups called bundles. A bundle is an atomic operation in the sense that either all or none of its transactions are accepted by the network. Even single transactions are propagated through the network within a bundle making it the only confirmable communication unit of the IOTA protocol.
 
@@ -101,7 +101,7 @@ For a bundle to be considered valid, the following assertions must be true:
 - transactions share the same bundle hash;
 - transactions absolute value doesn't exceed total IOTA supply;
 - bundle absolute sum never exceeds total IOTA supply;
-- transactions appear in the announced order;
+- order of transactions in the bundle is the same as announced by `current_index` and `last_index`;
 - value transactions have an address ending in `0` i.e. has been generated with Kerl;
 - bundle inputs and outputs are balanced i.e. the bundle sum equals `0`;
 - announced bundle hash matches the computed bundle hash;
