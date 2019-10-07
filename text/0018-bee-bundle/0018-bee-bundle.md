@@ -121,6 +121,10 @@ finalise(bundle)
 
 ### Sign
 
+*Client side operation.*
+
+Signing a bundle allow you to prove that you are the owner of the address you are trying to move funds from. With no signature or a bad signature, the bundle won't be considered valid and the funds won't be moved. Only the owner of the right seed is able to generate the right signature for this address.
+
 Pseudocode:
 
 ```
@@ -139,11 +143,11 @@ sign(bundle, seed, inputs)
 | | | current_index = current_index + 1
 ```
 
-<!-- TODO -->
+*Since signature size depends on the security level, a single signature can spread out to up to 3 transactions. `inputs` is an object that contain all unused addresses of a seed with a sufficient balance.*
 
 ### Validate
 
-*Server side operation.*
+*Client side and server side operation.*
 
 Validating a bundle means checking the syntactic and semantic integrity of a bundle as a whole and of its constituent transactions. As bundles are atomic transfers, either all or none of the transactions will be accepted by the network. After validation, transactions of a bundle are candidates to be included to the ledger.
 
