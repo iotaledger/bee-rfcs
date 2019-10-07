@@ -49,21 +49,21 @@ The structure of a transaction is defined as follows:
 
 ```rust
 struct Transaction {
-    signature_fragments: String,
-    address: String,
-    value: i64,
-    obsolete_tag: String,
-    timestamp: u64,
-    current_index: usize,
-    last_index: usize,
-    bundle_hash: String,
-    trunk: String,
-    branch: String,
-    tag: String,
-    attachment_timestamp: u64,
-    attachment_timestamp_lower_bound: u64,
-    attachment_timestamp_upper_bound: u64,
-    nonce: String
+    signature_or_message_fragment: SignatureOrMessageFragment,
+    address: Address,
+    value: Value,
+    obsolete_tag: ObsoleteTag,
+    timestamp: Timestamp,
+    current_index: CurrentIndex,
+    last_index: LastIndex,
+    bundle_hash: BundleHash,
+    trunk: Trunk,
+    branch: Branch,
+    tag: Tag,
+    attachment_timestamp: AttachmentTimestamp,
+    attachment_timestamp_lower_bound: AttachmentTimestampLowerbound,
+    attachment_timestamp_upper_bound: AttachmentTimestampUpperbound,
+    nonce: Nonce
 }
 ```
 
@@ -72,19 +72,15 @@ The type implementation is defined as follows:
 ```rust
 impl Transaction {
     
-    pub fn from_bytes(bytes: &Vec<u8>) -> Result<Transaction, TransactionBuilderValidationError> {
-        unimplemented!()
-    }
-
-    pub fn signature_fragments(&self) -> &String {
+    pub fn signature_or_message_fragment(&self) -> &SignatureOrMessageFragment {
         &self.signature_fragments
     }
 
-    pub fn address(&self) -> &String {
+    pub fn address(&self) -> &Address {
         &self.address
     }
 
-    pub fn value(&self) -> &i64 {
+    pub fn value(&self) -> &Value {
         &self.value
     }
 
@@ -93,9 +89,6 @@ impl Transaction {
 }
 ```
 
-The **from_bytes(bytes: &Vec)** is striking here. It serves as constructor and allows to build transactions from received bytes, e.g. from the network socket.
-It's one way to build transactions. Another way to build transactions would be via **TransactionBuilder**.
-
 ### TransactionBuilder
 
 The TransactionBuilder offers a **simple and convenient** way to build transactions. It's defined as follows:
@@ -103,36 +96,67 @@ The TransactionBuilder offers a **simple and convenient** way to build transacti
 ```rust
 #[derive(Default)]
 pub struct TransactionBuilder {
-    pub signature_fragments: String,
-    pub address: String,
-    pub value: i64,
-    pub obsolete_tag: String,
-    pub current_index: usize,
-    pub last_index: usize,
-    pub bundle_hash: String,
-    pub trunk: String,
-    pub branch: String,
-    pub tag: String,
-    pub attachment_timestamp: u64,
-    pub attachment_timestamp_lower_bound: u64,
-    pub attachment_timestamp_upper_bound: u64,
+    signature_or_message_fragment: SignatureOrMessageFragment,
+    address: Address,
+    value: Value,
+    obsolete_tag: ObsoleteTag,
+    current_index: CurrentIndex,
+    last_index: LastIndex,
+    bundle_hash: BundleHash,
+    trunk: Trunk,
+    branch: Branch,
+    tag: Tag,
+    attachment_timestamp: AttachmentTimestamp,
+    attachment_timestamp_lower_bound: AttachmentTimestampLowerbound,
+    attachment_timestamp_upper_bound: AttachmentTimestampUpperbound,
+    nonce: Nonce
 }
 
 impl TransactionBuilder {
 
-    pub fn build(self) -> Result<(Transaction, TranscationMetadata), TransactionBuilderValidationError> {
+    pub fn from_bytes(bytes: &Vec<u8>) -> Result<Transaction, TransactionBuilderValidationError> {
+        unimplemented!()
+    }
 
-        match TransactionBuilderValidator::validate(&self) {
-            Ok(()) => { ; }
-            Err(e) => { return Err(e) }
-        }
+    pub fn build(self) -> (Transaction, TranscationMetadata) {
 
         Ok(Pow::compute(&self))
 
     }
+    
+    pub fn set_signature_or_message_fragment(&mut self, signature_or_message_fragment: SignatureOrMessageFragment) {
+        self.signature_or_message_fragment = signature_or_message_fragment;
+    }
+    
+    pub fn set_address(&mut self, address: Address) {
+        self.address = address;
+    }
+    
+    pub fn set_value(&mut self, value: Value) {
+        self.value = value;
+    }
+    
+    ...
+    
+    pub fn signature_or_message_fragment(&self) {
+        self.signature_or_message_fragment
+    }
+    
+    pub fn address(&self) {
+        self.signature_or_message_fragment
+    }
+    
+    pub fn value(&self) {
+        self.value
+    }
+    
+    ...
 
 }
 ```
+
+The **from_bytes(bytes: &Vec)** is striking here. It serves as constructor and allows to build transactions from received bytes, e.g. from the network socket.
+It's one way to build transactions. Transactions can be built also from ground up via *build()* from **TransactionBuilder**.
 
 In comparison to the Transaction model, the TransactionBuilder can be manipulated as desired. It consists of public accessible fields.
 Once *build()* is called, the set fields will be validated. Validation happens via the *TransactionBuilderValidator*. It checks if fields don't contain any invalid characters. Besides that, if not the full size of fields (e.g. signature_or_message_fragment) is used, it will pad the empty space up.
@@ -146,7 +170,7 @@ Each transaction contains a mutable metadata which is defined as following:
 
 ```rust
 pub struct TransactionMetadata {
-    pub transaction_hash: String,
+    pub transaction_hash: TransactinHash,
     ...
 }
 ```
