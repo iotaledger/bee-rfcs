@@ -253,11 +253,11 @@ validate(bundle):
 
 # Rationale and alternatives
 
-<!-- TODO -->
+- A `Bundle` is a fundamental component of the IOTA protocol and must be implemented;
+- There is no more intuitive and simple way to implement a `Bundle` than the one proposed;
+- Since bundles are final, `BundleBuilder` is mandatory;
 
 # Unresolved questions
-
-<!-- TODO -->
 
 - Should this RFC expands a bit more on the M-Bug ? Or give a link ?
 - Should `Bundle` provide a `.transactions` or a `.at` method ?
