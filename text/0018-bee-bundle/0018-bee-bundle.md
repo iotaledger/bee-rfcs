@@ -189,7 +189,7 @@ sign(bundle, seed, inputs)
 
 *Client side operation.*
 
-Proof of Work (PoW) allows your transactions to be accepted by the network. On the IOTA network, PoW is only a rate control mechanism. Doing PoW on a bundle means doing PoW on each of its transactions and set trunks and branch accordingly. After PoW, a bundle is ready to be sent to the network.
+Proof of Work (PoW) allows your transactions to be accepted by the network. On the IOTA network, PoW is only a rate control mechanism. Doing PoW on a bundle means doing PoW on each of its transactions and setting trunks and branch accordingly. After PoW, a bundle is ready to be sent to the network.
 
 Pseudocode:
 
