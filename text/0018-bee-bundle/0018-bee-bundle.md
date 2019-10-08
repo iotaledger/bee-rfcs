@@ -62,7 +62,7 @@ The `BundleBuilder` offers a simple and convenient way to build bundles:
 
 ```rust
 pub struct BundleBuilder {
-    transactions: Vec<Transaction>
+    transactions: Vec<TransactionBuilder>
 }
 ```
 
