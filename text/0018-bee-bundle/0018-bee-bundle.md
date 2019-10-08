@@ -189,7 +189,23 @@ sign(bundle, seed, inputs)
 
 *Client side operation.*
 
-<!-- TODO -->
+Pseudocode:
+
+```
+pow(bundle, trunk, branch, mwm)
+| for transaction in rev(bundle)
+| | transaction.trunk = trunk
+| | transaction.branch = branch
+| | if transaction.current_index == transaction.last_index
+| | | branch = trunk
+| | transaction.attachment_timestamp = timestamp()
+| | transaction.attachment_timestamp_lower = 0
+| | transaction.attachment_timestamp_upper = 3812798742493
+| | if transaction.tag.empty()
+| | | transaction.tag = transaction.obsolete_tag
+| | trunk = transaction.pow(mwm)
+
+```
 
 ### Validate
 
