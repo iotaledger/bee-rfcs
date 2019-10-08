@@ -20,30 +20,30 @@ This feature is responsible for the creation and interpretation of transactions.
 
 A transaction can be understood as a **tuple** of 15 elements. Essentially, it's an **ordered list (sequence)** of following elements/fields: 
 
-| Name  | Description | Size |
+| Name  | Description | Size in trytes |
 | ------------- | ------------- | ------------- |
-| **signature_or_message_fragment** | contains the signature of the transfer or user-defined message data | 2187 trytes |
-| **address**  | receiver (output) if value > 0, or sender (input) if value < 0  | 81 trytes |
-| **value**  | the transferred amount in IOTA  | 27 trytes |
-| **obsolete_tag**  | another arbitrary user-defined tag  | 27 trytes |
-| **timestamp**  | the time when the transaction was issued  | 9 trytes |
-| **current_index**  | the position of the transaction in its bundle  | 9 trytes |
-| **last_index**  | the index of the last transaction in the bundle  | 9 trytes |
-| **bundle**  | the hash of the bundle essence | 81 trytes |
-| **trunk**  | the hash of the first transaction referenced/approved | 81 trytes |
-| **branch**  | the hash of the second transaction referenced/approved | 81 trytes |
-| **tag**  | arbitrary user-defined value | 27 trytes |
-| **attachment_timestamp**  |  the timestamp for when Proof-of-Work is completed | 9 trytes |
-| **attachment_timestamp_lowerbound**  |  *not specified* | 9 trytes |
-| **attachment_timestamp_upperbound**  |  *not specified* | 9 trytes |
-| **nonce**  | is the Proof-of-Work nonce of the transaction | 27 trytes |
+| `signature_or_message_fragment` | contains the signature of the transfer or user-defined message data | 2187 trytes |
+| `address`  | receiver (output) if value > 0, or sender (input) if value < 0  | 81 trytes |
+| `value`  | the transferred amount in IOTA  | 27 trytes |
+| `obsolete_tag`  | another arbitrary user-defined tag  | 27 trytes |
+| `timestamp`  | the time when the transaction was issued  | 9 trytes |
+| `current_index` | the position of the transaction in its bundle  | 9 trytes |
+| `last_index`  | the index of the last transaction in the bundle  | 9 trytes |
+| `bundle`  | the hash of the bundle essence | 81 trytes |
+| `trunk`  | the hash of the first transaction referenced/approved | 81 trytes |
+| `branch`  | the hash of the second transaction referenced/approved | 81 trytes |
+| `tag`  | arbitrary user-defined value | 27 trytes |
+| `attachment_timestamp`  |  the timestamp for when Proof-of-Work is completed | 9 trytes |
+| `attachment_timestamp_lowerbound`  |  *not specified* | 9 trytes |
+| `attachment_timestamp_upperbound`  |  *not specified* | 9 trytes |
+| `nonce`  | is the Proof-of-Work nonce of the transaction | 27 trytes |
 
 As reflected in the table, each field is of constant length. Totally, one transaction consists of **2673 trytes** (**8019 trits**).
 
 Transactions are classified as unique. Each transaction is identified by its hash, the transaction hash, which includes all fields of a transaction.
 Note, the transaction hash is not part of the transaction.
 
-Once a transaction is built, it can be identified by its transaction hash. Manipulating a transaction afterwards would result in the hash no longer matching the transaction, which is more like creating a new transaction.
+Once a transaction is built, it can be identified by its transaction hash. Manipulating a transaction afterwards would result in the hash no longer matching the transaction, which essentially is like creating a new transaction.
 Therefore, transactions should **not be modifiable** after construction. Transaction fields should be only accessible by getter functions.
 
 ## Exposed Interface
@@ -125,7 +125,7 @@ impl TransactionBuilder {
 
     pub fn build(self) -> (Transaction, TranscationMetadata) {
 
-        Ok(Pow::compute(&self))
+        Pow::compute(&self)
 
     }
     
@@ -163,11 +163,10 @@ impl TransactionBuilder {
 The **from_bytes(bytes: &Vec)** is striking here. It serves as constructor and allows to build transactions from received bytes, e.g. from the network socket.
 It's one way to build transactions. Transactions can be built also from ground up via *build()* from **TransactionBuilder**.
 
-In comparison to the Transaction model, the TransactionBuilder can be manipulated as desired. It consists of public accessible fields.
-Once *build()* is called, the set fields will be validated. Validation happens via the *TransactionBuilderValidator*. It checks if fields don't contain any invalid characters. Besides that, if not the full size of fields (e.g. signature_or_message_fragment) is used, it will pad the empty space up.
+In comparison to Transaction, TransactionBuilder can be manipulated as desired with the help of setter methods.
 
-Once the validation of the transaction fields was successful, Proof-of-Work (PoW) will be next.
-**PoW will return a tuple (Transaction, TranscationMetadata).**
+In build() Proof-of-Work (PoW) will be called.
+**PoW will return the tuple (Transaction, TranscationMetadata).**
 
 ### TransactionMetadata
 
@@ -285,11 +284,9 @@ Without any bee-model crate, nodes can not exchange transactions. Therefore this
 
 # Rationale and alternatives
 
-- The distinction between Transaction and Transaction Builder as well as Bundle and Bundle Builder makes the code cleaner. Properties are clearly assigned to specific data objects and not mixed up.
+- The distinction between Transaction and Transaction Builder makes the code cleaner. Properties are clearly assigned to specific data objects and not mixed up.
 
-- The proposed crate interface is relatively intuitive. Completely different alternatives did not naturally come to mind.
-
-- The validation logic could be done in setter functions instead of the separate validator class.
+- The proposed crate interface seems relatively intuitive. Completely different alternatives did not naturally come to mind.
 
 - This kind of interface is relatively minimal and easily extended upon in a future iteration.
 
@@ -299,8 +296,6 @@ Without any bee-model crate, nodes can not exchange transactions. Therefore this
 
 - Where should the actual Transaction struct be initialized/returned? Current ideas are to put it in the build() of the TransactionBuilder or as it currently is in the compute() of Pow.
 
-- Where should Transaction fields get validated? One-time validation once build() is called by the separate *TransactionBuilderValidator* as it currently is, or use **setters** in the TransactionBuilder and validate in each setter separately?
+- Should we introduce a fluent API to the TransactionBuilder?
 
-- Should we use setters for the TransactionBuilder?
-
-- Introducing a fluent API to the TransactionBuilder?
+- Should we use Option<T> for the fields in TransactionBuilder? 
