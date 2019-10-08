@@ -18,7 +18,7 @@ This feature is responsible for the creation and interpretation of transactions.
 
 ## General
 
-A transaction can be understood as a tuple of 15 elements, also called fields:
+A transaction can be understood as a **tuple** of 15 elements. Essentially, it's an **ordered list (sequence)** of following elements/fields: 
 
 | Name  | Description | Size |
 | ------------- | ------------- | ------------- |
@@ -38,8 +38,13 @@ A transaction can be understood as a tuple of 15 elements, also called fields:
 | **attachment_timestamp_upperbound**  |  *not specified* | 9 trytes |
 | **nonce**  | is the Proof-of-Work nonce of the transaction | 27 trytes |
 
-As reflected in the table, each field is of constant length. Totally, one transaction consists of **2673 trytes**.
-Transactions should not be **modifiable** after construction. Transaction fields therefore only should be accessible by getter functions.
+As reflected in the table, each field is of constant length. Totally, one transaction consists of **2673 trytes** (**8019 trits**).
+
+Transactions are classified as unique. Each transaction is identified by its hash, the transaction hash, which includes all fields of a transaction.
+Note, the transaction hash is not part of the transaction.
+
+Once a transaction is built, it can be identified by its transaction hash. Manipulating a transaction afterwards would result in the hash no longer matching the transaction, which is more like creating a new transaction.
+Therefore, transactions should **not be modifiable** after construction. Transaction fields should be only accessible by getter functions.
 
 ## Exposed Interface
 
@@ -170,7 +175,7 @@ Each transaction contains a mutable metadata which is defined as following:
 
 ```rust
 pub struct TransactionMetadata {
-    transaction_hash: TransactinHash,
+    transaction_hash: TransactionHash,
     ...
 }
 
