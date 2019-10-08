@@ -1,4 +1,4 @@
-+ Feature name: `transaction-module`
++ Feature name: `bee-transaction`
 + Start date: 2019-09-06
 + RFC PR: [iotaledger/bee-rfcs#3](https://github.com/iotaledger/bee-rfcs/pull/3)
 + Bee issue: [iotaledger/bee#43](https://github.com/iotaledger/bee/issues/43)
@@ -44,7 +44,7 @@ Transactions are classified as unique. Each transaction is identified by its has
 Note, the transaction hash is not part of the transaction.
 
 Once a transaction is built, it can be identified by its transaction hash. Manipulating a transaction afterwards would result in the hash no longer matching the transaction, which essentially is like creating a new transaction.
-Therefore, transactions should **not be modifiable** after construction. Transaction fields should be only accessible by getter functions.
+Therefore, transactions should **not be modifiable** after construction. Transaction fields should only be accessible by getter functions.
 
 ## Exposed Interface
 
@@ -71,6 +71,8 @@ struct Transaction {
     nonce: Nonce
 }
 ```
+
+As reflected above, **each field gets its own type**. This makes the code more readable and clean. Furthermore it makes sure allocations are valid. The validation happens in each type separately.
 
 The type implementation is defined as follows:
 
@@ -159,14 +161,13 @@ impl TransactionBuilder {
 
 }
 ```
-
-The **from_bytes(bytes: &Vec)** is striking here. It serves as constructor and allows to build transactions from received bytes, e.g. from the network socket.
-It's one way to build transactions. Transactions can be built also from ground up via *build()* from **TransactionBuilder**.
-
 In comparison to Transaction, TransactionBuilder can be manipulated as desired with the help of setter methods.
 
-In build() Proof-of-Work (PoW) will be called.
-**PoW will return the tuple (Transaction, TranscationMetadata).**
+The **from_bytes(bytes: &Vec)** is striking here. It serves as constructor and allows to build transactions from received bytes, e.g. from the network socket.
+It's one way to build transactions. Another way would be from ground up via setters and use **build()** from **TransactionBuilder**.
+
+Also **Pow::compute(&self)** in **build()** striking here. This function calls the needed Proof-of-Work (PoW) for the transaction.
+As reflected in the code, the **PoW will return the tuple (Transaction, TranscationMetadata).**
 
 ### TransactionMetadata
 
@@ -284,7 +285,7 @@ Without any bee-model crate, nodes can not exchange transactions. Therefore this
 
 # Rationale and alternatives
 
-- The distinction between Transaction and Transaction Builder makes the code cleaner. Properties are clearly assigned to specific data objects and not mixed up.
+- The distinction between Transaction and TransactionBuilder makes the code cleaner. Properties are clearly assigned to specific data objects and not mixed up.
 
 - The proposed crate interface seems relatively intuitive. Completely different alternatives did not naturally come to mind.
 
@@ -296,6 +297,8 @@ Without any bee-model crate, nodes can not exchange transactions. Therefore this
 
 - Where should the actual Transaction struct be initialized/returned? Current ideas are to put it in the build() of the TransactionBuilder or as it currently is in the compute() of Pow.
 
-- Should we introduce a fluent API to the TransactionBuilder?
+- Should we introduce a fluent API to the TransactionBuilder for more easy manipulation?
 
 - Should we use Option<T> for the fields in TransactionBuilder? 
+
+- Should we use a intermediary building type like **TransactionBuilder -> UnpowedTransaction -> Transaction**
