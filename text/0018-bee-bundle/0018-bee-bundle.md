@@ -58,7 +58,43 @@ impl Bundle {
 
 ### BundleBuilder
 
-<!-- TODO -->
+The `BundleBuilder` offers a simple and convenient way to build bundles:
+
+```rust
+pub struct BundleBuilder {
+    transactions: Vec<Transaction>
+}
+```
+
+```rust
+impl BundleBuilder {    
+    pub fn hash(&self) {
+      unimplemented!()
+    }
+
+    pub fn finalise(&self) {
+      unimplemented!()
+    }
+
+    pub fn sign(&self) {
+      unimplemented!()
+    }
+
+    pub fn pow(&self) {
+      unimplemented!()
+    }
+
+    pub fn validate(&self) {
+      unimplemented!()
+    }
+
+    pub fn build(&self) {
+      unimplemented!()
+    }
+}
+```
+
+*We do not list parameters and/or return values as they are implementation details.*
 
 ## Algorithms
 
