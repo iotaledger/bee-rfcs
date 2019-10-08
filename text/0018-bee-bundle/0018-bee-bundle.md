@@ -36,13 +36,17 @@ Transactions are final and bundles, essentially being arrays of transactions, ar
 
 ### Bundle
 
-A bundle can simply be represented as an array of transactions. As bundles are final, they shouldn't be modifiable outside of the scope of the bundle module.
+As bundles are final, they shouldn't be modifiable outside of the scope of the bundle module.
+
+A bundle can simply be represented as an array of transactions:
 
 ```rust
 struct Bundle {
     transactions: Vec<Transaction>
 }
 ```
+
+And its implementation should only allow to retrieve transactions:
 
 ```rust
 impl Bundle {    
@@ -51,8 +55,6 @@ impl Bundle {
     }
 }
 ```
-
-<!-- TODO -->
 
 ### BundleBuilder
 
@@ -139,7 +141,7 @@ sign(bundle, seed, inputs)
 | | | | input = inputs[transaction.address]
 | | | | fragments = sign(seed, input.index, input.security, transaction.bundle)
 | | | | for fragment in fragments
-| | | | | bundle[current_index].signature = fragment
+| | | | | bundle.at(current_index).signature = fragment
 | | | | | current_index = current_index + 1
 | | else
 | | | current_index = current_index + 1
@@ -222,3 +224,4 @@ validate(bundle):
 <!-- TODO -->
 
 - Should this RFC expands a bit more on the M-Bug ? Or give a link ?
+- Should `Bundle` provide a `.transactions` or a `.at` method ?
