@@ -8,11 +8,20 @@
 This RFC is based on [`transaction-module`]().
 <!-- TODO FIx link to RFC#3 -->
 
-The smallest communication unit in the IOTA protocol is the transaction. Everything, including payment settlements and/or plain data, is propagated through the IOTA network in transactions.
+The smallest communication unit in the IOTA protocol is the transaction. Everything, including payment settlements
+and/or plain data, is propagated through the IOTA network in transactions.
 
-A transaction is `2673` trytes and the part available to the user is `2187` trytes. This part holds a signature in case of a payment settlement and plain data otherwise. Since it has a limited size, a user often needs more than one transaction to fulfil their operation, for example signatures with security level `2` or `3` don't fit in a single transaction and user-provided data may exceed the allowance so they need to be fragmented across multiple transactions. Moreover, a value transaction doesn't make sense on its own because it would change the total amount of the ledger so it has to be paired with other complementary transactions that together will balance the total value to zero.
+A transaction is `2673` trytes and the part available to the user is `2187` trytes. This part holds a signature in case
+of a payment settlement and plain data otherwise. Since it has a limited size, a user often needs more than one
+transaction to fulfil their operation, for example signatures with security level `2` or `3` don't fit in a single
+transaction and user-provided data may exceed the allowance so they need to be fragmented across multiple transactions.
+Moreover, a value transaction doesn't make sense on its own because it would change the total amount of the ledger so
+it has to be paired with other complementary transactions that together will balance the total value to zero.
 
-For these reasons, transactions have to be processed as a whole, in groups called bundles. A bundle is an atomic operation in the sense that either all or none of its transactions are accepted by the network. Even single transactions are propagated through the network within a bundle making it the only confirmable communication unit of the IOTA protocol.
+For these reasons, transactions have to be processed as a whole, in groups called bundles. A bundle is an atomic
+operation in the sense that either all or none of its transactions are accepted by the network. Even single
+transactions are propagated through the network within a bundle making it the only confirmable communication unit of
+the IOTA protocol.
 
 This RFC proposes ways to create and manipulate a bundle and describe the associated algorithms.
 
@@ -32,7 +41,10 @@ Useful links:
 
 ## Bundle and BundleBuilder
 
-Transactions are final and bundles, essentially being arrays of transactions, are also final. Once a bundle is created and validated, it shouldn't be tempered. For this reason we have a `Bundle` type and a `BundleBuilder` type. An instantiated `Bundle` object represents a syntactically and semantically valid IOTA bundle and a `BundleBuilder` is the only gateway to a `Bundle` object.
+Transactions are final and bundles, essentially being arrays of transactions, are also final. Once a bundle is created
+and validated, it shouldn't be tempered. For this reason we have a `Bundle` type and a `BundleBuilder` type.
+An instantiated `Bundle` object represents a syntactically and semantically valid IOTA bundle and a `BundleBuilder` is
+the only gateway to a `Bundle` object.
 
 ### Bundle
 
@@ -98,19 +110,23 @@ impl BundleBuilder {
 
 ## Algorithms
 
-In this section, we describe the algorithms needed to build a `Bundle`. The lifecycle of a `BundleBuilder` depends on if it's being used in client side or server side:
+In this section, we describe the algorithms needed to build a `Bundle`. The lifecycle of a `BundleBuilder` depends on
+if it's being used in client side or server side:
 - client side: `finalise` -> [`sign` ->] [`pow` ->] `validate` -> `build`
 - server side: `add_transaction`/`add_transaction_builder` -> `validate` -> `build`
 
-*`sign` is optional because data transactions don't have to be signed. `pow` is optional because one can use remote pow instead.*
+*`sign` is optional because data transactions don't have to be signed. `pow` is optional because one can use remote
+pow instead.*
 
 ### Hash
 
 *Client side and server side operation.*
 
-A bundle hash ties different transactions together. By having this common hash in their `bundle` field, it makes it clear that these transactions should be processed as a whole.
+A bundle hash ties different transactions together. By having this common hash in their `bundle` field, it makes it
+clear that these transactions should be processed as a whole.
 
-The hash of a bundle is derived from the bundle essence of each of its transactions. The bundle essence of a transaction is composed of the following fields.
+The hash of a bundle is derived from the bundle essence of each of its transactions. The bundle essence of a
+transaction is composed of the following fields.
 
 | Name          | Size      |
 | ------------- | --------- |
@@ -121,7 +137,8 @@ The hash of a bundle is derived from the bundle essence of each of its transacti
 | current_index | 27 trits  |
 | last_index    | 27 trits  |
 
-The bundle hash is generated with a sponge by iterating through the bundle, from `0` to `last_index`, absorbing the bundle essence of each transaction and eventually squeezing the bundle hash from the sponge.
+The bundle hash is generated with a sponge by iterating through the bundle, from `0` to `last_index`, absorbing the
+bundle essence of each transaction and eventually squeezing the bundle hash from the sponge.
 
 Pseudocode:
 
@@ -141,7 +158,9 @@ hash(bundle)
 
 *Client side operation.*
 
-Finalising a bundle means computing the bundle hash, verifying that it matches the security requirement and setting it to all the transactions of the bundle. After finalisation, transactions of a bundle are ready to be safely attached to the tangle.
+Finalising a bundle means computing the bundle hash, verifying that it matches the security requirement and setting it
+to all the transactions of the bundle. After finalisation, transactions of a bundle are ready to be safely attached to
+the tangle.
 
 Pseudocode:
 
@@ -157,13 +176,17 @@ finalise(bundle)
 | | transaction.setBundleHash(hash)
 ```
 
-*Security requirement: due to the implementation of the signature process, the normalised bundle hash can't contain a `M` or `13` because it could expose a significant part of the private key, weakening the signature. The bundle hash is then repetitively generated with a slight modification until its normalisation doesn't contain a `M`.*
+*Security requirement: due to the implementation of the signature process, the normalised bundle hash can't contain a
+`M` or `13` because it could expose a significant part of the private key, weakening the signature. The bundle hash is
+then repetitively generated with a slight modification until its normalisation doesn't contain a `M`.*
 
 ### Sign
 
 *Client side operation.*
 
-Signing a bundle allow you to prove that you are the owner of the address you are trying to move funds from. With no signature or a bad signature, the bundle won't be considered valid and the funds won't be moved. Only the owner of the right seed is able to generate the right signature for this address.
+Signing a bundle allow you to prove that you are the owner of the address you are trying to move funds from. With no
+signature or a bad signature, the bundle won't be considered valid and the funds won't be moved. Only the owner of the
+right seed is able to generate the right signature for this address.
 
 Pseudocode:
 
@@ -183,13 +206,16 @@ sign(bundle, seed, inputs)
 | | | current_index = current_index + 1
 ```
 
-*Since signature size depends on the security level, a single signature can spread out to up to 3 transactions. `inputs` is an object that contain all unused addresses of a seed with a sufficient balance.*
+*Since signature size depends on the security level, a single signature can spread out to up to 3 transactions.
+`inputs` is an object that contain all unused addresses of a seed with a sufficient balance.*
 
 ### Pow
 
 *Client side operation.*
 
-Proof of Work (PoW) allows your transactions to be accepted by the network. On the IOTA network, PoW is only a rate control mechanism. Doing PoW on a bundle means doing PoW on each of its transactions and setting trunks and branch accordingly. After PoW, a bundle is ready to be sent to the network.
+Proof of Work (PoW) allows your transactions to be accepted by the network. On the IOTA network, PoW is only a rate
+control mechanism. Doing PoW on a bundle means doing PoW on each of its transactions and setting trunks and branch
+accordingly. After PoW, a bundle is ready to be sent to the network.
 
 Pseudocode:
 
@@ -213,7 +239,8 @@ pow(bundle, trunk, branch, mwm)
 
 *Client side and server side operation.*
 
-Validating a bundle means checking the syntactic and semantic integrity of a bundle as a whole and of its constituent transactions. As bundles are atomic transfers, either all or none of the transactions will be accepted by the network. After validation, transactions of a bundle are candidates to be included to the ledger.
+Validating a bundle means checking the syntactic and semantic integrity of a bundle as a whole and of its constituent transactions. As bundles are atomic transfers, either all or none of the transactions will be accepted by the network.
+After validation, transactions of a bundle are candidates to be included to the ledger.
 
 For a bundle to be considered valid, the following assertions must be true:
 
