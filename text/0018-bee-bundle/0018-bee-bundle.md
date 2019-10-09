@@ -17,10 +17,10 @@ For these reasons, transactions have to be processed as a whole, in groups calle
 This RFC proposes ways to create and manipulate a bundle and describe the associated algorithms.
 
 Useful links:
-- [What is a bundle?
-](https://docs.iota.org/docs/getting-started/0.1/introduction/what-is-a-bundle)
-- [Bundles and transactions
-](https://docs.iota.org/docs/dev-essentials/0.1/concepts/bundles-and-transactions)
+- [Trinary](https://docs.iota.org/docs/dev-essentials/0.1/concepts/trinary)
+- [What is a bundle?](https://docs.iota.org/docs/getting-started/0.1/introduction/what-is-a-bundle)
+- [Bundles and transactions](https://docs.iota.org/docs/dev-essentials/0.1/concepts/bundles-and-transactions)
+- [Structure of a bundle](https://docs.iota.org/docs/dev-essentials/0.1/references/structure-of-a-bundle)
 
 # Motivation
 
