@@ -5,11 +5,12 @@
 
 # Summary
 
-IOTA is a distributed ledger that was designed for payment settlement and data transfer between machines and devices in the Internet of Things (IoT) ecosystem.
-The messages that are sent through the network are called "transactions".
-Payment settlements or data transfers can be done with the help of these transactions. 
-
-This feature is responsible for the creation and interpretation of transactions.
+*Transactions* are the fundamental unit of communication in the IOTA network.
+This RFC proposes a `Transaction` type to represent the transaction format used
+by the IOTA Reference Implementation as of version [`iri
+1.8.1`](https://github.com/iotaledger/iri/releases/tag/v1.8.1-RELEASE), commit
+`e1776fbad5d90df86a26402f9025e4b0b2ef7d3e`. Messages sent through the IOTA
+network are called *transactions*.
 
 # Motivation
 [...]
@@ -18,7 +19,8 @@ This feature is responsible for the creation and interpretation of transactions.
 
 ## General
 
-A transaction can be understood as a **tuple** of 15 elements. Essentially, it's an **ordered list (sequence)** of following elements/fields: 
+A transaction can be understood as a **tuple** of 15 elements. Essentially,
+it's an **ordered list (sequence)** of following elements/fields: 
 
 | Name  | Description | Size in trytes |
 | ------------- | ------------- | ------------- |
