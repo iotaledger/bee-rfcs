@@ -28,8 +28,8 @@ understood how a common interface between different versions transaction
 formats should be implemented, or if the network will support several
 transaction types simultaneously.
 
-We thus do not consider generalizations over or interfaces of transactions, but
-only propose a basic `Transaction` type. All mentions of *transactions* in
+We thus do not consider generalizations over or interfaces for transactions,
+but only propose a basic `Transaction` type. All mentions of *transactions* in
 general or the `Transaction` type in particular will be implicitly in reference
 to that format used by `iri v1.8.1`.
 
@@ -37,34 +37,35 @@ to that format used by `iri v1.8.1`.
 
 # Detailed design
 
-A transaction can be understood as a **tuple** of 15 elements. Essentially,
-it's an **ordered list (sequence)** of following elements/fields: 
+A transaction is a sequence of 15 fields of constant length. A transaction has
+a total length of 8019 trits. The fields' name, description, and size (in
+trits) is summarized in the table below, in their order of appearance in
+a transaction.
 
-| Name  | Description | Size in trytes |
-| ------------- | ------------- | ------------- |
-| `signature_or_message_fragment` | contains the signature of the transfer or user-defined message data | 2187 trytes |
-| `address`  | receiver (output) if value > 0, or sender (input) if value < 0  | 81 trytes |
-| `value`  | the transferred amount in IOTA  | 27 trytes |
-| `obsolete_tag`  | another arbitrary user-defined tag  | 27 trytes |
-| `timestamp`  | the time when the transaction was issued  | 9 trytes |
-| `current_index` | the position of the transaction in its bundle  | 9 trytes |
-| `last_index`  | the index of the last transaction in the bundle  | 9 trytes |
-| `bundle`  | the hash of the bundle essence | 81 trytes |
-| `trunk`  | the hash of the first transaction referenced/approved | 81 trytes |
-| `branch`  | the hash of the second transaction referenced/approved | 81 trytes |
-| `tag`  | arbitrary user-defined value | 27 trytes |
-| `attachment_timestamp`  |  the timestamp for when Proof-of-Work is completed | 9 trytes |
-| `attachment_timestamp_lowerbound`  |  *not specified* | 9 trytes |
-| `attachment_timestamp_upperbound`  |  *not specified* | 9 trytes |
-| `nonce`  | is the Proof-of-Work nonce of the transaction | 27 trytes |
+| Name                              | Description                                                         | Size (in trits) |
+| --                                | --                                                                  | --              |
+| `signature_or_message_fragment`   | contains the signature of the transfer or user-defined message data | 6561            |
+| `address`                         | receiver (output) if value > 0, or sender (input) if value < 0      | 243             |
+| `value`                           | the transferred amount in IOTA                                      | 81              |
+| `obsolete_tag`                    | another arbitrary user-defined tag                                  | 81              |
+| `timestamp`                       | the time when the transaction was issued                            | 27              |
+| `current_index`                   | the position of the transaction in its bundle                       | 27              |
+| `last_index`                      | the index of the last transaction in the bundle                     | 27              |
+| `bundle`                          | the hash of the bundle essence                                      | 243             |
+| `trunk`                           | the hash of the first transaction referenced/approved               | 243             |
+| `branch`                          | the hash of the second transaction referenced/approved              | 243             |
+| `tag`                             | arbitrary user-defined value                                        | 81              |
+| `attachment_timestamp`            | the timestamp for when Proof-of-Work is completed                   | 27              |
+| `attachment_timestamp_lowerbound` | *not specified*                                                     | 27              |
+| `attachment_timestamp_upperbound` | *not specified*                                                     | 27              |
+| `nonce`                           | the Proof-of-Work nonce of the transaction                          | 81              |
 
-As reflected in the table, each field is of constant length. Totally, one transaction consists of **2673 trytes** (**8019 trits**).
+Each transaction is uniquely identified by its *transaction hash*, which is
+calculated based on all fields of the transaction. Note that the transaction
+hash is not part of the transaction.
 
-Transactions are classified as unique. Each transaction is identified by its hash, the transaction hash, which includes all fields of a transaction.
-Note, the transaction hash is not part of the transaction.
-
-Once a transaction is built, it can be identified by its transaction hash. Manipulating a transaction afterwards would result in the hash no longer matching the transaction, which essentially is like creating a new transaction.
-Therefore, transactions should **not be modifiable** after construction. Transaction fields should only be accessible by getter functions.
+Because modifying the fields of a transaction would invalidate its hash, the
+transaction should be immutable after creation.
 
 ## Exposed Interface
 
