@@ -7,17 +7,35 @@
 
 *Transactions* are the fundamental unit of communication in the IOTA network.
 This RFC proposes a `Transaction` type to represent the transaction format used
-by the IOTA Reference Implementation as of version [`iri
-1.8.1`](https://github.com/iotaledger/iri/releases/tag/v1.8.1-RELEASE), commit
-`e1776fbad5d90df86a26402f9025e4b0b2ef7d3e`. Messages sent through the IOTA
-network are called *transactions*.
+by the IOTA Reference Implementation as of version [`iri v1.8.1`], commit
+`e1776fbad5d90df86a26402f9025e4b0b2ef7d3e`.
 
 # Motivation
-[...]
+
+IOTA is a transaction settlement and data transfer layer for IoT (the Internet
+of Things). Data is shared *transactions* in transactions and stored in
+a distributed ledger called the Tangle. They encode data such as sender and
+receiver addresses, reference nodes in the Tangle, timestamps, and other
+information required to verify and process each transaction. With the
+transaction being the fundamental unit of communication within the IOTA
+network, we need to represent it in memory.
+
+At the time of this RFC, the transaction format used by the IOTA network is
+defined by [release v1.8.1 of the IOTA Reference Implementation, IRI](`iri
+v1.8.1`), commit `e1776fbad5d90df86a26402f9025e4b0b2ef7d3e`. The transaction
+format might change in the future, but for the time being it is not yet
+understood how a common interface between different versions transaction
+formats should be implemented, or if the network will support several
+transaction types simultaneously.
+
+We thus do not consider generalizations over or interfaces of transactions, but
+only propose a basic `Transaction` type. All mentions of *transactions* in
+general or the `Transaction` type in particular will be implicitly in reference
+to that format used by `iri v1.8.1`.
+
+[`iri v1.8.1`]: https://github.com/iotaledger/iri/releases/tag/v1.8.1-RELEASE
 
 # Detailed design
-
-## General
 
 A transaction can be understood as a **tuple** of 15 elements. Essentially,
 it's an **ordered list (sequence)** of following elements/fields: 
