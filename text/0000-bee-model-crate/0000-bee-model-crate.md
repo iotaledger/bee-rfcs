@@ -42,23 +42,25 @@ a total length of 8019 trits. The fields' name, description, and size (in
 trits) is summarized in the table below, in their order of appearance in
 a transaction.
 
-| Name                              | Description                                                         | Size (in trits) |
-| --                                | --                                                                  | --              |
-| `signature_or_message_fragment`   | contains the signature of the transfer or user-defined message data | 6561            |
-| `address`                         | receiver (output) if value > 0, or sender (input) if value < 0      | 243             |
-| `value`                           | the transferred amount in IOTA                                      | 81              |
-| `obsolete_tag`                    | another arbitrary user-defined tag                                  | 81              |
-| `timestamp`                       | the time when the transaction was issued                            | 27              |
-| `current_index`                   | the position of the transaction in its bundle                       | 27              |
-| `last_index`                      | the index of the last transaction in the bundle                     | 27              |
-| `bundle`                          | the hash of the bundle essence                                      | 243             |
-| `trunk`                           | the hash of the first transaction referenced/approved               | 243             |
-| `branch`                          | the hash of the second transaction referenced/approved              | 243             |
-| `tag`                             | arbitrary user-defined value                                        | 81              |
-| `attachment_timestamp`            | the timestamp for when Proof-of-Work is completed                   | 27              |
-| `attachment_timestamp_lowerbound` | *not specified*                                                     | 27              |
-| `attachment_timestamp_upperbound` | *not specified*                                                     | 27              |
-| `nonce`                           | the Proof-of-Work nonce of the transaction                          | 81              |
+| Name                              | Description                                            | Size (in trits) |
+| ---                               | ---                                                    | ---             |
+| `signature_or_message_fragment`   | contains the signature of the transfer                 |                 |
+|                                   | or user-defined message data                           | 6561            |
+| `address`                         | receiver (output) if value > 0,
+|                                   | or sender (input) if value < 0                         | 243             |
+| `value`                           | the transferred amount in IOTA                         | 81              |
+| `obsolete_tag`                    | another arbitrary user-defined tag                     | 81              |
+| `timestamp`                       | the time when the transaction was issued               | 27              |
+| `current_index`                   | the position of the transaction in its bundle          | 27              |
+| `last_index`                      | the index of the last transaction in the bundle        | 27              |
+| `bundle`                          | the hash of the bundle essence                         | 243             |
+| `trunk`                           | the hash of the first transaction referenced/approved  | 243             |
+| `branch`                          | the hash of the second transaction referenced/approved | 243             |
+| `tag`                             | arbitrary user-defined value                           | 81              |
+| `attachment_timestamp`            | the timestamp for when Proof-of-Work is completed      | 27              |
+| `attachment_timestamp_lowerbound` | *not specified*                                        | 27              |
+| `attachment_timestamp_upperbound` | *not specified*                                        | 27              |
+| `nonce`                           | the Proof-of-Work nonce of the transaction             | 81              |
 
 Each transaction is uniquely identified by its *transaction hash*, which is
 calculated based on all fields of the transaction. Note that the transaction
