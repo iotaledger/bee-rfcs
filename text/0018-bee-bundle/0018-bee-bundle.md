@@ -155,15 +155,13 @@ Pseudocode:
 
 ```
 hash(bundle)
-| sponge = Sponge(HASH_FUNCTION)
+| sponge = Sponge(Kerl)
 |
 | for transaction in bundle
 | | sponge.absorb(transaction.essence())
 |
 | return sponge.squeeze()
 ```
-
-*In the current mainnet, the hash function of the sponge used to generate bundle hashes is Kerl.*
 
 ### Finalise
 
