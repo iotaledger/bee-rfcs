@@ -136,8 +136,8 @@ pow instead.*
 A bundle hash ties different transactions together. By having this common hash in their `bundle` field, it makes it
 clear that these transactions should be processed as a whole.
 
-The hash of a bundle is derived from the bundle essence of each of its transactions. The bundle essence of a
-transaction is composed of the following fields.
+The hash of a bundle is derived from the bundle essence of each of its transactions. A bundle essence is a `486` trits
+subset of the transaction fields.
 
 | Name          | Size      |
 | ------------- | --------- |
