@@ -11,12 +11,13 @@ This RFC is based on [`transaction-module`]().
 The smallest communication unit in the IOTA protocol is the transaction. Everything, including payment settlements
 and/or plain data, is propagated through the IOTA network in transactions.
 
-A transaction is `8019` trits and the part available to the user is `6561` trits. This part holds a signature in case
-of a payment settlement and plain data otherwise. Since it has a limited size, a user often needs more than one
-transaction to fulfil their operation, for example signatures with security level `2` or `3` don't fit in a single
-transaction and user-provided data may exceed the allowance so they need to be fragmented across multiple transactions.
-Moreover, a value transaction doesn't make sense on its own because it would change the total amount of the ledger so
-it has to be paired with other complementary transactions that together will balance the total value to zero.
+A transaction is `8019` trits and the main part available to the user, `sig_or_msg`, is `6561` trits. This part holds a
+signature in case of a payment settlement and plain data otherwise. Since it has a limited size, a user often needs
+more than one transaction to fulfil their operation, for example signatures with security level `2` or `3` don't fit in
+a single transaction and user-provided data may exceed the allowance so they need to be fragmented across multiple
+transactions. Moreover, a value transaction doesn't make sense on its own because it would change the total amount of
+the ledger so it has to be paired with other complementary transactions that together will balance the total value to
+zero.
 
 For these reasons, transactions have to be processed as a whole, in groups called bundles. A bundle is an atomic
 operation in the sense that either all or none of its transactions are accepted by the network. Even single
@@ -51,7 +52,8 @@ the only gateway to a `Bundle` object.
 As bundles are final, they shouldn't be modifiable outside of the scope of the bundle module.
 
 There is a natural order to transactions in a bundle that can be represented in two ways:
-- each transaction has a `current_index` and a `last_index` and `current_index` goes from `0` to `last_index`, a bundle can then simply be represented by a data structure that contiguously keeps the order like `Vec`;
+- each transaction has a `current_index` and a `last_index` and `current_index` goes from `0` to `last_index`, a bundle
+can then simply be represented by a data structure that contiguously keeps the order like `Vec`;
 - each transaction is chained to the next one through its `trunk` which means we can consider data structures like
 `HashMap` or `BTreeMap`;
 
@@ -252,7 +254,8 @@ pow(bundle, trunk, branch, mwm)
 
 *Client side and server side operation.*
 
-Validating a bundle means checking the syntactic and semantic integrity of a bundle as a whole and of its constituent transactions. As bundles are atomic transfers, either all or none of the transactions will be accepted by the network.
+Validating a bundle means checking the syntactic and semantic integrity of a bundle as a whole and of its constituent
+transactions. As bundles are atomic transfers, either all or none of the transactions will be accepted by the network.
 After validation, transactions of a bundle are candidates to be included to the ledger.
 
 For a bundle to be considered valid, the following assertions must be true:
