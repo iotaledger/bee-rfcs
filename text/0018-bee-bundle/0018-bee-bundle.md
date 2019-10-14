@@ -50,13 +50,24 @@ the only gateway to a `Bundle` object.
 
 As bundles are final, they shouldn't be modifiable outside of the scope of the bundle module.
 
-Since there is a natural order to transactions in a bundle (each transaction has a `current_index` and a `last_index`
-and `current_index` goes from `0` to `last_index`), a bundle can simply be represented by a data structure that keeps
-the order intact, like an array:
+There is a natural order to transactions in a bundle that can be represented in two ways:
+- each transaction has a `current_index` and a `last_index` and `current_index` goes from `0` to `last_index`, a bundle can then simply be represented by a data structure that contiguously keeps the order like `Vec`;
+- each transaction is chained to the next one through its `trunk` which means we can consider data structures like
+`HashMap` or `BTreeMap`;
+
+For this reason, we hide this as an implementation detail and instead provide a newtype:
+
+```rust
+struct Transactions(Vec<Transaction>)
+//struct Transactions(HashMap<Transaction>)
+//struct Transactions(BTreeMap<Transaction>)
+```
+
+Then the `Bundle` type looks like:
 
 ```rust
 struct Bundle {
-    transactions: Vec<Transaction>
+    transactions: Transactions
 }
 ```
 
@@ -64,7 +75,7 @@ And its implementation should only allow to retrieve transactions:
 
 ```rust
 impl Bundle {    
-    pub fn transactions(&self) -> &Vec<Transaction> {
+    pub fn transactions(&self) -> &Transactions {
         &self.transactions
     }
 }
@@ -308,4 +319,3 @@ validate(bundle):
 
 - Should this RFC expands a bit more on the M-Bug ? Or give a link ?
 - Should `Bundle` provide a `.transactions` or a `.at` method ?
-- The inner structure of a Bundle could be a `HashMap` ?
