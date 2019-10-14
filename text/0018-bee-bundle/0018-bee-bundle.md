@@ -5,9 +5,6 @@
 
 # Summary
 
-This RFC is based on [`transaction-module`]().
-<!-- TODO FIx link to RFC#3 -->
-
 The smallest communication unit in the IOTA protocol is the transaction. Everything, including payment settlements
 and/or plain data, is propagated through the IOTA network in transactions.
 
