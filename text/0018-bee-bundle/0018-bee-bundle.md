@@ -8,13 +8,12 @@
 The smallest communication unit in the IOTA protocol is the transaction. Everything, including payment settlements
 and/or plain data, is propagated through the IOTA network in transactions.
 
-A transaction is `8019` trits and the main part available to the user, `sig_or_msg`, is `6561` trits. This part holds a
-signature in case of a payment settlement and plain data otherwise. Since it has a limited size, a user often needs
-more than one transaction to fulfil their operation, for example signatures with security level `2` or `3` don't fit in
-a single transaction and user-provided data may exceed the allowance so they need to be fragmented across multiple
-transactions. Moreover, a value transaction doesn't make sense on its own because it would change the total amount of
-the ledger so it has to be paired with other complementary transactions that together will balance the total value to
-zero.
+A transaction is `8019` trits and the payload (i.e. `sig_or_msg`) is `6561` trits. This payload holds a signature in
+case of a payment settlement and plain data otherwise. Since it has a limited size, a user often needs more than one
+transaction to fulfil their operation, for example signatures with security level `2` or `3` don't fit in a single
+transaction and user-provided data may exceed the allowance so they need to be fragmented across multiple transactions.
+Moreover, a value transaction doesn't make sense on its own because it would change the total amount of the ledger so
+it has to be paired with other complementary transactions that together will balance the total value to zero.
 
 For these reasons, transactions have to be processed as a whole, in groups called bundles. A bundle is an atomic
 operation in the sense that either all or none of its transactions are accepted by the network. Even single
