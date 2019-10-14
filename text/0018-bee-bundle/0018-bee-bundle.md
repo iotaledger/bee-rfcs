@@ -50,7 +50,9 @@ the only gateway to a `Bundle` object.
 
 As bundles are final, they shouldn't be modifiable outside of the scope of the bundle module.
 
-A bundle can simply be represented as an array of transactions:
+Since there is a natural order to transactions in a bundle (each transaction has a `current_index` and a `last_index`
+and `current_index` goes from `0` to `last_index`), a bundle can simply be represented by a data structure that keeps
+the order intact, like an array:
 
 ```rust
 struct Bundle {
@@ -306,3 +308,4 @@ validate(bundle):
 
 - Should this RFC expands a bit more on the M-Bug ? Or give a link ?
 - Should `Bundle` provide a `.transactions` or a `.at` method ?
+- The inner structure of a Bundle could be a `HashMap` ?
