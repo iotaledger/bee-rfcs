@@ -91,7 +91,7 @@ pub struct BundleBuilder {
 
 ```rust
 impl BundleBuilder {    
-    pub fn hash(&self) {
+    pub fn calculate_hash(&self) {
       unimplemented!()
     }
 
@@ -103,7 +103,7 @@ impl BundleBuilder {
       unimplemented!()
     }
 
-    pub fn pow(&self) {
+    pub fn calculate_proof_of_work(&self) {
       unimplemented!()
     }
 
@@ -154,7 +154,7 @@ bundle essence of each transaction and eventually squeezing the bundle hash from
 Pseudocode:
 
 ```
-hash(bundle)
+calculate_hash(bundle)
 | sponge = Sponge(Kerl)
 |
 | for transaction in bundle
@@ -218,7 +218,7 @@ sign(bundle, seed, inputs)
 *Since signature size depends on the security level, a single signature can spread out to up to 3 transactions.
 `inputs` is an object that contain all unused addresses of a seed with a sufficient balance.*
 
-### Pow
+### Proof of Work
 
 *Client side operation.*
 
@@ -229,7 +229,7 @@ accordingly. After PoW, a bundle is ready to be sent to the network.
 Pseudocode:
 
 ```
-pow(bundle, trunk, branch, mwm)
+calculate_proof_of_work(bundle, trunk, branch, mwm)
 | for transaction in rev(bundle)
 | | transaction.trunk = trunk
 | | transaction.branch = branch
