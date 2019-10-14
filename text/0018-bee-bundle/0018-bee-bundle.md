@@ -11,7 +11,7 @@ This RFC is based on [`transaction-module`]().
 The smallest communication unit in the IOTA protocol is the transaction. Everything, including payment settlements
 and/or plain data, is propagated through the IOTA network in transactions.
 
-A transaction is `2673` trytes and the part available to the user is `2187` trytes. This part holds a signature in case
+A transaction is `8019` trits and the part available to the user is `6561` trits. This part holds a signature in case
 of a payment settlement and plain data otherwise. Since it has a limited size, a user often needs more than one
 transaction to fulfil their operation, for example signatures with security level `2` or `3` don't fit in a single
 transaction and user-provided data may exceed the allowance so they need to be fragmented across multiple transactions.
