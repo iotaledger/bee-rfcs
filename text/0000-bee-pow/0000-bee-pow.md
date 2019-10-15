@@ -1,70 +1,67 @@
-+ Feature name: `bee-pow`
++ Feature name: `bee-pow` 
 + Start date: 2019-10-03
-+ RFC PR: [iotaledger/bee-rfcs#0000](https://github.com/iotaledger/bee-rfcs/pull/0000)
++ RFC PR: [iotaledger/bee-rfcs#0000](https://github.com/iotaledger/bee-rfcs/pull/0000) 
 + Bee issue: [iotaledger/bee#0000](https://github.com/iotaledger/bee/issues/0000)
 
 # Summary
 
-This RFC proposes a dedicated crate to perform proof-of-work (PoW) for a single gossip message, that attempts to become accepted and propagated by the network. 
+IOTA is a permissionless and feeless network which unavoidably makes it vulnerable to spam attacks. To make such
+attacks more costly this RFC proposes a spam protection mechanism based on Proof-of-Work (PoW) where only those
+messages are accepted and propagated by the honest nodes that include a valid nonce value. That nonce serves as a
+proof to show that a predefined amount of computational work has been done upfront either by the publisher itself or
+by some PoW service provider on its behalf.
 
 # Motivation
 
-In order to protect the network from spam each device that wishes to get a message (e.g. a value transaction) propagated by all the nodes needs a way to proove to the network, that it has invested the necessary amount of computational work either by doing the computation by itself, or by externalizing it using some PoW service provider. 
-
-### Background info on PoW
-Cryptographic hash functions are one-way-functions. That means in simple terms that given the output you cannot calculate the input from it. Proof-of-Work works by setting some constraint on the output like a certain number of zeros at the end or the beginning of the hash. It's completely arbitrary. It could be ten `1`s or the sequence `1234567890` because any particular sequence is equally likely. What matters is that your only chance to find an input that satisfies the constraint is guessing/brute-forcing it. You can also easily set the difficulty by making the constraint harder to satisfy (extend the sequence). So to check if PoW was correctly done all a validating node has to do is hash the given message which includes the nonce, and see if the constraint is satisfied. On the other hand the message publisher has to repeat the following cycle many times until it has found a valid nonce:
-* Pick a nonce value (e.g. by simply increasing it, or choose it randomly)
-* Hash the message together with selected nonce
-* Compare if the hash satisfies the constraint given by the majority of the network
-
-This process is called `Mining` and in this analogy the nonce is the nugget.
-
-TODO
-
-Why are we doing this? What use cases does it support? What is the expected
-outcome?
-
-1. Write a summary of the motivation.
-2. List all the specific use cases that your proposal is trying to address. 
-   the software, for example using the "Job story" format:
-
-TODO
+Since IOTA is a permissionless and feeless network it needs methods of protecting itself against spam from
+intentionally or even unintentionally misbehaving network participants (nodes or clients) that otherwise could
+disrupt the network rather cheaply. Furthermore, this mechanism is currently (at the time of this writing) used in
+the IOTA mainnet, and necessary to build compatible nodes with this framework.
 
 ### Job stories:
-When I create a gossip message (e.g. a transaction), I want to be able to find a nonce, so that hashing the message and the nonce creates a hash that satisfies the constraint set by the network.
 
-When I receive a gossip message, I want to be able to verify, that the contained nonce is valid, so that I know that the publisher of that message has at least invested some resource to find it.
+When I - as a client - want to send a message, for example a value transaction, I want to be able to find and include
+a valid nonce, so that my transaction is accepted and propagated by all honest nodes in the network.
 
-
-`IMPORTANT NOTE`
-It is important that this crate is independent from the particular hashfunction. Ideally it would not even depend on whether a trinary or a binary hashfunction is used.
+When I - as a node - receive a network message from the gossip pipeline, I want to be able to check if its contained
+nonce value satisfies the pre-defined network difficulty, so that I can decide whether to discard or process that
+message.
 
 # Detailed design
 
-`This is the bulk of the RFC. Explain the design in enough detail for somebody
-familiar with the IOTA and to understand, and for somebody familiar with Rust
-to implement. This should get into specifics and corner-cases, and include
-examples of how the feature is used.`
+WIP (various designs are currently evaluated in small prototype implementations)
 
-For a prototype implementation please checkout [bee-pow-preview](https://github.com/Alex6323/bee-pow-preview).
+
+For more information on PoW in general and the relation to the proposed `Transaction` struct please read:
+* [Minimum Weight Magnitude](https://docs.iota.org/docs/dev-essentials/0.1/concepts/minimum-weight-magnitude),
+* [Transaction/Bundle RFC](https://github.com/iotaledger/bee-rfcs/pull/20)
 
 # Drawbacks
 
-Why should we *not* do this?
+A spam protection mechanism based on PoW 
+* consumes energy for doing throw-away calculations,
+* slows down all participants even if there's no attack (always-on defense),
+* is not favorable for battery-driven devices, many of which form the IoT space,
+* amplifies problems that arise in networks where nodes have diverse computation capabilities like in the IoT space
 
 # Rationale and alternatives
 
-- Why is this design the best in the space of possible designs?
-- What other designs have been considered and what is the rationale for not
-  choosing them?
+- Why is this design the best in the space of possible designs? 
+
+The main purpose of this proposal is to support building nodes that can interoperate with the current IOTA mainnet.
+
+- What other designs have been considered and what is the rationale for not choosing them? 
+
+No other designs have been considered. Other anti-spam mechanisms are still being researched.
+
 - What is the impact of not doing this?
+
+Not doing this means that nodes built with this framework are incompatible with the current IOTA mainnet.
+
 
 # Unresolved questions
 
-- What parts of the design do you expect to resolve through the RFC process
-  before this gets merged?
-- What parts of the design do you expect to resolve through the implementation
-  of this feature before stabilization?
-- What related issues do you consider out of scope for this RFC that could be
-  addressed in the future independently of the solution that comes out of this
-  RFC?
+- How modular do we want this crate to be?
+- Should we focus on Curl or make the hashfunction plug and play?
+- Should we design this a kind of service component employing its own runtime that performs PoW jobs asynchronously?
+- Should support for external PoW be part of the implementation following the proposal?
