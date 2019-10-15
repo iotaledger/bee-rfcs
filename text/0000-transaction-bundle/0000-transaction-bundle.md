@@ -40,10 +40,10 @@ the IOTA protocol.
 This RFC proposes ways to create and manipulate a bundle and describe the associated algorithms.
 
 Useful links:
-- [Trinary](https://docs.iota.org/docs/dev-essentials/0.1/concepts/trinary)
-- [What is a bundle?](https://docs.iota.org/docs/getting-started/0.1/introduction/what-is-a-bundle)
-- [Bundles and transactions](https://docs.iota.org/docs/dev-essentials/0.1/concepts/bundles-and-transactions)
-- [Structure of a bundle](https://docs.iota.org/docs/dev-essentials/0.1/references/structure-of-a-bundle)
++ [Trinary](https://docs.iota.org/docs/dev-essentials/0.1/concepts/trinary)
++ [What is a bundle?](https://docs.iota.org/docs/getting-started/0.1/introduction/what-is-a-bundle)
++ [Bundles and transactions](https://docs.iota.org/docs/dev-essentials/0.1/concepts/bundles-and-transactions)
++ [Structure of a bundle](https://docs.iota.org/docs/dev-essentials/0.1/references/structure-of-a-bundle)
 
 # Motivation
 
@@ -264,9 +264,9 @@ the only gateway to a `Bundle` object.
 As bundles are final, they shouldn't be modifiable outside of the scope of the bundle module.
 
 There is a natural order to transactions in a bundle that can be represented in two ways:
-- each transaction has a `current_index` and a `last_index` and `current_index` goes from `0` to `last_index`, a bundle
++ each transaction has a `current_index` and a `last_index` and `current_index` goes from `0` to `last_index`, a bundle
 can then simply be represented by a data structure that contiguously keeps the order like `Vec`;
-- each transaction is chained to the next one through its `trunk` which means we can consider data structures like
++ each transaction is chained to the next one through its `trunk` which means we can consider data structures like
 `HashMap` or `BTreeMap`;
 
 For this reason, we hide this as an implementation detail and instead provide a newtype:
@@ -339,8 +339,8 @@ impl BundleBuilder {
 
 In this section, we describe the algorithms needed to build a `Bundle`. The lifecycle of a `BundleBuilder` depends on
 if it's being used in client side or server side:
-- client side: `finalise` -> [`sign` ->] [`pow` ->] `validate` -> `build`
-- server side: `add_transaction`/`add_transaction_builder` -> `validate` -> `build`
++ client side: `finalise` -> [`sign` ->] [`pow` ->] `validate` -> `build`
++ server side: `add_transaction`/`add_transaction_builder` -> `validate` -> `build`
 
 *`sign` is optional because data transactions don't have to be signed. `pow` is optional because one can use remote
 pow instead.*
@@ -470,15 +470,15 @@ After validation, transactions of a bundle are candidates to be included to the 
 
 For a bundle to be considered valid, the following assertions must be true:
 
-- bundle has announced size;
-- transactions share the same bundle hash;
-- transactions absolute value doesn't exceed total IOTA supply;
-- bundle absolute sum never exceeds total IOTA supply;
-- order of transactions in the bundle is the same as announced by `current_index` and `last_index`;
-- value transactions have an address ending in `0` i.e. has been generated with Kerl;
-- bundle inputs and outputs are balanced i.e. the bundle sum equals `0`;
-- announced bundle hash matches the computed bundle hash;
-- for spending transactions, the signature is valid;
++ bundle has announced size;
++ transactions share the same bundle hash;
++ transactions absolute value doesn't exceed total IOTA supply;
++ bundle absolute sum never exceeds total IOTA supply;
++ order of transactions in the bundle is the same as announced by `current_index` and `last_index`;
++ value transactions have an address ending in `0` i.e. has been generated with Kerl;
++ bundle inputs and outputs are balanced i.e. the bundle sum equals `0`;
++ announced bundle hash matches the computed bundle hash;
++ for spending transactions, the signature is valid;
 
 Pseudocode:
 
@@ -546,9 +546,9 @@ validate(bundle):
 
 ## Bundle
 
-- A `Bundle` is a fundamental component of the IOTA protocol and must be implemented;
-- There is no more intuitive and simple way to implement a `Bundle` than the one proposed;
-- Since bundles are final, `BundleBuilder` is mandatory;
++ A `Bundle` is a fundamental component of the IOTA protocol and must be implemented;
++ There is no more intuitive and simple way to implement a `Bundle` than the one proposed;
++ Since bundles are final, `BundleBuilder` is mandatory;
 
 # Unresolved questions
 
@@ -568,5 +568,5 @@ validate(bundle):
 
 ## Bundle
 
-- Should this RFC expands a bit more on the M-Bug ? Or give a link ?
-- Should `Bundle` provide a `.transactions` or a `.at` method ?
++ Should this RFC expands a bit more on the M-Bug ? Or give a link ?
++ Should `Bundle` provide a `.transactions` or a `.at` method ?
