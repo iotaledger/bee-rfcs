@@ -17,9 +17,6 @@ of version [`iri v1.8.1`], commit `e1776fbad5d90df86a26402f9025e4b0b2ef7d3e`. Th
 struct and is intended to be a public interface. It thus comes with a number of opaque types for its fields that we
 leave to be fleshed out at a later time.
 
-We also propose a `TransactionDraft` type that follows the builder pattern. It is intended to be an implementation
-detail and only be used by a `Bundle` builder type and not exposed publicly.
-
 ## Bundle
 
 The smallest communication unit in the IOTA protocol is the transaction. Everything, including payment settlements
@@ -71,7 +68,7 @@ The `Transaction` type is intended to be *final* and immutable. This contract is
 allow manipulating its fields directly. The only public constructor method that allows creating a `Transaction` directly
 are the `from_reader` and `from_slice` method to construct it from a type implementing `std::io::Read`, or from byte
 slice. Otherwise, `Transaction`s should only be built through `Bundle` constructors, and only from that context direct
-access to fields is permitted. To this purpose, this RFC contains the `TransactionDraft` builder pattern type.
+access to fields is permitted.
 
 [`iri v1.8.1`]: https://github.com/iotaledger/iri/releases/tag/v1.8.1-RELEASE
 
@@ -181,9 +178,6 @@ impl Transaction {
 }
 ```
 
-The `from_slice` and `from_reader` methods will use a `TransactionDraft` internally, but these are implementation
-details.
-
 The `TransactionError` is not fully fleshed out yet. For the time being, it definitely contains `io::Error`:
 
 ```rust
@@ -191,60 +185,6 @@ pub enum TransactionError {
     Io(io::Error),
 }
 ```
-
-#### `TransactionDraft`
-
-`TransactionDraft` is a basic builder pattern for creating and setting the individual fields of a new transaction.
-
-```rust
-#[derive(Default)]
-struct TransactionDraft {
-    signature_or_message_fragment: Option<SignatureOrMessageFragment>,
-    address: Option<Address>,
-    value: Option<Value>,
-    obsolete_tag: Option<ObsoleteTag>,
-    current_index: Option<CurrentIndex>,
-    last_index: Option<LastIndex>,
-    bundle_hash: Option<BundleHash>,
-    trunk: Option<Trunk>,
-    branch: Option<Branch>,
-    tag: Option<Tag>,
-    attachment_timestamp: Option<AttachmentTimestamp>,
-    attachment_timestamp_lower_bound: Option<AttachmentTimestampLowerbound>,
-    attachment_timestamp_upper_bound: Option<AttachmentTimestampUpperbound>,
-    nonce: Option<Nonce>
-}
-
-impl TransactionDraft {
-    /// Create a `TransactionDraft` from a reader.
-    pub fn from_reader<R: std::io::Read>(reader: R) -> Result<Self, TransactionDraftError> {
-        unimplemented!()
-    }
-
-    /// Create a `TransactionDraft` from a slice of bytes
-    pub fn from_slice(stream: &[u8]) -> Result<Self, TransactionDraftError> {
-        unimplemented!()
-    }
-
-    /// Verify that all fieleds are set and build the `Transaction`.
-    pub fn build(self) -> Result<Transaction, TransactionDraftError> {
-        unimplemented!()
-    }
-
-    pub fn address(&mut self, address: Address) -> &mut Self {
-        self.address.replace(address);
-        self
-    }
-
-    // Rest of the setter methods similarly
-}
-```
-
-`TransactionDraft` is a very basic builder pattern. For the sake of this proposal, it does not contain any complex
-logic. It should simply allow to set the fields piecemeal, and then give back a `Transaction` object.
-
-The `from_slice` and `from_reader` methods mimick those of the `Transaction` type and are primarily intended as
-convenience methods to be used from within `Bundle` (and to implement `Transaction::{from_slice,from_reader}`).
 
 #### `TransactionMetadata`
 
@@ -520,8 +460,8 @@ validate(bundle):
 
 ## Transaction
 
-+ There might be use cases that require the ability to directly create a `Transaction`, requiring exposing
-  `TransactionDraft` or a similar builder pattern.
++ There might be use cases that require the ability to directly create a `Transaction`, requiring exposing a builder
+  pattern.
 + This proposal does not consider any kind of generics or abstraction over transactions. Future iterations of the IOTA
   network that have different transaction formats will probably require new types.
 
@@ -552,13 +492,7 @@ validate(bundle):
 
 + What assumption do we have to make about the incoming bytes and how to parse them into a `Transaction`? Is the
   structure of the incoming packet static? Or do we need to write a byteparser?
-+ How much logic should the setter methods on `TransactionDraft` contain? Do we introduce traits for parsing into the
-  opaque types we have provided? What would a natural interaction with the setters look like?
-+ Should there be an intermediate type to go `TransactionDraft -> Transaction`. Given that the `TransactionDraft` will
-  probably need to be serialized to some byte slice so that the proof of work hasher can work on it, it might be
-  convenient to provide an intermediate type.
 + What should go into a `TransactionError`?
-+ What should go into a `TransactionDraftError`?
 + Should we use some error libraries?
 + What `TransactionMetadata` is there? Is this part of the `Bundle` or part of the `Transaction`?
 + Should this RFC expands a bit more on the M-Bug ? Or give a link ?
