@@ -41,8 +41,10 @@ This RFC proposes ways to create and manipulate a bundle and describe the associ
 
 Useful links:
 + [Trinary](https://docs.iota.org/docs/dev-essentials/0.1/concepts/trinary)
++ [What is a transaction?](https://docs.iota.org/docs/getting-started/0.1/introduction/what-is-a-transaction)
 + [What is a bundle?](https://docs.iota.org/docs/getting-started/0.1/introduction/what-is-a-bundle)
 + [Bundles and transactions](https://docs.iota.org/docs/dev-essentials/0.1/concepts/bundles-and-transactions)
++ [Structure of a transaction](https://docs.iota.org/docs/dev-essentials/0.1/references/structure-of-a-transaction)
 + [Structure of a bundle](https://docs.iota.org/docs/dev-essentials/0.1/references/structure-of-a-bundle)
 
 # Motivation
