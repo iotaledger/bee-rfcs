@@ -7,20 +7,8 @@
 
 # Summary
 
-## Transaction
-
-In the context of IOTA, a `Bundle` is a message that is shared over the network, and a `Transaction` is the fundamental
-unit that a `Bundle` is constructed from. To use TCP as a well known analogy, a `Bundle` corresponds to a message, and a `Transaction` corresponds to a packet.
-
-This RFC proposes a `Transaction` type to represent the transaction format used by the IOTA Reference Implementation as
-of version [`iri v1.8.1`], commit `e1776fbad5d90df86a26402f9025e4b0b2ef7d3e`. The `Transaction` type is implemented as a
-struct and is intended to be a public interface. It thus comes with a number of opaque types for its fields that we
-leave to be fleshed out at a later time.
-
-## Bundle
-
-The smallest communication unit in the IOTA protocol is the transaction. Everything, including payment settlements
-and/or plain data, is propagated through the IOTA network in transactions.
+The fundamental communication unit in the IOTA protocol is the transaction. Everything, including payment settlements
+and plain data, is propagated through the IOTA network in transactions.
 
 A transaction is `8019` trits and the payload (i.e. `sig_or_msg`) is `6561` trits. This payload holds a signature in
 case of a payment settlement and plain data otherwise. Since it has a limited size, a user often needs more than one
@@ -34,7 +22,10 @@ operation in the sense that either all or none of its transactions are accepted 
 transactions are propagated through the network within a bundle making it the only confirmable communication unit of
 the IOTA protocol.
 
-This RFC proposes ways to create and manipulate a bundle and describe the associated algorithms.
+By analogy with TCP, a `Bundle` corresponds to a message, and a `Transaction` corresponds to a packet.
+
+This RFC proposes a `Transaction` type and a `Bundle` type to represent the transaction and bundle formats used by the
+IOTA Reference Implementation as of version [`iri v1.8.1`], commit `e1776fbad5d90df86a26402f9025e4b0b2ef7d3e`.
 
 Useful links:
 + [Trinary](https://docs.iota.org/docs/dev-essentials/0.1/concepts/trinary)
