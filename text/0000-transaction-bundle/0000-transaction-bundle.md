@@ -552,8 +552,6 @@ validate(bundle):
 
 # Unresolved questions
 
-## Transaction
-
 + What assumption do we have to make about the incoming bytes and how to parse them into a `Transaction`? Is the
   structure of the incoming packet static? Or do we need to write a byteparser?
 + How much logic should the setter methods on `TransactionDraft` contain? Do we introduce traits for parsing into the
@@ -565,8 +563,5 @@ validate(bundle):
 + What should go into a `TransactionDraftError`?
 + Should we use some error libraries?
 + What `TransactionMetadata` is there? Is this part of the `Bundle` or part of the `Transaction`?
-
-## Bundle
-
 + Should this RFC expands a bit more on the M-Bug ? Or give a link ?
 + Should `Bundle` provide a `.transactions` or a `.at` method ?
