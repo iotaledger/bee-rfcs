@@ -252,16 +252,12 @@ This needs to be fleshed out.
 
 ## Bundle
 
-<!-- TODO -->
-
-## Bundle and BundleBuilder
-
 Transactions are final and bundles, essentially being arrays of transactions, are also final. Once a bundle is created
 and validated, it shouldn't be tempered. For this reason we have a `Bundle` type and a `BundleBuilder` type.
 An instantiated `Bundle` object represents a syntactically and semantically valid IOTA bundle and a `BundleBuilder` is
 the only gateway to a `Bundle` object.
 
-### Bundle
+### Bundle struct
 
 As bundles are final, they shouldn't be modifiable outside of the scope of the bundle module.
 
@@ -337,7 +333,7 @@ impl BundleBuilder {
 
 *We do not list parameters and/or return values as they are implementation details.*
 
-## Algorithms
+### Algorithms
 
 In this section, we describe the algorithms needed to build a `Bundle`. The lifecycle of a `BundleBuilder` depends on
 if it's being used in client side or server side:
@@ -347,7 +343,7 @@ if it's being used in client side or server side:
 *`sign` is optional because data transactions don't have to be signed. `pow` is optional because one can use remote
 pow instead.*
 
-### Hash
+#### Hash
 
 *Client side and server side operation.*
 
@@ -381,7 +377,7 @@ calculate_hash(bundle)
 | return sponge.squeeze()
 ```
 
-### Finalise
+#### Finalise
 
 *Client side operation.*
 
@@ -407,7 +403,7 @@ finalise(bundle)
 `M` or `13` because it could expose a significant part of the private key, weakening the signature. The bundle hash is
 then repetitively generated with a slight modification until its normalisation doesn't contain a `M`.*
 
-### Sign
+#### Sign
 
 *Client side operation.*
 
@@ -436,7 +432,7 @@ sign(bundle, seed, inputs)
 *Since signature size depends on the security level, a single signature can spread out to up to 3 transactions.
 `inputs` is an object that contain all unused addresses of a seed with a sufficient balance.*
 
-### Proof of Work
+#### Proof of Work
 
 *Client side operation.*
 
@@ -462,7 +458,7 @@ calculate_proof_of_work(bundle, trunk, branch, mwm)
 
 ```
 
-### Validate
+#### Validate
 
 *Client side and server side operation.*
 
