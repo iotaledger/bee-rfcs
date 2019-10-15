@@ -1,4 +1,4 @@
-+ Feature name: (fill me in with a unique ident, `my_awesome_feature`)
++ Feature name: `iri_v181_transaction_and_bundle`
 + Start date: 2019-09-06
 + RFC PR: [iotaledger/bee-rfcs#3](https://github.com/iotaledger/bee-rfcs/pull/3),
 [iotaledger/bee-rfcs#18](https://github.com/iotaledger/bee-rfcs/pull/18),
