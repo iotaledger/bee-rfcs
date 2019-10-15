@@ -1,6 +1,6 @@
 + Feature name: `chronicle-module`
 + Start date: 2019-10-14
-+ RFC PR: [iotaledger/bee-rfcs#xx](https://github.com/iotaledger/bee-rfcs/pull/xx)
++ RFC PR: [iotaledger/bee-rfcs#22](https://github.com/iotaledger/bee-rfcs/pull/22)
 + Bee issue: [iotaledger/bee#64](https://github.com/iotaledger/bee/issues/64)
 
 **To Do**: break 120 characters for each line
