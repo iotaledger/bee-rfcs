@@ -26,8 +26,6 @@ By analogy with TCP, a bundle corresponds to a stream, and a transaction corresp
 This RFC proposes a `Transaction` type and a `Bundle` type to represent the transaction and bundle formats used by the
 IOTA Reference Implementation as of version [`iri v1.8.1`].
 
-[`iri v1.8.1`]: https://github.com/iotaledger/iri/releases/tag/v1.8.1-RELEASE
-
 Useful links:
 + [Trinary](https://docs.iota.org/docs/dev-essentials/0.1/concepts/trinary)
 + [What is a transaction?](https://docs.iota.org/docs/getting-started/0.1/introduction/what-is-a-transaction)
@@ -46,10 +44,9 @@ called the *Tangle*. Each `Transaction` encodes data such as sender and receiver
 the Tangle, `Bundle` hash, timestamps, and other information required to verify and process each transaction. With the
 transaction being the fundamental unit that is sent over the network, we need to represent it in memory.
 
-At the time of this RFC, the transaction format used by the IOTA network is defined by [release v1.8.1 of the IOTA
-Reference Implementation, IRI](`iri v1.8.1`), commit `e1776fbad5d90df86a26402f9025e4b0b2ef7d3e`. The transaction format
-might change in the future, but for the time being it is not yet understood how a common interface between different
-versions transaction formats should be implemented, or if the network will support several transaction types
+At the time of this RFC, the transaction format used by the IOTA network is defined by [`iri v1.8.1`]. The transaction
+format might change in the future, but for the time being it is not yet understood how a common interface between
+different versions transaction formats should be implemented, or if the network will support several transaction types
 simultaneously.
 
 We thus do not consider generalizations over or interfaces for transactions, but only propose a basic `Transaction`
@@ -61,6 +58,8 @@ allow manipulating its fields directly. The only public constructor method that 
 are the `from_reader` and `from_slice` method to construct it from a type implementing `std::io::Read`, or from byte
 slice. Otherwise, `Transaction`s should only be built through `Bundle` constructors, and only from that context direct
 access to fields is permitted.
+
+[`iri v1.8.1`]: https://github.com/iotaledger/iri/releases/tag/v1.8.1-RELEASE
 
 ## Bundle
 
