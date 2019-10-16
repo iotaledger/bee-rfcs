@@ -41,8 +41,8 @@ Useful links:
 
 IOTA is a transaction settlement and data transfer layer for IoT (the Internet of Things). Messages on the network are
 `Bundle`s of individual `Transaction`s, which in turn are sent one at a time and are stored in a distributed ledger
-called the *Tangle*. Each `Transaction` encodes data such as sender and receiver addresses, reference nodes in the
-Tangle, `Bundle` hash, timestamps, and other information required to verify and process each transaction. With the
+called the *Tangle*. Each `Transaction` encodes data such as sender and receiver addresses, referenced transactions in
+the Tangle, `Bundle` hash, timestamps, and other information required to verify and process each transaction. With the
 transaction being the fundamental unit that is sent over the network, we need to represent it in memory.
 
 At the time of this RFC, the transaction format used by the IOTA network is defined by [release v1.8.1 of the IOTA
