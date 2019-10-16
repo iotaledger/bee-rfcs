@@ -175,10 +175,6 @@ pub enum TransactionError {
 }
 ```
 
-#### `TransactionMetadata`
-
-This needs to be fleshed out.
-
 ## Bundle
 
 Transactions are final and bundles, essentially being arrays of transactions, are also final. Once a bundle is created
@@ -483,6 +479,5 @@ validate(bundle):
   structure of the incoming packet static? Or do we need to write a byteparser?
 + What should go into a `TransactionError`?
 + Should we use some error libraries?
-+ What `TransactionMetadata` is there? Is this part of the `Bundle` or part of the `Transaction`?
 + Should this RFC expands a bit more on the M-Bug ? Or give a link ?
 + Should `Bundle` provide a `.transactions` or a `.at` method ?
