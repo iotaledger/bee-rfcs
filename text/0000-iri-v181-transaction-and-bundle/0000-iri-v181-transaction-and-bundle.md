@@ -239,7 +239,7 @@ impl BundleBuilder {
       unimplemented!()
     }
 
-    pub fn finalise(&self) {
+    pub fn finalize(&self) {
       unimplemented!()
     }
 
@@ -267,7 +267,7 @@ impl BundleBuilder {
 
 In this section, we describe the algorithms needed to build a `Bundle`. The lifecycle of a `BundleBuilder` depends on
 if it's being used in client side or server side:
-+ client side: `finalise` -> [`sign` ->] [`pow` ->] `validate` -> `build`
++ client side: `finalize` -> [`sign` ->] [`pow` ->] `validate` -> `build`
 + server side: `add_transaction`/`add_transaction_builder` -> `validate` -> `build`
 
 *`sign` is optional because data transactions don't have to be signed. `pow` is optional because one can use remote
@@ -307,18 +307,18 @@ calculate_hash(bundle)
 | return sponge.squeeze()
 ```
 
-#### Finalise
+#### Finalize
 
 *Client side operation.*
 
-Finalising a bundle means computing the bundle hash, verifying that it matches the security requirement and setting it
-to all the transactions of the bundle. After finalisation, transactions of a bundle are ready to be safely attached to
+Finalizing a bundle means computing the bundle hash, verifying that it matches the security requirement and setting it
+to all the transactions of the bundle. After finalization, transactions of a bundle are ready to be safely attached to
 the tangle.
 
 Pseudocode:
 
 ```
-finalise(bundle)
+finalize(bundle)
 | hash = bundleHash(bundle)
 |
 | while hash.normalise().find('M')
