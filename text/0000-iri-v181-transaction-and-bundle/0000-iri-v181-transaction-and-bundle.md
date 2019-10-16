@@ -13,19 +13,20 @@ and plain data, is propagated through the IOTA network in transactions.
 A transaction is `8019` trits and the payload - `sig_or_msg` field - is `6561` trits. This payload can hold a signature
 fragment or a message fragment. Since it has a limited size, a user often needs more than one transaction to fulfil
 their operation, for example signatures with security level `2` or `3` don't fit in a single transaction and
-user-provided message may exceed the allowance so they need to be fragmented across multiple transactions. Moreover, an
-input/output transaction doesn't make sense on its own because it would change the total amount of the ledger so it has
-to be paired with another complementary input/output transaction that together will balance the total value to zero.
+user-provided message may exceed the allowance so they need to be fragmented across multiple transactions. Moreover,
+input/output transactions doesn't make sense on their own because they would change the total amount of the ledger so
+they have to be paired with other input/output transactions that together will balance the total value to zero.
 
 For these reasons, transactions have to be processed as a whole, in groups called bundles. A bundle is an atomic
 operation in the sense that either all or none of its transactions are accepted by the network. Even single
-transactions are propagated through the network within a bundle making it the only confirmable communication unit of
-the IOTA protocol.
+transactions are propagated through the network within a bundle.
 
 By analogy with TCP, a bundle corresponds to a stream, and a transaction corresponds to a packet.
 
 This RFC proposes a `Transaction` type and a `Bundle` type to represent the transaction and bundle formats used by the
-IOTA Reference Implementation as of version [`iri v1.8.1`], commit `e1776fbad5d90df86a26402f9025e4b0b2ef7d3e`.
+IOTA Reference Implementation as of version [`iri v1.8.1`].
+
+[`iri v1.8.1`]: https://github.com/iotaledger/iri/releases/tag/v1.8.1-RELEASE
 
 Useful links:
 + [Trinary](https://docs.iota.org/docs/dev-essentials/0.1/concepts/trinary)
@@ -60,8 +61,6 @@ allow manipulating its fields directly. The only public constructor method that 
 are the `from_reader` and `from_slice` method to construct it from a type implementing `std::io::Read`, or from byte
 slice. Otherwise, `Transaction`s should only be built through `Bundle` constructors, and only from that context direct
 access to fields is permitted.
-
-[`iri v1.8.1`]: https://github.com/iotaledger/iri/releases/tag/v1.8.1-RELEASE
 
 ## Bundle
 
