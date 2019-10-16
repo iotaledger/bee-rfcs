@@ -22,7 +22,7 @@ operation in the sense that either all or none of its transactions are accepted 
 transactions are propagated through the network within a bundle making it the only confirmable communication unit of
 the IOTA protocol.
 
-By analogy with TCP, a `Bundle` corresponds to a message, and a `Transaction` corresponds to a packet.
+By analogy with TCP, a bundle corresponds to a stream, and a transaction corresponds to a packet.
 
 This RFC proposes a `Transaction` type and a `Bundle` type to represent the transaction and bundle formats used by the
 IOTA Reference Implementation as of version [`iri v1.8.1`], commit `e1776fbad5d90df86a26402f9025e4b0b2ef7d3e`.
