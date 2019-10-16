@@ -360,7 +360,7 @@ sign(bundle, seed, inputs)
 ```
 
 *Since signature size depends on the security level, a single signature can spread out to up to 3 transactions.
-`inputs` is an object that contain all unused addresses of a seed with a sufficient balance.*
+`inputs` is an object that contains all unused addresses of a seed with a sufficient balance.*
 
 #### Proof of Work
 
