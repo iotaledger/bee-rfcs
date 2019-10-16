@@ -290,16 +290,18 @@ subset of the transaction fields.
 The bundle hash is generated with a sponge by iterating through the bundle, from `0` to `last_index`, absorbing the
 bundle essence of each transaction and eventually squeezing the bundle hash from the sponge.
 
-Pseudocode:
+Rust pseudocode:
 
-```
-calculate_hash(bundle)
-| sponge = Sponge(Kerl)
-|
-| for transaction in bundle
-| | sponge.absorb(transaction.essence())
-|
-| return sponge.squeeze()
+```rust
+fn calculate_hash(bundle: Bundle) -> BundleHash {
+    let mut sponge: Sponge<Kerl> = Sponge::new();
+
+    for transaction in bundle {
+        sponge.absorb(transaction.essence());
+    }
+
+    sponge.squeeze()
+}
 ```
 
 #### Finalize
@@ -308,20 +310,42 @@ calculate_hash(bundle)
 
 Finalizing a bundle means computing the bundle hash, verifying that it matches the security requirement and setting it
 to all the transactions of the bundle. After finalization, transactions of a bundle are ready to be safely attached to
-the tangle.
+the tangle.;
 
-Pseudocode:
+Rust pseudocode:
 
-```
-finalize(bundle)
-| hash = bundleHash(bundle)
-|
-| while hash.normalise().find('M')
-| | bundle.at(0).obsolete_tag++
-| | hash = bundleHash(bundle)
-|
-| for transaction in bundle
-| | transaction.setBundleHash(hash)
+```rust
+fn finalize(bundle: Bundle)
+    // Use the `calculate_hash` function defined above.
+    // TODO: Is this comment above correct?
+    let mut hash = calculate_hash(&bundle);
+
+    // TODO: Define the normalize function.
+    // TODO: finding an 'M' is sufficiently weird to warrant an explanation.
+    // TODO: Explain the reasoning behind this loop;
+    // while hash.normalize().find('M') {
+        // NOTE: Does this refer to the first message in the `Bundle`?
+        // TODO: We probably want to explain why we increment the obsolete tag.
+        // bundle.at(0).obsolete_tag++;
+        // hash = calculate_hash(bundle);
+    // }
+
+    let final_hash = loop {
+        let hash = calculate_hash(&bundle);
+        if hash.normalize().find('M') {
+            bundle
+                .first_transaction()
+                .increment_obsolete_tag();
+        } else {
+            break hash;
+        }
+    };
+
+
+    for transaction in &mut bundle {
+        transaction.set_bundle_hash(final_hash);
+    }
+}
 ```
 
 *Security requirement: due to the implementation of the signature process, the normalised bundle hash can't contain a
@@ -336,22 +360,30 @@ Signing a bundle allow you to prove that you are the owner of the address you ar
 signature or a bad signature, the bundle won't be considered valid and the funds won't be moved. Only the owner of the
 right seed is able to generate the right signature for this address.
 
-Pseudocode:
+Rust pseudocode:
 
-```
-sign(bundle, seed, inputs)
-| current_index = 0
-|
-| for transaction in bundle
-| | if transaction.value < 0
-| | | if transaction.current_index >= current_index
-| | | | input = inputs[transaction.address]
-| | | | fragments = sign(seed, input.index, input.security, transaction.bundle)
-| | | | for fragment in fragments
-| | | | | bundle.at(current_index).signature = fragment
-| | | | | current_index = current_index + 1
-| | else
-| | | current_index = current_index + 1
+```rust
+fn sign(bundle: Bundle, seed: Seed, inputs: Inputs) {
+    let mut current_index = 0
+
+    // TODO: Explain what this loop is trying to achieve.
+    for transaction in bundle {
+        if transaction.value < 0 {
+            if transaction.current_index >= current_index {
+                let input = inputs[transaction.address];
+                // FIXME: This `sign` function below seems to be a different sign function compares to the one above?
+                //        It has a different signature.
+                let fragments = sign(seed, input.index, input.security, transaction.bundle);
+                for fragment in fragments {
+                    bundle[current_index].signature = fragment;
+                    current_index = current_index + 1
+                }
+            }
+        } else {
+            current_index = current_index + 1;
+        }
+    }
+}
 ```
 
 *Since signature size depends on the security level, a single signature can spread out to up to 3 transactions.
@@ -365,22 +397,28 @@ Proof of Work (PoW) allows your transactions to be accepted by the network. On t
 control mechanism. Doing PoW on a bundle means doing PoW on each of its transactions and setting trunks and branch
 accordingly. After PoW, a bundle is ready to be sent to the network.
 
-Pseudocode:
+Rust pseudocode:
 
-```
-calculate_proof_of_work(bundle, trunk, branch, mwm)
-| for transaction in rev(bundle)
-| | transaction.trunk = trunk
-| | transaction.branch = branch
-| | if transaction.current_index == transaction.last_index
-| | | branch = trunk
-| | transaction.attachment_timestamp = timestamp()
-| | transaction.attachment_timestamp_lower = 0
-| | transaction.attachment_timestamp_upper = 3812798742493
-| | if transaction.tag.empty()
-| | | transaction.tag = transaction.obsolete_tag
-| | trunk = transaction.pow(mwm)
-
+```rust
+// TODO: `mwm` probably refers to `minimum weight magntitude`. This needs to be mentioned
+// and an explanation linked.
+fn calculate_proof_of_work(bundle: Bundle, mut trunk: Trunk, mut branch: Branch, mwm: MinimumWeightMagnitude) {
+    // TODO: We need to explain what this loop tries to achieve.
+    for transaction in rev(&mut bundle) {
+        transaction.trunk = trunk;
+        transaction.branch = branch;
+        if transaction.current_index == transaction.last_index {
+            branch = trunk;
+        }
+        transaction.attachment_timestamp = timestamp();
+        transaction.attachment_timestamp_lower = 0;
+        transaction.attachment_timestamp_upper = 3812798742493;
+        if transaction.tag.is_empty() {
+          transaction.tag = transaction.obsolete_tag;
+        }
+        trunk = transaction.pow(mwm);
+    }
+}
 ```
 
 #### Validate
@@ -403,42 +441,63 @@ For a bundle to be considered valid, the following assertions must be true:
 + announced bundle hash matches the computed bundle hash;
 + for spending transactions, the signature is valid;
 
-Pseudocode:
+Rust pseudocode:
 
-```
-validate(bundle):
-| value = 0
-| current_index = 0
-|
-| if bundle.length() != bundle.at(0).last_index + 1
-| | return BUNDLE_INVALID_LENGTH
-|
-| bundle_hash = bundle.at(0).bundle_hash
-| last_index = bundle.at(0).last_index
-|
-| for transaction in bundle
-| | if transaction.bundle_hash != bundle_hash
-| | | return BUNDLE_INVALID_HASH
-| | if abs(transaction.value) > IOTA_SUPPLY
-| | | return BUNDLE_INVALID_TRANSACTION_VALUE
-| | value = value + transaction.value
-| | if abs(value) > IOTA_SUPPLY
-| | | return BUNDLE_INVALID_VALUE
-| | if transaction.current_index != current_index++
-| | | return BUNDLE_INVALID_INDEX
-| | if transaction.last_index != last_index
-| | | return BUNDLE_INVALID_INDEX
-| | if transaction.value != 0 && transaction.address.last != 0
-| | | return BUNDLE_INVALID_ADDRESS
-|
-| if value != 0
-| | return BUNDLE_INVALID_VALUE
-| if bundle_hash != bundleHash(bundle)
-| | return BUNDLE_INVALID_HASH
-| if !bundleSignaturesValidate(bundle)
-| | return BUNDLE_INVALID_SIGNATURE
-|
-| return BUNDLE_VALID
+```rust
+// It looks like this is supposed to return an error?
+fn validate(bundle) -> Result<(), BundleValidationError> {
+    use BundleValidationError::*;
+    let mut value = 0;
+    let current_index = 0;
+
+    if bundle.length() != bundle.first_transaction().last_index + 1 {
+        Err(InvalidLength)?
+    }
+
+    let bundle_hash = bundle.first_transaction().bundle_hash;
+    let last_index = bundle.first_transaction.last_index;
+
+    for transaction in bundle {
+        if transaction.bundle_hash != bundle_hash {
+            Err(InvalidHash)?
+        }
+
+        if abs(transaction.value) > IOTA_SUPPLY {
+            Err(InvalidTransactionValue)?
+        }
+
+        value += transaction.value;
+        if abs(value) > IOTA_SUPPLY {
+            Err(InvalidValue)?
+        }
+
+        if transaction.current_index != current_index + 1 {
+            Err(InvalidIndex)?
+        }
+
+        if transaction.last_index != last_index {
+            Err(InvalidIndex)?
+        }
+
+        if transaction.value != 0 && transaction.address.last != 0 {
+            Err(InvalidAddress)?
+    }
+ 
+    if value != 0 {
+        Err(InvalidValue)?
+    }
+
+    // NOTE: This refers to the calculate_hash function defined previously?
+    if bundle_hash != calculate_hash(bundle) {
+        Err(InvalidHash)?
+    }
+
+    // TODO: Which function does this refer to? If not specified, we should explain what it does.
+    if !validate_bundle_signatures(bundle) {
+        Err(InvalidSignature)?
+    }
+
+    Ok(())
 ```
 
 # Drawbacks
