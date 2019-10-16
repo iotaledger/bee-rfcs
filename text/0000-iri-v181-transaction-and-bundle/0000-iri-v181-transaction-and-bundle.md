@@ -13,9 +13,9 @@ and plain data, is propagated through the IOTA network in transactions.
 A transaction is `8019` trits and the payload - `sig_or_msg` field - is `6561` trits. This payload can hold a signature
 fragment or a message fragment. Since it has a limited size, a user often needs more than one transaction to fulfil
 their operation, for example signatures with security level `2` or `3` don't fit in a single transaction and
-user-provided message may exceed the allowance so they need to be fragmented across multiple transactions. Moreover, a
-value transaction doesn't make sense on its own because it would change the total amount of the ledger so it has to be
-paired with other complementary transactions that together will balance the total value to zero.
+user-provided message may exceed the allowance so they need to be fragmented across multiple transactions. Moreover, an
+input/output transaction doesn't make sense on its own because it would change the total amount of the ledger so it has
+to be paired with another complementary input/output transaction that together will balance the total value to zero.
 
 For these reasons, transactions have to be processed as a whole, in groups called bundles. A bundle is an atomic
 operation in the sense that either all or none of its transactions are accepted by the network. Even single
@@ -404,7 +404,7 @@ For a bundle to be considered valid, the following assertions must be true:
 + transactions absolute value doesn't exceed total IOTA supply;
 + bundle absolute sum never exceeds total IOTA supply;
 + order of transactions in the bundle is the same as announced by `current_index` and `last_index`;
-+ value transactions have an address ending in `0` i.e. has been generated with Kerl;
++ input/output transactions have an address ending in `0` i.e. has been generated with Kerl;
 + bundle inputs and outputs are balanced i.e. the bundle sum equals `0`;
 + announced bundle hash matches the computed bundle hash;
 + for spending transactions, the signature is valid;
