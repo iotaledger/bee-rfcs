@@ -330,7 +330,7 @@ fn finalize(bundle_builder: BundleBuilder)
     };
 
     for transaction_draft in &mut bundle_builder {
-        transaction_draft.set_bundle_hash(final_hash);
+        transaction_draft.bundle = final_hash;
     }
 }
 ```
