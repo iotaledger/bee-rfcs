@@ -10,12 +10,12 @@
 The fundamental communication unit in the IOTA protocol is the transaction. Everything, including payment settlements
 and plain data, is propagated through the IOTA network in transactions.
 
-A transaction is `8019` trits and the payload - `sig_or_msg` field - is `6561` trits. This payload can hold a signature
+A transaction is 8019 trits and the payload - `sig_or_msg` field - is 6561 trits. This payload can hold a signature
 fragment or a message fragment. Since it has a limited size, a user often needs more than one transaction to fulfil
-their operation, for example signatures with security level `2` or `3` don't fit in a single transaction and
-user-provided message may exceed the allowance so they need to be fragmented across multiple transactions. Moreover,
-input/output transactions doesn't make sense on their own because they would change the total amount of the ledger so
-they have to be paired with other input/output transactions that together will balance the total value to zero.
+their operation, for example signatures with security level 2 or 3 don't fit in a single transaction and user-provided
+message may exceed the allowance so they need to be fragmented across multiple transactions. Moreover, input/output
+transactions doesn't make sense on their own because they would change the total amount of the ledger so they have to be
+paired with other input/output transactions that together will balance the total value to zero.
 
 For these reasons, transactions have to be processed as a whole, in groups called bundles. A bundle is an atomic
 operation in the sense that either all or none of its transactions are accepted by the network. Even single
@@ -70,27 +70,27 @@ access to fields is permitted.
 ## Transaction
 
 A transaction is a sequence of 15 fields of constant length. A transaction has a total length of 8019 trits. The fields'
-name, description, and size (in trits) is summarized in the table below, in their order of appearance in a transaction.
+name, description, and size are summarized in the table below, in their order of appearance in a transaction.
 
-| Name                              | Description                                            | Size (in trits) |
-| ---                               | ---                                                    | ---             |
-| `signature_or_message_fragment`   | contains the signature of the transfer                 |                 |
-|                                   | or user-defined message data                           | 6561            |
+| Name                              | Description                                             | Size (in trits) |
+| ---                               | ---                                                     | ---             |
+| `signature_or_message_fragment`   | contains a signature fragment of the transfer           |                 |
+|                                   | or user-defined message fragment                        | 6561            |
 | `address`                         | receiver (output) if value > 0,
-|                                   | or sender (input) if value < 0                         | 243             |
-| `value`                           | the transferred amount in IOTA                         | 81              |
-| `obsolete_tag`                    | another arbitrary user-defined tag                     | 81              |
-| `timestamp`                       | the time when the transaction was issued               | 27              |
-| `current_index`                   | the position of the transaction in its bundle          | 27              |
-| `last_index`                      | the index of the last transaction in the bundle        | 27              |
-| `bundle`                          | the hash of the bundle essence                         | 243             |
-| `trunk`                           | the hash of the first transaction referenced/approved  | 243             |
-| `branch`                          | the hash of the second transaction referenced/approved | 243             |
-| `tag`                             | arbitrary user-defined value                           | 81              |
-| `attachment_timestamp`            | the timestamp for when Proof-of-Work is completed      | 27              |
-| `attachment_timestamp_lowerbound` | *not specified*                                        | 27              |
-| `attachment_timestamp_upperbound` | *not specified*                                        | 27              |
-| `nonce`                           | the Proof-of-Work nonce of the transaction             | 81              |
+|                                   | or sender (input) if value < 0                          | 243             |
+| `value`                           | the transferred amount in IOTA                          | 81              |
+| `obsolete_tag`                    | currently only used for the M-Bug (see later)           | 81              |
+| `timestamp`                       | the time when the transaction was issued                | 27              |
+| `current_index`                   | the index of the transaction in its bundle              | 27              |
+| `last_index`                      | the index of the last transaction in the bundle         | 27              |
+| `bundle`                          | the hash of the bundle essence                          | 243             |
+| `trunk`                           | the hash of the first transaction referenced/approved   | 243             |
+| `branch`                          | the hash of the second transaction referenced/approved  | 243             |
+| `tag`                             | arbitrary user-defined value                            | 81              |
+| `attachment_timestamp`            | the timestamp for when Proof-of-Work is completed       | 27              |
+| `attachment_timestamp_lowerbound` | *not specified*                                         | 27              |
+| `attachment_timestamp_upperbound` | *not specified*                                         | 27              |
+| `nonce`                           | the Proof-of-Work nonce of the transaction              | 81              |
 
 Each transaction is uniquely identified by its *transaction hash*, which is calculated based on all fields of the
 transaction. Note that the transaction hash is not part of the transaction.
@@ -110,7 +110,7 @@ pub struct Transaction {
     timestamp: Timestamp,
     current_index: Index,
     last_index: Index,
-    bundle_hash: BundleHash,
+    bundle: BundleHash,
     trunk: TransactionHash,
     branch: TransactionHash,
     tag: Tag,
@@ -128,10 +128,10 @@ the implementation phase or in future RFCs.
 pub struct Trit(u8);
 pub struct SignatureOrMessageFragment([Trit; 6561]);
 pub struct Address([Trit; 243]);
+pub struct Value(i64);
 pub struct Tag([Trit; 81]);
 pub struct Timestamp(u64);
 pub struct Index(u64);
-pub struct Value(i64);
 pub struct BundleHash([Trit; 243]);
 pub struct TransactionHash([Trit; 243]);
 pub struct Nonce([Trit; 81]);
@@ -482,7 +482,7 @@ fn validate(bundle) -> Result<(), BundleValidationError> {
         if transaction.value != 0 && transaction.address.last != 0 {
             Err(InvalidAddress)?
     }
- 
+
     if value != 0 {
         Err(InvalidValue)?
     }
