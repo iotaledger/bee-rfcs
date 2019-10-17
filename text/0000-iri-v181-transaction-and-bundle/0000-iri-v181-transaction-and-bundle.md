@@ -310,28 +310,16 @@ fn calculate_hash(bundle: Bundle) -> BundleHash {
 
 Finalizing a bundle means computing the bundle hash, verifying that it matches the security requirement and setting it
 to all the transactions of the bundle. After finalization, transactions of a bundle are ready to be safely attached to
-the tangle.;
+the tangle.
 
 Rust pseudocode:
 
 ```rust
 fn finalize(bundle: Bundle)
-    // Use the `calculate_hash` function defined above.
-    // TODO: Is this comment above correct?
-    let mut hash = calculate_hash(&bundle);
-
-    // TODO: Define the normalize function.
-    // TODO: finding an 'M' is sufficiently weird to warrant an explanation.
-    // TODO: Explain the reasoning behind this loop;
-    // while hash.normalize().find('M') {
-        // NOTE: Does this refer to the first message in the `Bundle`?
-        // TODO: We probably want to explain why we increment the obsolete tag.
-        // bundle.at(0).obsolete_tag++;
-        // hash = calculate_hash(bundle);
-    // }
-
     let final_hash = loop {
+        // Use the `calculate_hash` function defined above.
         let hash = calculate_hash(&bundle);
+        // See paragraphs on Normalization and M-Bug below pseudocode
         if hash.normalize().find('M') {
             bundle
                 .first_transaction()
@@ -341,16 +329,21 @@ fn finalize(bundle: Bundle)
         }
     };
 
-
     for transaction in &mut bundle {
         transaction.set_bundle_hash(final_hash);
     }
 }
 ```
+**Normalization**: during signing scheme, the share of the private key being leaked is not uniform, introducing a risk
+to leak a critically large part of it. By normalizing the hash, we ensure that exactly half of the private key is
+leaked. The actual normalization algorithm is provided in the signing scheme RFC.
+Useful links: [Addresses and signatures](https://docs.iota.org/docs/dev-essentials/0.1/concepts/addresses-and-signatures),
+[Why is the bundle hash normalized?](https://iota.stackexchange.com/questions/1588/why-is-the-bundle-hash-normalized).
 
-*Security requirement: due to the implementation of the signature process, the normalised bundle hash can't contain a
-`M` or `13` because it could expose a significant part of the private key, weakening the signature. The bundle hash is
-then repetitively generated with a slight modification until its normalisation doesn't contain a `M`.*
+**M-Bug**: due to the implementation of the signature scheme, the normalized bundle hash can't contain a `M` (or `13`) because it could expose a significant part of the private key, making it easier for attackers to forge signatures. The bundle hash is then repetitively generated with a slight modification until its normalization doesn't contain a `M`.
+This modification is usually operated by incrementing the `obsolete_tag` of the first transaction of the bundle since
+this field is not being used for any other reason. Useful links:
+[Why is the normalized hash considered insecure when containing the char 'M'](https://iota.stackexchange.com/questions/1241/why-is-the-normalized-hash-considered-insecure-when-containing-the-char-m).
 
 ### Sign
 
