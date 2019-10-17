@@ -515,10 +515,4 @@ the signing scheme RFC.
 
 # Unresolved questions
 
-+ What assumption do we have to make about the incoming bytes and how to parse them into a `Transaction`? Is the
-  structure of the incoming packet static? Or do we need to write a byteparser?
-+ What should go into a `TransactionError`?
-+ Should we use some error libraries?
-+ Should this RFC expands a bit more on the M-Bug ? Or give a link ?
-+ Should `Bundle` provide a `.next()` method ?
 + How does remote PoW works ?
