@@ -497,35 +497,21 @@ the signing scheme RFC.
 
 # Drawbacks
 
-## Transaction
-
 + There might be use cases that require the ability to directly create a `Transaction`, requiring exposing a builder
   pattern.
-+ This proposal does not consider any kind of generics or abstraction over transactions. Future iterations of the IOTA
-  network that have different transaction formats will probably require new types.
-
-## Bundle
-
-<!-- TODO -->
++ This proposal does not consider any kind of generics or abstraction over transactions and bundles. Future iterations
+  of the IOTA network that have different transaction and/or bundle formats will probably require new types.
 
 # Rationale and alternatives
 
-## Transaction
-
-+ Immutable `Transaction`s encode the fact that a `Transaction` should not be mutated after creation.
++ Immutable `Transaction`s and `Bundle`s encode the fact that they should not be mutated after creation.
 + If there is a use case that requires direct creation of a `Transaction` it can be brought forward in a feature request
   or RFC. The interface can always be extended upon and be made public.
 + Forbidding the direct creation of a `Transaction` via a public API ensures that a complete message is only ever
   constructed via a `Bundle`.
 + This proposal is very straight forward and idiomatic Rust. It does not contain any overly complicated parts. As such,
   it should be easy to extend it in the future.
-+ Hiding the fields of `Transaction` behind opaque types allows us to flesh them out in the future.
-
-## Bundle
-
-+ A `Bundle` is a fundamental component of the IOTA protocol and must be implemented;
-+ There is no more intuitive and simple way to implement a `Bundle` than the one proposed;
-+ Since bundles are immutable, `BundleBuilder` is mandatory;
++ Hiding the fields of `Transaction` and `Bundle` behind opaque types allows us to flesh them out in the future.
 
 # Unresolved questions
 
