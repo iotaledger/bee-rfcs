@@ -177,14 +177,13 @@ pub enum TransactionError {
 
 ## Bundle
 
-Transactions are final and bundles, essentially being arrays of transactions, are also final. Once a bundle is created
-and validated, it shouldn't be tempered. For this reason we have a `Bundle` type and a `BundleBuilder` type.
-An instantiated `Bundle` object represents a syntactically and semantically valid IOTA bundle and a `BundleBuilder` is
-the only gateway to a `Bundle` object.
+Bundles are immutable groups of immutable transactions, once a bundle is created and validated, it shouldn't be
+tempered. For this reason we have a `Bundle` type and a `BundleBuilder` type. An instantiated `Bundle` object represents
+a syntactically and semantically valid IOTA bundle and a `BundleBuilder` is the only gateway to a `Bundle` object.
 
 ### Bundle struct
 
-As bundles are final, they shouldn't be modifiable outside of the scope of the bundle module.
+As bundles are immutable, they shouldn't be modifiable outside of the scope of the bundle module.
 
 There is a natural order to transactions in a bundle that can be represented in two ways:
 + each transaction has a `current_index` and a `last_index` and `current_index` goes from `0` to `last_index`, a bundle
@@ -195,15 +194,15 @@ can then simply be represented by a data structure that contiguously keeps the o
 For this reason, we hide this as an implementation detail and instead provide a newtype:
 
 ```rust
-struct Transactions(Vec<Transaction>)
-//struct Transactions(HashMap<Transaction>)
-//struct Transactions(BTreeMap<Transaction>)
+pub struct Transactions(Vec<Transaction>)
+// pub struct Transactions(HashMap<Transaction>)
+// pub struct Transactions(BTreeMap<Transaction>)
 ```
 
 Then the `Bundle` type looks like:
 
 ```rust
-struct Bundle {
+pub struct Bundle {
     transactions: Transactions
 }
 ```
@@ -218,15 +217,16 @@ impl Bundle {
 }
 ```
 
-### BundleBuilder
+### BundleBuilder struct
 
 The `BundleBuilder` offers a simple and convenient way to build bundles:
 
 ```rust
 pub struct BundleBuilder {
-    transactions: Vec<TransactionBuilder>
+    transaction_drafts: TransactionDrafts
 }
 ```
+*`TransactionDrafts` is a constructor for `Transaction`s, but since we don't expose the `transaction_drafts` field publicly, it remains an implementation detail for the end user.*
 
 ```rust
 impl BundleBuilder {    
@@ -530,7 +530,7 @@ fn validate(bundle) -> Result<(), BundleValidationError> {
 
 + A `Bundle` is a fundamental component of the IOTA protocol and must be implemented;
 + There is no more intuitive and simple way to implement a `Bundle` than the one proposed;
-+ Since bundles are final, `BundleBuilder` is mandatory;
++ Since bundles are immutable, `BundleBuilder` is mandatory;
 
 # Unresolved questions
 
@@ -539,4 +539,4 @@ fn validate(bundle) -> Result<(), BundleValidationError> {
 + What should go into a `TransactionError`?
 + Should we use some error libraries?
 + Should this RFC expands a bit more on the M-Bug ? Or give a link ?
-+ Should `Bundle` provide a `.transactions` or a `.at` method ?
++ Should `Bundle` provide a `.next()` method ?
