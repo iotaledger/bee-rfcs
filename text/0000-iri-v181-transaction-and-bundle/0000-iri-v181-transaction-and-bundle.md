@@ -293,11 +293,11 @@ bundle essence of each transaction and eventually squeezing the bundle hash from
 Rust pseudocode:
 
 ```rust
-fn calculate_hash(bundle: Bundle) -> BundleHash {
+fn calculate_hash(bundle_builder: BundleBuilder) -> BundleHash {
     let mut sponge: Sponge<Kerl> = Sponge::new();
 
-    for transaction in bundle {
-        sponge.absorb(transaction.essence());
+    for transaction_draft in bundle_builder {
+        sponge.absorb(transaction_draft.essence());
     }
 
     sponge.squeeze()
@@ -315,13 +315,13 @@ the tangle.
 Rust pseudocode:
 
 ```rust
-fn finalize(bundle: Bundle)
+fn finalize(bundle_builder: BundleBuilder)
     let final_hash = loop {
         // Use the `calculate_hash` function defined above.
-        let hash = calculate_hash(&bundle);
+        let hash = calculate_hash(&bundle_builder);
         // See paragraphs on Normalization and M-Bug below pseudocode
         if hash.normalize().find('M') {
-            bundle
+            bundle_builder
                 .first_transaction()
                 .increment_obsolete_tag();
         } else {
@@ -329,8 +329,8 @@ fn finalize(bundle: Bundle)
         }
     };
 
-    for transaction in &mut bundle {
-        transaction.set_bundle_hash(final_hash);
+    for transaction_draft in &mut bundle_builder {
+        transaction_draft.set_bundle_hash(final_hash);
     }
 }
 ```
@@ -356,19 +356,19 @@ right seed is able to generate the right signature for this address.
 Rust pseudocode:
 
 ```rust
-fn sign(bundle: Bundle, seed: Seed, inputs: Inputs) {
+fn sign(bundle_builder: BundleBuilder, seed: Seed, inputs: Inputs) {
     let mut current_index = 0
 
     // TODO: Explain what this loop is trying to achieve.
-    for transaction in bundle {
-        if transaction.value < 0 {
-            if transaction.current_index >= current_index {
-                let input = inputs[transaction.address];
+    for transaction_draft in bundle_builder {
+        if transaction_draft.value < 0 {
+            if transaction_draft.current_index >= current_index {
+                let input = inputs[transaction_draft.address];
                 // FIXME: This `sign` function below seems to be a different sign function compares to the one above?
                 //        It has a different signature.
-                let fragments = sign(seed, input.index, input.security, transaction.bundle);
+                let fragments = sign(seed, input.index, input.security, transaction_draft.bundle);
                 for fragment in fragments {
-                    bundle[current_index].signature = fragment;
+                    bundle_builder[current_index].signature = fragment;
                     current_index = current_index + 1
                 }
             }
@@ -395,20 +395,20 @@ transaction of the bundle, sets some attachment related fields and does individu
 Rust pseudocode:
 
 ```rust
-fn calculate_proof_of_work(bundle: Bundle, mut trunk: TransactionHash, mut branch: TransactionHash, mwm: MinimumWeightMagnitude) {
-    for transaction in rev(&mut bundle) {
-        transaction.trunk = trunk;
-        transaction.branch = branch;
-        if transaction.current_index == transaction.last_index {
+fn calculate_proof_of_work(bundle_builder: BundleBuilder, mut trunk: TransactionHash, mut branch: TransactionHash, mwm: MinimumWeightMagnitude) {
+    for transaction_draft in rev(&mut bundle_builder) {
+        transaction_draft.trunk = trunk;
+        transaction_draft.branch = branch;
+        if transaction_draft.current_index == transaction_draft.last_index {
             branch = trunk;
         }
-        transaction.attachment_timestamp = timestamp();
-        transaction.attachment_timestamp_lower = 0;
-        transaction.attachment_timestamp_upper = 3812798742493;
-        if transaction.tag.is_empty() {
-          transaction.tag = transaction.obsolete_tag;
+        transaction_draft.attachment_timestamp = timestamp();
+        transaction_draft.attachment_timestamp_lower = 0;
+        transaction_draft.attachment_timestamp_upper = 3812798742493;
+        if transaction_draft.tag.is_empty() {
+          transaction_draft.tag = transaction_draft.obsolete_tag;
         }
-        trunk = transaction.pow(mwm);
+        trunk = transaction_draft.pow(mwm);
     }
 }
 ```
@@ -438,41 +438,41 @@ For a bundle to be considered valid, the following assertions must be true:
 Rust pseudocode:
 
 ```rust
-fn validate(bundle) -> Result<(), BundleValidationError> {
+fn validate(bundle_builder: BundleBuilder) -> Result<(), BundleValidationError> {
     use BundleValidationError::*;
     let mut value = 0;
     let mut current_index = 0;
 
-    if bundle.length() != bundle.first_transaction().last_index + 1 {
+    if bundle_builder.length() != bundle_builder.first_transaction().last_index + 1 {
         Err(InvalidLength)?
     }
 
-    let bundle_hash = bundle.first_transaction().bundle_hash;
-    let last_index = bundle.first_transaction.last_index;
+    let bundle_hash = bundle_builder.first_transaction().bundle_hash;
+    let last_index = bundle_builder.first_transaction().last_index;
 
-    for transaction in bundle {
-        if transaction.bundle_hash != bundle_hash {
+    for transaction_draft in bundle_builder {
+        if transaction_draft.bundle_hash != bundle_hash {
             Err(InvalidHash)?
         }
 
-        if abs(transaction.value) > IOTA_SUPPLY {
+        if abs(transaction_draft.value) > IOTA_SUPPLY {
             Err(InvalidTransactionValue)?
         }
 
-        value += transaction.value;
+        value += transaction_draft.value;
         if abs(value) > IOTA_SUPPLY {
             Err(InvalidValue)?
         }
 
-        if transaction.current_index != current_index++ {
+        if transaction_draft.current_index != current_index++ {
             Err(InvalidIndex)?
         }
 
-        if transaction.last_index != last_index {
+        if transaction_draft.last_index != last_index {
             Err(InvalidIndex)?
         }
 
-        if transaction.value != 0 && transaction.address.last != 0 {
+        if transaction_draft.value != 0 && transaction_draft.address.last != 0 {
             Err(InvalidAddress)?
     }
 
@@ -481,11 +481,11 @@ fn validate(bundle) -> Result<(), BundleValidationError> {
     }
 
     // Use the `calculate_hash` function defined above.
-    if bundle_hash != calculate_hash(bundle) {
+    if bundle_hash != calculate_hash(bundle_builder) {
         Err(InvalidHash)?
     }
 
-    if !validate_bundle_signatures(bundle) {
+    if !validate_bundle_signatures(bundle_builder) {
         Err(InvalidSignature)?
     }
 
