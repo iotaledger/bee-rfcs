@@ -433,16 +433,15 @@ For a bundle to be considered valid, the following assertions must be true:
 + input/output transactions have an address ending in `0` i.e. has been generated with Kerl;
 + bundle inputs and outputs are balanced i.e. the bundle sum equals `0`;
 + announced bundle hash matches the computed bundle hash;
-+ for spending transactions, the signature is valid;
++ for input transactions, the signature is valid;
 
 Rust pseudocode:
 
 ```rust
-// It looks like this is supposed to return an error?
 fn validate(bundle) -> Result<(), BundleValidationError> {
     use BundleValidationError::*;
     let mut value = 0;
-    let current_index = 0;
+    let mut current_index = 0;
 
     if bundle.length() != bundle.first_transaction().last_index + 1 {
         Err(InvalidLength)?
@@ -465,7 +464,7 @@ fn validate(bundle) -> Result<(), BundleValidationError> {
             Err(InvalidValue)?
         }
 
-        if transaction.current_index != current_index + 1 {
+        if transaction.current_index != current_index++ {
             Err(InvalidIndex)?
         }
 
@@ -481,18 +480,20 @@ fn validate(bundle) -> Result<(), BundleValidationError> {
         Err(InvalidValue)?
     }
 
-    // NOTE: This refers to the calculate_hash function defined previously?
+    // Use the `calculate_hash` function defined above.
     if bundle_hash != calculate_hash(bundle) {
         Err(InvalidHash)?
     }
 
-    // TODO: Which function does this refer to? If not specified, we should explain what it does.
     if !validate_bundle_signatures(bundle) {
         Err(InvalidSignature)?
     }
 
     Ok(())
 ```
+
+**Note:** `validate_bundle_signatures` is a function that actually checks the validity of signatures. It is defined in
+the signing scheme RFC.
 
 # Drawbacks
 
