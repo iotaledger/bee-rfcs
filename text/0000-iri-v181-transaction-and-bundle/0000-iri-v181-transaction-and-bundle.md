@@ -262,8 +262,9 @@ impl BundleBuilder {
 
 In this section, we describe the algorithms needed to build a `Bundle`. The lifecycle of a `BundleBuilder` depends on
 if it's being used in client side or server side:
-+ client side: `finalize` -> [`sign` ->] [`pow` ->] `validate` -> `build`
-+ server side: `add_transaction`/`add_transaction_builder` -> `validate` -> `build`
+
++ client side: `finalize -> [sign ->] [pow ->] validate -> build`
++ server side: `add_transaction_draft -> validate -> build`
 
 *`sign` is optional because data transactions don't have to be signed. `pow` is optional because one can use remote
 pow instead.*
