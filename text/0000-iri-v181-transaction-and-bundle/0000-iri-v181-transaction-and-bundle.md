@@ -387,16 +387,15 @@ fn sign(bundle: Bundle, seed: Seed, inputs: Inputs) {
 *Client side operation.*
 
 Proof of Work (PoW) allows your transactions to be accepted by the network. On the IOTA network, PoW is only a rate
-control mechanism. Doing PoW on a bundle means doing PoW on each of its transactions and setting trunks and branch
-accordingly. After PoW, a bundle is ready to be sent to the network.
+control mechanism.  After PoW, a bundle is ready to be sent to the network. Given a `trunk` and a `branch` returned by
+[getTransactionsToApprove](https://docs.iota.org/docs/node-software/0.1/iri/references/api-reference#gettransactionstoapprove)
+and a minimum weight magnitude `mwm` which represents the difficulty of the PoW, the process iterates over each
+transaction of the bundle, sets some attachment related fields and does individual PoW.
 
 Rust pseudocode:
 
 ```rust
-// TODO: `mwm` probably refers to `minimum weight magntitude`. This needs to be mentioned
-// and an explanation linked.
-fn calculate_proof_of_work(bundle: Bundle, mut trunk: Trunk, mut branch: Branch, mwm: MinimumWeightMagnitude) {
-    // TODO: We need to explain what this loop tries to achieve.
+fn calculate_proof_of_work(bundle: Bundle, mut trunk: TransactionHash, mut branch: TransactionHash, mwm: MinimumWeightMagnitude) {
     for transaction in rev(&mut bundle) {
         transaction.trunk = trunk;
         transaction.branch = branch;
@@ -413,6 +412,8 @@ fn calculate_proof_of_work(bundle: Bundle, mut trunk: Trunk, mut branch: Branch,
     }
 }
 ```
+
+Useful links: [Minimum weight magnitude](https://docs.iota.org/docs/dev-essentials/0.1/concepts/minimum-weight-magnitude).
 
 ### Validate
 
@@ -533,3 +534,4 @@ fn validate(bundle) -> Result<(), BundleValidationError> {
 + Should we use some error libraries?
 + Should this RFC expands a bit more on the M-Bug ? Or give a link ?
 + Should `Bundle` provide a `.next()` method ?
++ How does remote PoW works ?
