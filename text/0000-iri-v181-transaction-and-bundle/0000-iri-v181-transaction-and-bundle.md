@@ -258,7 +258,7 @@ impl BundleBuilder {
 
 *We do not list parameters and/or return values as they are implementation details.*
 
-### Algorithms
+## Algorithms
 
 In this section, we describe the algorithms needed to build a `Bundle`. The lifecycle of a `BundleBuilder` depends on
 if it's being used in client side or server side:
@@ -268,7 +268,7 @@ if it's being used in client side or server side:
 *`sign` is optional because data transactions don't have to be signed. `pow` is optional because one can use remote
 pow instead.*
 
-#### Hash
+### Calculate hash
 
 *Client side and server side operation.*
 
@@ -304,7 +304,7 @@ fn calculate_hash(bundle: Bundle) -> BundleHash {
 }
 ```
 
-#### Finalize
+### Finalize
 
 *Client side operation.*
 
@@ -352,7 +352,7 @@ fn finalize(bundle: Bundle)
 `M` or `13` because it could expose a significant part of the private key, weakening the signature. The bundle hash is
 then repetitively generated with a slight modification until its normalisation doesn't contain a `M`.*
 
-#### Sign
+### Sign
 
 *Client side operation.*
 
@@ -389,7 +389,7 @@ fn sign(bundle: Bundle, seed: Seed, inputs: Inputs) {
 *Since signature size depends on the security level, a single signature can spread out to up to 3 transactions.
 `inputs` is an object that contains all unused addresses of a seed with a sufficient balance.*
 
-#### Proof of Work
+### Proof of Work
 
 *Client side operation.*
 
@@ -421,7 +421,7 @@ fn calculate_proof_of_work(bundle: Bundle, mut trunk: Trunk, mut branch: Branch,
 }
 ```
 
-#### Validate
+### Validate
 
 *Client side and server side operation.*
 
