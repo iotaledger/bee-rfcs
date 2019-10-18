@@ -226,7 +226,8 @@ pub struct BundleBuilder {
     transaction_drafts: TransactionDrafts
 }
 ```
-*`TransactionDrafts` is a constructor for `Transaction`s, but since we don't expose the `transaction_drafts` field publicly, it remains an implementation detail for the end user.*
+*`TransactionDrafts` is a constructor for `Transaction`s, but since we don't expose the `transaction_drafts`
+field publicly, it remains an implementation detail for the end user.*
 
 ```rust
 impl BundleBuilder {    
@@ -263,11 +264,34 @@ impl BundleBuilder {
 In this section, we describe the algorithms needed to build a `Bundle`. The lifecycle of a `BundleBuilder` depends on
 if it's being used in client side or server side:
 
-+ client side: `finalize -> [sign ->] [pow ->] validate -> build`
++ client side: `[add_message ->] finalize -> [sign ->] [pow ->] validate -> build`
 + server side: `add_transaction_draft -> validate -> build`
 
 *`sign` is optional because data transactions don't have to be signed. `pow` is optional because one can use remote
 pow instead.*
+
+### Add message
+
+*Client side operation.*
+
+Given an address, a tag and a message, this function adds the message to the bundle builder by splitting it into chunks
+of 6561 trits (size of an individual `signature_or_message_fragment` field) and spreading it across newly created
+transactions.
+
+Rust pseudocode:
+
+```rust
+fn add_message(bundle_builder: BundleBuilder, address: Address, tag: Tag, message: &[i8]) {
+  for chunk in message.chunks(6561) {
+    let mut draft: TransactionDraft = TransactionDraft::new();
+
+    draft.address = address;
+    draft.tag = tag;
+    draft.message = chunk;
+    bundle_builder.push_back(draft);
+  }
+}
+```
 
 ### Calculate hash
 
@@ -349,7 +373,9 @@ leaked. The actual normalization algorithm is provided in the signing scheme RFC
 Useful links: [Addresses and signatures](https://docs.iota.org/docs/dev-essentials/0.1/concepts/addresses-and-signatures),
 [Why is the bundle hash normalized?](https://iota.stackexchange.com/questions/1588/why-is-the-bundle-hash-normalized).
 
-**M-Bug**: due to the implementation of the signature scheme, the normalized bundle hash can't contain a `M` (or `13`) because it could expose a significant part of the private key, making it easier for attackers to forge signatures. The bundle hash is then repetitively generated with a slight modification until its normalization doesn't contain a `M`.
+**M-Bug**: due to the implementation of the signature scheme, the normalized bundle hash can't contain a `M` (or `13`)
+because it could expose a significant part of the private key, making it easier for attackers to forge signatures.
+The bundle hash is then repetitively generated with a slight modification until its normalization doesn't contain a `M`.
 This modification is usually operated by incrementing the `obsolete_tag` of the first transaction of the bundle since
 this field is not being used for any other reason. Useful links:
 [Why is the normalized hash considered insecure when containing the char 'M'](https://iota.stackexchange.com/questions/1241/why-is-the-normalized-hash-considered-insecure-when-containing-the-char-m).
