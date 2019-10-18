@@ -238,7 +238,19 @@ field publicly, it remains an implementation detail for the end user.*
 
 ```rust
 impl BundleBuilder {    
-    pub fn calculate_hash(&self) {
+    pub fn add_message(&self, address: Address, tag: Tag, message: &[i8]) {
+        unimplemented!()
+    }
+
+    pub fn add_input(&self, address: Address, tag: Tag, value: Value, security: u8) {
+        unimplemented!()
+    }
+
+    pub fn add_output(&self, address: Address, tag: Tag, value: Value) {
+        unimplemented!()
+    }
+
+    pub fn calculate_hash(&self) -> BundleHash {
         unimplemented!()
     }
 
@@ -246,15 +258,15 @@ impl BundleBuilder {
         unimplemented!()
     }
 
-    pub fn sign(&self) {
+    pub fn sign(&self, seed: Seed, inputs: Inputs) {
         unimplemented!()
     }
 
-    pub fn calculate_proof_of_work(&self) {
+    pub fn calculate_proof_of_work(&self, mut trunk: TransactionHash, mut branch: TransactionHash, mwm: MinimumWeightMagnitude) {
         unimplemented!()
     }
 
-    pub fn validate(&self) {
+    pub fn validate(&self) -> Result<(), BundleValidationError> {
         unimplemented!()
     }
 
@@ -263,8 +275,6 @@ impl BundleBuilder {
     }
 }
 ```
-
-*We do not list parameters and/or return values as they are implementation details.*
 
 ## Algorithms
 
