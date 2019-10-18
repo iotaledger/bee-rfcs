@@ -311,12 +311,20 @@ fn calculate_hash(bundle_builder: BundleBuilder) -> BundleHash {
 
 Finalizing a bundle means computing the bundle hash, verifying that it matches the security requirement and setting it
 to all the transactions of the bundle. After finalization, transactions of a bundle are ready to be safely attached to
-the tangle.
+the tangle. Finalization is also the place to set the transaction indexes since the bundle essence contains all
+`current_index` and `last_index` and we wouldn't be able to alter them after the bundle hash has been calculated.
 
 Rust pseudocode:
 
 ```rust
 fn finalize(bundle_builder: BundleBuilder)
+    let mut current_index = 0;
+
+    for transaction_draft in bundle_builder {
+      transaction_draft.current_index = current_index++;
+      transaction_draft.last_index = bundle_builder.size() - 1;
+    }
+
     let final_hash = loop {
         // Use the `calculate_hash` function defined above.
         let hash = calculate_hash(&bundle_builder);
