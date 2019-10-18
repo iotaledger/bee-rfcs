@@ -72,25 +72,25 @@ access to fields is permitted.
 A transaction is a sequence of 15 fields of constant length. A transaction has a total length of 8019 trits. The fields'
 name, description, and size are summarized in the table below, in their order of appearance in a transaction.
 
-| Name                              | Description                                             | Size (in trits) |
-| ---                               | ---                                                     | ---             |
-| `signature_or_message_fragment`   | contains a signature fragment of the transfer           |                 |
-|                                   | or user-defined message fragment                        | 6561            |
+| Name                              | Description                                             | Size (in trits) | Set by (functions detailed below)             |
+| ---                               | ---                                                     | ---             | ---
+| `signature_or_message_fragment`   | contains a signature fragment of the transfer           |                 |                                               |
+|                                   | or user-defined message fragment                        | 6561            | `add_message` or `sign`                       |
 | `address`                         | receiver (output) if value > 0,
-|                                   | or sender (input) if value < 0                          | 243             |
-| `value`                           | the transferred amount in IOTA                          | 81              |
-| `obsolete_tag`                    | currently only used for the M-Bug (see later)           | 81              |
-| `timestamp`                       | the time when the transaction was issued                | 27              |
-| `current_index`                   | the index of the transaction in its bundle              | 27              |
-| `last_index`                      | the index of the last transaction in the bundle         | 27              |
-| `bundle`                          | the hash of the bundle essence                          | 243             |
-| `trunk`                           | the hash of the first transaction referenced/approved   | 243             |
-| `branch`                          | the hash of the second transaction referenced/approved  | 243             |
-| `tag`                             | arbitrary user-defined value                            | 81              |
-| `attachment_timestamp`            | the timestamp for when Proof-of-Work is completed       | 27              |
-| `attachment_timestamp_lowerbound` | *not specified*                                         | 27              |
-| `attachment_timestamp_upperbound` | *not specified*                                         | 27              |
-| `nonce`                           | the Proof-of-Work nonce of the transaction              | 81              |
+|                                   | or sender (input) if value < 0                          | 243             | `add_message` or `add_input` or `add_output`  |
+| `value`                           | the transferred amount in IOTA                          | 81              | `add_message` or `add_input` or `add_output`  |
+| `obsolete_tag`                    | currently only used for the M-Bug (see later)           | 81              | `finalize`                                    |
+| `timestamp`                       | the time when the transaction was issued                | 27              | `add_message` or `add_input` or `add_output`  |
+| `current_index`                   | the index of the transaction in its bundle              | 27              | `finalize`                                    |
+| `last_index`                      | the index of the last transaction in the bundle         | 27              | `finalize`                                    |
+| `bundle`                          | the hash of the bundle essence                          | 243             | `finalize`                                    |
+| `trunk`                           | the hash of the first transaction referenced/approved   | 243             | `calculate_proof_of_work`                     |
+| `branch`                          | the hash of the second transaction referenced/approved  | 243             | `calculate_proof_of_work`                     |
+| `tag`                             | arbitrary user-defined value                            | 81              | `add_message` or `add_input` or `add_output`  |
+| `attachment_timestamp`            | the timestamp for when Proof-of-Work is completed       | 27              | `calculate_proof_of_work`                     |
+| `attachment_timestamp_lowerbound` | *not specified*                                         | 27              | `calculate_proof_of_work`                     |
+| `attachment_timestamp_upperbound` | *not specified*                                         | 27              | `calculate_proof_of_work`                     |
+| `nonce`                           | the Proof-of-Work nonce of the transaction              | 81              | `calculate_proof_of_work`                     |
 
 Each transaction is uniquely identified by its *transaction hash*, which is calculated based on all fields of the
 transaction. Note that the transaction hash is not part of the transaction.
