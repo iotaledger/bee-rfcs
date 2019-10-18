@@ -1,8 +1,8 @@
 + Feature name: `iri_v181_transaction_and_bundle`
 + Start date: 2019-09-06
 + RFC PR: [iotaledger/bee-rfcs#3](https://github.com/iotaledger/bee-rfcs/pull/3),
-[iotaledger/bee-rfcs#18](https://github.com/iotaledger/bee-rfcs/pull/18),
-[iotaledger/bee-rfcs#20](https://github.com/iotaledger/bee-rfcs/pull/20)
+  [iotaledger/bee-rfcs#18](https://github.com/iotaledger/bee-rfcs/pull/18),
+  [iotaledger/bee-rfcs#20](https://github.com/iotaledger/bee-rfcs/pull/20)
 + Bee issue: [iotaledger/bee#0000](https://github.com/iotaledger/bee/issues/0000)
 
 # Summary
@@ -194,9 +194,9 @@ As bundles are immutable, they shouldn't be modifiable outside of the scope of t
 
 There is a natural order to transactions in a bundle that can be represented in two ways:
 + each transaction has a `current_index` and a `last_index` and `current_index` goes from `0` to `last_index`, a bundle
-can then simply be represented by a data structure that contiguously keeps the order like `Vec`;
+  can then simply be represented by a data structure that contiguously keeps the order like `Vec`;
 + each transaction is chained to the next one through its `trunk` which means we can consider data structures like
-`HashMap` or `BTreeMap`;
+  `HashMap` or `BTreeMap`;
 
 For this reason, we hide this as an implementation detail and instead provide a newtype:
 
