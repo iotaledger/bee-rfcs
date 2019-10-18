@@ -239,27 +239,27 @@ field publicly, it remains an implementation detail for the end user.*
 ```rust
 impl BundleBuilder {    
     pub fn calculate_hash(&self) {
-      unimplemented!()
+        unimplemented!()
     }
 
     pub fn finalize(&self) {
-      unimplemented!()
+        unimplemented!()
     }
 
     pub fn sign(&self) {
-      unimplemented!()
+        unimplemented!()
     }
 
     pub fn calculate_proof_of_work(&self) {
-      unimplemented!()
+        unimplemented!()
     }
 
     pub fn validate(&self) {
-      unimplemented!()
+        unimplemented!()
     }
 
     pub fn build(&self) {
-      unimplemented!()
+        unimplemented!()
     }
 }
 ```
@@ -289,14 +289,14 @@ Rust pseudocode:
 
 ```rust
 fn add_message(bundle_builder: BundleBuilder, address: Address, tag: Tag, message: &[i8]) {
-  for chunk in message.chunks(6561) {
-    let mut draft: TransactionDraft = TransactionDraft::new();
+    for chunk in message.chunks(6561) {
+        let mut draft: TransactionDraft = TransactionDraft::new();
 
-    draft.address = address;
-    draft.tag = tag;
-    draft.message = chunk;
-    bundle_builder.push_back(draft);
-  }
+        draft.address = address;
+        draft.tag = tag;
+        draft.message = chunk;
+        bundle_builder.push_back(draft);
+    }
 }
 ```
 
@@ -308,29 +308,29 @@ to hold a full signature.
 
 ```rust
 fn add_input(bundle_builder: BundleBuilder, address: Address, tag: Tag, value: Value, security: u8) {
-  for i in 0..security {
-    let mut draft: TransactionDraft = TransactionDraft::new();
-    
-    draft.address = address;
-    draft.tag = tag;
-    if i == 0 {
-      draft.value = value;
-    } else {
-      draft.value = 0;
+    for i in 0..security {
+        let mut draft: TransactionDraft = TransactionDraft::new();
+
+        draft.address = address;
+        draft.tag = tag;
+        if i == 0 {
+            draft.value = value;
+        } else {
+            draft.value = 0;
+        }
+        bundle_builder.push_back(draft);
     }
-    bundle_builder.push_back(draft);
-  }
 }
 ```
 
 ```rust
 fn add_output(bundle_builder: BundleBuilder, address: Address, tag: Tag, value: Value) {
-  let mut draft: TransactionDraft = TransactionDraft::new();
+    let mut draft: TransactionDraft = TransactionDraft::new();
 
-  draft.address = address;
-  draft.tag = tag;
-  draft.value = value;
-  bundle_builder.push_back(draft);
+    draft.address = address;
+    draft.tag = tag;
+    draft.value = value;
+    bundle_builder.push_back(draft);
 }
 ```
 
@@ -386,8 +386,8 @@ fn finalize(bundle_builder: BundleBuilder)
     let mut current_index = 0;
 
     for transaction_draft in bundle_builder {
-      transaction_draft.current_index = current_index++;
-      transaction_draft.last_index = bundle_builder.size() - 1;
+        transaction_draft.current_index = current_index++;
+        transaction_draft.last_index = bundle_builder.size() - 1;
     }
 
     let final_hash = loop {
@@ -482,7 +482,7 @@ fn calculate_proof_of_work(bundle_builder: BundleBuilder, mut trunk: Transaction
         transaction_draft.attachment_timestamp_lower = 0;
         transaction_draft.attachment_timestamp_upper = 3812798742493;
         if transaction_draft.tag.is_empty() {
-          transaction_draft.tag = transaction_draft.obsolete_tag;
+            transaction_draft.tag = transaction_draft.obsolete_tag;
         }
         trunk = transaction_draft.pow(mwm);
     }
