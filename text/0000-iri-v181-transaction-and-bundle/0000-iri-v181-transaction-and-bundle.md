@@ -271,7 +271,7 @@ impl BundleBuilder {
 In this section, we describe the algorithms needed to build a `Bundle`. The lifecycle of a `BundleBuilder` depends on
 if it's being used in client side or server side:
 
-+ client side: `[add_message ->] finalize -> [sign ->] [pow ->] validate -> build`
++ client side: `[add_message/add_input/add_output ->] finalize -> [sign ->] [pow ->] validate -> build`
 + server side: `add_transaction_draft -> validate -> build`
 
 *`sign` is optional because data transactions don't have to be signed. `pow` is optional because one can use remote
@@ -297,6 +297,40 @@ fn add_message(bundle_builder: BundleBuilder, address: Address, tag: Tag, messag
     draft.message = chunk;
     bundle_builder.push_back(draft);
   }
+}
+```
+
+### Add input/output
+
+Given an address, a tag and a value, these functions creates new input and/or output transactions and add them to the
+bundle builder. In case of input transaction, and depending on the security level, enough transactions will be created
+to hold a full signature.
+
+```rust
+fn add_input(bundle_builder: BundleBuilder, address: Address, tag: Tag, value: Value, security: u8) {
+  for i in 0..security {
+    let mut draft: TransactionDraft = TransactionDraft::new();
+    
+    draft.address = address;
+    draft.tag = tag;
+    if i == 0 {
+      draft.value = value;
+    } else {
+      draft.value = 0;
+    }
+    bundle_builder.push_back(draft);
+  }
+}
+```
+
+```rust
+fn add_output(bundle_builder: BundleBuilder, address: Address, tag: Tag, value: Value) {
+  let mut draft: TransactionDraft = TransactionDraft::new();
+
+  draft.address = address;
+  draft.tag = tag;
+  draft.value = value;
+  bundle_builder.push_back(draft);
 }
 ```
 
