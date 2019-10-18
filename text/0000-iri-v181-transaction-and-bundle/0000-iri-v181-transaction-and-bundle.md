@@ -167,11 +167,15 @@ impl Transaction {
 }
 ```
 
-The `TransactionError` is not fully fleshed out yet. For the time being, it definitely contains `io::Error`:
+### TransactionError type
+
+Other than `io::Error`, we do not yet know which other errors are encountered related to creating or using the
+`Transaction` struct. We leave the specifics of defining appropriate errors for the implementation phase.
 
 ```rust
 pub enum TransactionError {
     Io(io::Error),
+    // ...
 }
 ```
 
