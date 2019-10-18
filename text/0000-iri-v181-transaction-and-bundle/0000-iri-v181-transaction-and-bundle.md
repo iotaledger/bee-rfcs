@@ -7,32 +7,35 @@
 
 # Summary
 
-The fundamental communication unit in the IOTA protocol is the transaction. Everything, including payment settlements
-and plain data, is propagated through the IOTA network in transactions.
+The fundamental communication unit in the IOTA protocol is the transaction. Messages, including payment settlements and
+plain data, are propagated through the IOTA network in transactions. Message that are too large are split up into
+several transactions. 
 
-A transaction is 8019 trits and the payload - `sig_or_msg` field - is 6561 trits. This payload can hold a signature
-fragment or a message fragment. Since it has a limited size, a user often needs more than one transaction to fulfil
-their operation, for example signatures with security level 2 or 3 don't fit in a single transaction and user-provided
-message may exceed the allowance so they need to be fragmented across multiple transactions. Moreover, input/output
-transactions doesn't make sense on their own because they would change the total amount of the ledger so they have to be
-paired with other input/output transactions that together will balance the total value to zero.
+In total, a transaction is 8019 trits large, and its payload --- placed in its `sig_or_msg` field --- 6561 trits. The
+payload is defined to either hold a signature fragment or a message fragment. Since it has a limited size, a user often
+needs more than one transaction to execuate an operation. For example, signatures with [security level 2 or 3](Security
+levels) don't fit in a single transaction, and user-provided messages may exceed the maximum payload capacity so they
+need to be fragmented across multiple transactions. Moreover, because the total amount of tokens stored in the ledger
+has to stay constant, *input transactions* (which are called thus because an address is *put into* a transfer as
+a source of tokens, thus removing them from the address) have to always be matched with *output transactions* such that
+their total value is zero. For these reasons, transactions have to be processed as a whole in groups called bundles.
+A bundle is an atomic operation in the sense that either all or none of its transactions are accepted by the network.
+Even single transactions are propagated through the network within a bundle.
 
-For these reasons, transactions have to be processed as a whole, in groups called bundles. A bundle is an atomic
-operation in the sense that either all or none of its transactions are accepted by the network. Even single
-transactions are propagated through the network within a bundle.
-
-By analogy with TCP, a bundle corresponds to a stream, and a transaction corresponds to a packet.
+By analogy with IP fragmentation, a bundle corresponds to a packet, while transactions correspond to fragments.
 
 This RFC proposes a `Transaction` type and a `Bundle` type to represent the transaction and bundle formats used by the
-IOTA Reference Implementation as of version [`iri v1.8.1`].
+IOTA Reference Implementation as of release [`iri v1.8.1`].
 
 Useful links:
+
 + [Trinary](https://docs.iota.org/docs/dev-essentials/0.1/concepts/trinary)
 + [What is a transaction?](https://docs.iota.org/docs/getting-started/0.1/introduction/what-is-a-transaction)
 + [What is a bundle?](https://docs.iota.org/docs/getting-started/0.1/introduction/what-is-a-bundle)
 + [Bundles and transactions](https://docs.iota.org/docs/dev-essentials/0.1/concepts/bundles-and-transactions)
 + [Structure of a transaction](https://docs.iota.org/docs/dev-essentials/0.1/references/structure-of-a-transaction)
 + [Structure of a bundle](https://docs.iota.org/docs/dev-essentials/0.1/references/structure-of-a-bundle)
++ [Security levels](https://docs.iota.org/docs/dev-essentials/0.1/references/security-levels)
 
 # Motivation
 
