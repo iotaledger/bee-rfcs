@@ -9,11 +9,11 @@
 
 The fundamental communication unit in the IOTA protocol is the transaction. Messages, including payment settlements and
 plain data, are propagated through the IOTA network in transactions. Message that are too large are split up into
-several transactions. 
+several transactions.
 
 In total, a transaction is 8019 trits large, and its payload --- placed in its `sig_or_msg` field --- 6561 trits. The
 payload is defined to either hold a signature fragment or a message fragment. Since it has a limited size, a user often
-needs more than one transaction to execuate an operation. For example, signatures with [security level 2 or 3](Security
+needs more than one transaction to execute an operation. For example, signatures with [security level 2 or 3](Security
 levels) don't fit in a single transaction, and user-provided messages may exceed the maximum payload capacity so they
 need to be fragmented across multiple transactions. Moreover, because the total amount of tokens stored in the ledger
 has to stay constant, *input transactions* (which are called thus because an address is *put into* a transfer as
