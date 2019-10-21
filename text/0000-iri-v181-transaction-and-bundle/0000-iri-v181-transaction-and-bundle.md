@@ -25,7 +25,11 @@ Even single transactions are propagated through the network within a bundle.
 By analogy with IP fragmentation, a bundle corresponds to a packet, while transactions correspond to fragments.
 
 This RFC proposes a `Transaction` type and a `Bundle` type to represent the transaction and bundle formats used by the
-IOTA Reference Implementation as of release [`iri v1.8.1`].
+IOTA Reference Implementation as of release [`iri v1.8.1`]. We also propose the `TransactionBuilder`,
+`IncomingBundleBuilder`, and `OutgoingBundleBuilder` types following the builder pattern to construct both message
+types, respectively. We distinguish between incoming and outgoing bundles because one is concerned with verifying the
+veracity of an existing message being received, while the other one is concerned with constructing a new message
+intended to be sent, which includes setting a number of fields like the bundle hash.
 
 Useful links:
 
@@ -39,13 +43,12 @@ Useful links:
 
 # Motivation
 
-## Transaction
-
 IOTA is a transaction settlement and data transfer layer for IoT (the Internet of Things). Messages on the network are
 `Bundle`s of individual `Transaction`s, which in turn are sent one at a time and are stored in a distributed ledger
 called the *Tangle*. Each `Transaction` encodes data such as sender and receiver addresses, referenced transactions in
-the Tangle, `Bundle` hash, timestamps, and other information required to verify and process each transaction. With the
-transaction being the fundamental unit that is sent over the network, we need to represent it in memory.
+the Tangle, `Bundle` hash, timestamps, and other information required to verify and process each transaction. With
+`Transaction` and `Bundle` representing the units of communication within the IOTA network, we need to be able to
+construct and represent them in memory.
 
 At the time of this RFC, the transaction format used by the IOTA network is defined by [`iri v1.8.1`]. The transaction
 format might change in the future, but for the time being it is not yet understood how a common interface between
@@ -56,17 +59,15 @@ We thus do not consider generalizations over or interfaces for transactions, but
 type. All mentions of *transactions* in general or the `Transaction` type in particular will be implicitly in reference
 to that format used by `iri v1.8.1`.
 
-The `Transaction` type is intended to be *final* and immutable. This contract is enforced by not expose any methods that
-allow manipulating its fields directly. The only public constructor method that allows creating a `Transaction` directly
-are the `from_reader` and `from_slice` method to construct it from a type implementing `std::io::Read`, or from byte
-slice. Otherwise, `Transaction`s should only be built through `Bundle` constructors, and only from that context direct
-access to fields is permitted.
+The `Transaction` and `Bundle` types are intended to be final and immutable. This contract is enforced by not exposing
+any methods that allow manipulating their fields directly. `Transaction`s are intended to be constructed through
+the `TransactionBuilder` builder pattern, while `Bundle`s can be created either via the `IncomingBundleBuilder` or
+`OutgoingBundleBuilder`. The `IncomingBundleBuilder` takes in existing `Transaction`s, compiles them, and verifies
+their veracity before constructing a `Bundle` type. The `OutgoingBundleBuilder` takes in `TransactionBuilder`s,
+and is primarily responsible for filling in all information that can only be set in the actual finalization
+of the outgoing message into a `Bundle`, such as the bundle hash.
 
 [`iri v1.8.1`]: https://github.com/iotaledger/iri/releases/tag/v1.8.1-RELEASE
-
-## Bundle
-
-<!-- TODO -->
 
 # Detailed design
 
