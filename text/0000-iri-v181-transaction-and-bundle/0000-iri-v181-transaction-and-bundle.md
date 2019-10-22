@@ -126,19 +126,19 @@ pub struct Transaction {
 ```
 
 We treat the types of the `Transaction` struct's fields as opaque newtypes for now so that we can flesh them out during
-the implementation phase or in future RFCs.
+the implementation phase or in future RFCs. While IOTA is operating on balanced binary-coded ternary, we choose to not
+introduce specific types for ternary here, and instead just treat each field as a bunch of bytes.
 
 ```rust
-pub struct Trit(u8);
-pub struct SignatureOrMessageFragment([Trit; 6561]);
-pub struct Address([Trit; 243]);
+pub struct SignatureOrMessageFragment([u8; 6561]);
+pub struct Address([u8; 243]);
 pub struct Value(i64);
-pub struct Tag([Trit; 81]);
+pub struct Tag([u8; 81]);
 pub struct Timestamp(u64);
 pub struct Index(u64);
-pub struct BundleHash([Trit; 243]);
-pub struct TransactionHash([Trit; 243]);
-pub struct Nonce([Trit; 81]);
+pub struct BundleHash([u8; 243]);
+pub struct TransactionHash([u8; 243]);
+pub struct Nonce([u8; 81]);
 ```
 
 The `Transaction` type only contains two constructor methods getter methods for read-only borrows of its fields.
@@ -171,23 +171,108 @@ impl Transaction {
 }
 ```
 
-### TransactionError type
+### `TransactionBuilder` struct
 
-Other than `io::Error`, we do not yet know which other errors are encountered related to creating or using the
-`Transaction` struct. We leave the specifics of defining appropriate errors for the implementation phase.
+The `TransactionBuilder` allows setting all the fields of a transaction.
 
 ```rust
-pub enum TransactionError {
-    Io(io::Error),
-    // ...
+pub struct TransactionBuilder {
+    signature_or_message_fragment: Option<SignatureOrMessageFragment>,
+    address: Option<Address>,
+    value: Option<Value>,
+    obsolete_tag: Option<Tag>,
+    timestamp: Option<Timestamp>,
+    current_index: Option<Index>,
+    last_index: Option<Index>,
+    bundle: Option<BundleHash>,
+    trunk: Option<TransactionHash>,
+    branch: Option<TransactionHash>,
+    tag: Option<Tag>,
+    attachment_timestamp: Option<Timestamp>,
+    attachment_timestamp_lower_bound: Option<Timestamp>,
+    attachment_timestamp_upper_bound: Option<Timestamp>,
+    nonce: Option<Nonce>,
 }
 ```
 
+Since the fields are all newtypes and in order to make the setter methods convenient to use, we implement them using the
+`TryInto` trait. This implies that we implement `TryFrom` for all the different newtypes in `TransactionBuilder` to
+convert from those types where appropriate. We leave determining which types to use to the implementation phase. Types
+that come to mind already now are `&str` or `String` to allow setting a field from a combination of
+`"9ABCDEFGHIJKLMNOPQRSTUVWXYZ"`, the permitted characters representing an IOTA tryte (this is where the requirement for
+`TryFrom` comes from, rather than `From`, because not all utf-8 characters encoded in a Rust `String` are allowed, and
+conversion can thus fail).
+
+```rust
+enum Error {
+    InvalidTryteChar,
+    WrongLength { expected: usize, given: usize },
+}
+
+impl fmt::Display for Error {
+    fn display(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        use Error::*;
+
+        let msg: Cow<'_, str> = match self {
+            InvalidTryteChar =>
+                "Tried converting invalid tryte character from string. Only one of '9ABCDEFGHIJKLMNOPQRSTUVWXYZ' may represent a tryte.".into(),
+
+            WrongLength { expected, given } =>
+                format!("Expected {} characters, found {} in String").into(),
+        };
+
+        fmt!(f, &msg)
+    }
+}
+
+impl error::Error for Error {
+    fn source(&self) -> Option<&(dyn Error + 'static)> {
+        None
+    }
+}
+
+impl TryFrom<String> for Tag {
+    type Error = Error;
+
+    fn try_from(value: String) -> Result<Self, Self::Error> {
+        if value.len() != 27 {
+            Err(Error::WrongLength { expected: 27, given: value.len()})?;
+        }
+
+        let mut tryte_array = [0u8; 27];
+        for (tryte, byte) in tryte_array.iter_mut().zip(value.bytes()) {
+            *tryte = match byte {
+                b'9' => 0,
+                b'A' ..= b'M' => byte - b'A' + 1,
+                b'N' ..= b'Z' => 255 - 'Z' + byte,
+                _ => Err(Error::InvalidTryteChar)?,
+            }
+        }
+    }
+}
+
+impl TransactionBuilder {
+    fn tag<T: TryInto<Tag>>(&mut self, tag: T) -> Result<&mut Self, TransactionBuilderError> {
+        self.tag.replace(tag.try_into()?);
+        self
+    }
+```
+
+### Error types
+
+<!-- Fill this in -->
+
+
 ## Bundle
 
-Bundles are immutable groups of immutable transactions, once a bundle is created and validated, it shouldn't be
-tempered. For this reason we have a `Bundle` type and a `BundleBuilder` type. An instantiated `Bundle` object represents
-a syntactically and semantically valid IOTA bundle and a `BundleBuilder` is the only gateway to a `Bundle` object.
+Bundles are immutable groups of immutable transactions. Once a bundle is created and validated, it shouldn't be changed.
+An instantiated `Bundle` object represents a syntactically and semantically valid IOTA bundle, and can only be created
+via the `IncomingBundleBuilder` and `OutgoingBundleBuilder` builder patterns. We distinguish between these builders,
+because the `IncomingBundleBuilder` is concerned with absorbing a number of final `Transaction`s coming in over the
+wire, and verifying their correctness before combining them into a final `Bundle`. The `OutgoingBundleBuilder` is
+concerned with taking in a number of not yet ready transactions represented by `TransactionBuilder`s, and then first
+inserting the bundle hash, and finally calculating the nonce via proof of work on each transaction before constructing
+the final `Bundle`.
 
 ### Bundle struct
 
@@ -225,15 +310,16 @@ impl Bundle {
 }
 ```
 
-### BundleBuilder struct
+### `IncomingBundleBuilder` struct
 
-The `BundleBuilder` offers a simple and convenient way to build bundles:
+The `InocmBundleBuilder` offers a simple and convenient way to build bundles:
 
 ```rust
 pub struct BundleBuilder {
-    transaction_drafts: TransactionDrafts
+    transaction_drafts: TransactionDrafts,
 }
 ```
+
 *`TransactionDrafts` is a constructor for `Transaction`s, but since we don't expose the `transaction_drafts`
 field publicly, it remains an implementation detail for the end user.*
 
@@ -482,7 +568,7 @@ transaction of the bundle, sets some attachment related fields and does individu
 Rust pseudocode:
 
 ```rust
-fn calculate_proof_of_work(bundle_builder: BundleBuilder, mut trunk: TransactionHash, mut branch: TransactionHash, mwm: MinimumWeightMagnitude) {
+fn calculate_proof_of_work(bundle_builder: BundleBuilder, mut trunk: TransactionHash, mut branch: TransactionHash, mwm: MinimumWeightMagnitude, pow: Fn(...)->...) {
     for transaction_draft in rev(&mut bundle_builder) {
         transaction_draft.trunk = trunk;
         transaction_draft.branch = branch;
