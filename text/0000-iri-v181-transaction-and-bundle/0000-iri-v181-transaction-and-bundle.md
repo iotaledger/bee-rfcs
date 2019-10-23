@@ -101,7 +101,7 @@ transaction. Note that the transaction hash is not part of the transaction.
 
 Because modifying the fields of a transaction would invalidate its hash, `Transaction` is immutable after creation.
 
-### Transaction struct
+### `Transaction` struct
 
 A transaction is represented by the `Transaction` struct and follows the structure presented in the table above:
 
@@ -123,22 +123,6 @@ pub struct Transaction {
     attachment_timestamp_upper_bound: Timestamp,
     nonce: Nonce
 }
-```
-
-We treat the types of the `Transaction` struct's fields as opaque newtypes for now so that we can flesh them out during
-the implementation phase or in future RFCs. While IOTA is operating on balanced binary-coded ternary, we choose to not
-introduce specific types for ternary here, and instead just treat each field as a bunch of bytes.
-
-```rust
-pub struct SignatureOrMessageFragment([u8; 6561]);
-pub struct Address([u8; 243]);
-pub struct Value(i64);
-pub struct Tag([u8; 81]);
-pub struct Timestamp(u64);
-pub struct Index(u64);
-pub struct BundleHash([u8; 243]);
-pub struct TransactionHash([u8; 243]);
-pub struct Nonce([u8; 81]);
 ```
 
 The `Transaction` type only contains two constructor methods getter methods for read-only borrows of its fields.
@@ -171,9 +155,92 @@ impl Transaction {
 }
 ```
 
+We treat the types of the `Transaction` struct's fields as opaque newtypes for now so that we can flesh them out during
+the implementation phase or in future RFCs. Because this RFC implements the transaction format as of iri v1.8.1, the
+newtypes shall be constructed from byte slices of a certain length matching that of the reference implementation.
+Conversion methods shall only verify that the passed byte slices (or fixed-size arrays or vectors of bytes) are of
+appropriate length and that each contained byte correctly encodes a balanced trit (this is also refered to as `T1B1`
+binary-coded ternary encoding).
+
+```rust
+pub struct SignatureOrMessageFragment([u8; 6561]);
+pub struct Address([u8; 243]);
+pub struct Value([u8; 81]);
+pub struct Tag([u8; 81]);
+pub struct Timestamp([u8; 27]);
+pub struct Index([u8; 27]);
+pub struct BundleHash([u8; 243]);
+pub struct TransactionHash([u8; 243]);
+pub struct Nonce([u8; 81]);
+```
+
+Below is an example implementation for the `Tag` type. We only consider conversion from byte slices, `&[u8]`. Checked
+conversions ensuring that each byte encodes `-1`, `0`, or `+1` are implemented in terms of the `TryFrom` trait,
+while we also provide `Tag::from_unchecked` as an unchecked faster constructor method.
+
+```rust
+enum TagError {
+    InvalidBinaryEncodedTrit,
+    WrongLength { expected: usize, given: usize },
+}
+
+impl fmt::Display for TagError {
+    fn display(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        use TagError::*;
+
+        let msg: Cow<'_, str> = match self {
+            InvalidTryteChar =>
+                "Tried converting invalid tryte character from string. Only one of '9ABCDEFGHIJKLMNOPQRSTUVWXYZ' may represent a tryte.".into(),
+
+            WrongLength { expected, given } =>
+                format!("Expected {} characters, found {} in String").into(),
+        };
+
+        fmt!(f, &msg)
+    }
+}
+
+impl error::Error for TagError {
+    fn source(&self) -> Option<&(dyn error::Error + 'static)> {
+        None
+    }
+}
+
+impl Tag {
+    /// Unchecked conversion from a byte slice.
+    ///
+    /// Panics if the slice has the wrong length, and does not check if the bytes correctly encode
+    /// a trit.
+    fn from_unchecked(bytes: &[u8]) -> Self {
+        let mut array = [0u8; 81];
+        // Panics if `bytes` is not of length 81
+        Tag(array.copy_from_slice(bytes))
+    }
+}
+
+impl<'_> TryFrom<&'_ [u8]> for Tag {
+    type Error = TagError;
+
+    fn try_from(value: &'_ [u8]) -> Result<Self, Self::Error> {
+        if value.len() != 81 {
+            Err(TagError::WrongLength { expected: 81, given: value.len()})?;
+        }
+
+        for byte in value {
+            match byte {
+                0b0000_0000 | 0b1111_1111 | 0b0000_0001 => {},
+                _ => Err(TagError::InvalidBinaryEncodedTrit)?,
+        }
+
+        Ok(Tag::from_unchecked(value))
+    }
+}
+```
+
 ### `TransactionBuilder` struct
 
-The `TransactionBuilder` allows setting all the fields of a transaction.
+The `TransactionBuilder` allows setting all the fields of a transaction, and verifies and builds a correct
+`Transaction` type.
 
 ```rust
 pub struct TransactionBuilder {
@@ -195,58 +262,39 @@ pub struct TransactionBuilder {
 }
 ```
 
-Since the fields are all newtypes and in order to make the setter methods convenient to use, we implement them using the
-`TryInto` trait. This implies that we implement `TryFrom` for all the different newtypes in `TransactionBuilder` to
-convert from those types where appropriate. We leave determining which types to use to the implementation phase. Types
-that come to mind already now are `&str` or `String` to allow setting a field from a combination of
-`"9ABCDEFGHIJKLMNOPQRSTUVWXYZ"`, the permitted characters representing an IOTA tryte (this is where the requirement for
-`TryFrom` comes from, rather than `From`, because not all utf-8 characters encoded in a Rust `String` are allowed, and
-conversion can thus fail).
+Its setter methods are implemented using generic type parameters `T: TryInto<{FieldType}>` to provide some convenience
+when setting fieds from byte slices. The `TryFrom` implementations for each field type ensure that the byte slices
+only encode correct trits. This can be circumvented by calling a setter method with an explicitly constructed object.
+For example, when setting the `tag` field, calling `transaction_builder.tag(Tag::from_unchecked(&bad_slice))` would
+create set `tag` to a value that was not checked to only contained valid bytes.
 
 ```rust
-enum Error {
-    InvalidTryteChar,
-    WrongLength { expected: usize, given: usize },
+enum TransactionBuilderError {
+    Tag(TagError),
 }
 
-impl fmt::Display for Error {
+impl From<TagError> for Error {
+    fn from(value: TagError) -> Self {
+        Error::Tag(value)
+    }
+}
+
+impl fmt::Display for TransactionBuilderError {
     fn display(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        use Error::*;
+        use TransactionBuilderError::*;
 
-        let msg: Cow<'_, str> = match self {
-            InvalidTryteChar =>
-                "Tried converting invalid tryte character from string. Only one of '9ABCDEFGHIJKLMNOPQRSTUVWXYZ' may represent a tryte.".into(),
-
-            WrongLength { expected, given } =>
-                format!("Expected {} characters, found {} in String").into(),
+        let msg = match self {
+            Tag(_) => "Failed setting tag from byte input.",
         };
 
         fmt!(f, &msg)
     }
 }
 
-impl error::Error for Error {
+impl error::Error for TransactionBuilderError {
     fn source(&self) -> Option<&(dyn Error + 'static)> {
-        None
-    }
-}
-
-impl TryFrom<String> for Tag {
-    type Error = Error;
-
-    fn try_from(value: String) -> Result<Self, Self::Error> {
-        if value.len() != 27 {
-            Err(Error::WrongLength { expected: 27, given: value.len()})?;
-        }
-
-        let mut tryte_array = [0u8; 27];
-        for (tryte, byte) in tryte_array.iter_mut().zip(value.bytes()) {
-            *tryte = match byte {
-                b'9' => 0,
-                b'A' ..= b'M' => byte - b'A' + 1,
-                b'N' ..= b'Z' => 255 - 'Z' + byte,
-                _ => Err(Error::InvalidTryteChar)?,
-            }
+        match self {
+            Tag(e) => Some(e),
         }
     }
 }
@@ -256,14 +304,16 @@ impl TransactionBuilder {
         self.tag.replace(tag.try_into()?);
         self
     }
+}
 ```
 
-### Error types
+### `Error` types
 
-<!-- Fill this in -->
+The `TransactionBuilderError` enum contains variants for each of its fields, encoding that an error can
+occur when setting any of them. In addition, it shall contain errors that can occur during verification
+or construction. We leave the specification of these extra error variants to the implementation phase.
 
-
-## Bundle
+## `Bundle`
 
 Bundles are immutable groups of immutable transactions. Once a bundle is created and validated, it shouldn't be changed.
 An instantiated `Bundle` object represents a syntactically and semantically valid IOTA bundle, and can only be created
@@ -274,22 +324,22 @@ concerned with taking in a number of not yet ready transactions represented by `
 inserting the bundle hash, and finally calculating the nonce via proof of work on each transaction before constructing
 the final `Bundle`.
 
-### Bundle struct
+### `Bundle` struct
 
 As bundles are immutable, they shouldn't be modifiable outside of the scope of the bundle module.
 
 There is a natural order to transactions in a bundle that can be represented in two ways:
-+ each transaction has a `current_index` and a `last_index` and `current_index` goes from `0` to `last_index`, a bundle
-  can then simply be represented by a data structure that contiguously keeps the order like `Vec`;
+
++ each transaction has a `current_index` and a `last_index`. `current_index` goes from `0` to `last_index`. A bundle can
+  then simply be represented by a data structure that contiguously keeps the order like `Vec`;
 + each transaction is chained to the next one through its `trunk` which means we can consider data structures like
   `HashMap` or `BTreeMap`;
 
-For this reason, we hide this as an implementation detail and instead provide a newtype:
+For the purpose of this RFC, we opt for the simplest implementation in terms of `Vec` but hide the details behind
+a newtype and leave the details of the underlying datastructure open to be changed in the future.
 
 ```rust
 pub struct Transactions(Vec<Transaction>)
-// pub struct Transactions(HashMap<Transaction>)
-// pub struct Transactions(BTreeMap<Transaction>)
 ```
 
 Then the `Bundle` type looks like:
@@ -303,7 +353,7 @@ pub struct Bundle {
 And its implementation should only allow to retrieve transactions:
 
 ```rust
-impl Bundle {    
+impl Bundle {
     pub fn transactions(&self) -> &Transactions {
         &self.transactions
     }
@@ -312,52 +362,27 @@ impl Bundle {
 
 ### `IncomingBundleBuilder` struct
 
-The `InocmBundleBuilder` offers a simple and convenient way to build bundles:
+The `IncomingBundleBuilder` offers a simple way to absorb transactions coming over the wire, and
+construct a `Bundle` after verifying that the transactions are consistent.
 
 ```rust
-pub struct BundleBuilder {
-    transaction_drafts: TransactionDrafts,
+pub struct IncomingBundleBuilder {
+    transactions: Transactions,
 }
 ```
 
-*`TransactionDrafts` is a constructor for `Transaction`s, but since we don't expose the `transaction_drafts`
-field publicly, it remains an implementation detail for the end user.*
-
 ```rust
-impl BundleBuilder {    
-    pub fn add_message(&self, address: Address, tag: Tag, message: &[i8]) {
+impl IncomingBundleBuilder {
+    pub push(&mut self, transaction: Transaction) -> &mut Self {
+        self.transactions.push(transaction);
+        self
+    }
+
+    pub fn validate(&self) -> Result<(), IncomingBundleError> {
         unimplemented!()
     }
 
-    pub fn add_input(&self, address: Address, tag: Tag, value: Value, security: u8) {
-        unimplemented!()
-    }
-
-    pub fn add_output(&self, address: Address, tag: Tag, value: Value) {
-        unimplemented!()
-    }
-
-    pub fn calculate_hash(&self) -> BundleHash {
-        unimplemented!()
-    }
-
-    pub fn finalize(&self) {
-        unimplemented!()
-    }
-
-    pub fn sign(&self, seed: Seed, inputs: Inputs) {
-        unimplemented!()
-    }
-
-    pub fn calculate_proof_of_work(&self, mut trunk: TransactionHash, mut branch: TransactionHash, mwm: MinimumWeightMagnitude) {
-        unimplemented!()
-    }
-
-    pub fn validate(&self) -> Result<(), BundleValidationError> {
-        unimplemented!()
-    }
-
-    pub fn build(&self) {
+    pub fn build(self) -> Bundle {
         unimplemented!()
     }
 }
