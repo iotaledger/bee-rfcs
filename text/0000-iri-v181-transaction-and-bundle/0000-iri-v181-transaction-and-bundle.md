@@ -710,6 +710,23 @@ fn validate(bundle_builder: BundleBuilder) -> Result<(), BundleValidationError> 
 **Note:** `validate_bundle_signatures` is a function that actually checks the validity of signatures. It is defined in
 the signing scheme RFC.
 
+## (Missing) interfaces
+
+This RFC is intended to be self contained and thus does not rely on the existence of any traits or types defined outside
+of this proposal. There are however a few aspects of this proposal that would benefit from additional interface
+definitions to make its types easier and more idiomatic to use, or in order to make it more typesafe. We list these here:
+
++ `Transaction` and its fields are heavily tied to the message format of `iri v1.8.1`, the fixed nature of its fields
+  and the representation of each of its fields as `one byte per trit` is the obvious choice. However, equipping the
+  field types with more semantics, for example implementing it in terms of a `BinaryCodedTernary` trait might be useful
+  to enforce invariants.
++ Serialization (and deserialization) of transactions and bundles and its builders is done by concatenating the bytes of
+  all its fields. It might be useful in the future to define traits to allow external code to take a transaction and
+  serialize it.
++ `OutgoingBundleBuilder::proof_of_work` takes an `Fn(&mut [u8; 8019]) -> Result<(), Box<&dyn error::Error>>`. A future
+  RFC should implement an interface instead, for example a `ProofOfWork` trait, and implement the method in terms of it
+  to a) not tie it to strongly to the current transaction length, and b) to properly type its errors. 
+
 # Drawbacks
 
 + There might be use cases that require the ability to directly create a `Transaction`, requiring exposing a builder
