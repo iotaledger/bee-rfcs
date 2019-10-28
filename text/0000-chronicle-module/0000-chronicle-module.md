@@ -3,8 +3,6 @@
 - RFC PR: [iotaledger/bee-rfcs#22](https://github.com/iotaledger/bee-rfcs/pull/22)
 - Bee issue: [iotaledger/bee#64](https://github.com/iotaledger/bee/issues/64)
 
-**TO-DO**: Word Wrapping for 120 characters
-
 # Summary
 
 This RFC proposes a `chronicle` module to provide a flexible and powerful framework for storing/accessing
@@ -46,10 +44,12 @@ The filter/TTL behavior should be based on the transaction categories, which are
 
 This crate mainly focuses on the `runtime` implementation, which makes the transaction
 storing/retrieving/adding/deleting in the database efficient.
+In chronicle runtime, **scheduler** represents the one runs inside a single thread and handles the execution flow of
+(channel -> executor -> reactor), and **ring** represents [scylla-visualized-ring](https://docs.scylladb.com/architecture/ringarchitecture/).
 
 The high-level of the chronicle event (has `future` trait) we have two options for the flow loop:
 
-Please note: both options are based on shared-nothing-architecture:
+Please note: both options are based on shared-nothing-architecture
 
 ## Runtime Design Option 1: channel -> executor -> reactor
 
@@ -90,7 +90,7 @@ Note: each actor has its own mpsc channel
 
 **Executor**
 
-- Owns a `vector<Actor>` with all the actors that belong to the executor's thread
+- Owns a `vector<Actor>` with all the actors that belong to the executor's thread.
 - Has a loop through all the actors using SIMD/AVX(if possible) to check on which actors are ready to do progress, we
   can determine if the actor is ready to do progress by checking if there are any events in its channel, so this
   eliminate the need for notifications to wake up given actors, because we are already looping through all the actors.
@@ -100,7 +100,7 @@ Note: each actor has its own mpsc channel
 
 **Reactor**
 
-- as above.
+- As above.
 
 The chronicle framework also provides useful metrics for ease of data analytics. Good examples of these metrics are
 in [tanglescope](https://github.com/iotaledger/entangled/tree/develop/tanglescope) in IOTA entangled project.
@@ -120,6 +120,10 @@ in [tanglescope](https://github.com/iotaledger/entangled/tree/develop/tanglescop
 
 - Is TTL range needed to be modified?
 - Should the runtime details be separated to different RFCs?
+- How do we guarantee/verify that all txs are collected in Chronicle nodes? (Subscribe redundant IOTA nodes?)
+- Do we need extra mechanism to verify that no txs are lost?
+- How do we detect that some txs are lost?
+- How do we recollect the lost txs when exceptions occur (e.g., zmq disconnected)
 - [Options] Which option do you prefer, notifications-based with channel per thread or iteration-like with channel per actor?
 - [Executor] Should we implement the actor (top level of a future) using async block, or implementing a custom futures?
 - [Reactor] What syscalls we should apply?
