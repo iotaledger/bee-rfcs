@@ -71,6 +71,29 @@ of the outgoing message into a `Bundle`, such as the bundle hash.
 
 # Detailed design
 
+This RFC proposes the implementation of the following types:
+
++ `Transaction` to represent the transaction format as of `iri v1.8.1`;
++ `TransactionBuilder`, a builder pattern to create a `Transaction`;
++ `Bundle` to represent a set of `Transaction`s;
++ `IncomingBundleBuilder`, a builder pattern to create `Bundle` from a set of already created `Transaction`s, such as
+  those coming in over the wire;
++ `OutgoingBundleBuilder` and `SealedBundleBuilder`, two builder patterns working in tandem to create a `Bundle` from
+  `TransactionBuilder`s, i.e. transactions that are not yet fully constructed and will be finalized during the
+  construction process of the entire `Bundle`.
+
+In this proposal we keep the representation of the various types relatively simple and flat. We assume that the user is
+responsible for pushing the appropriate number of transaction drafts into a bundle builder and don't encode this on the
+type level. During the construction phase we check that all transactions are consistent and adhere to IOTA convention,
+but we don't, for example:
+
++ attempt to represent different the different types of transactions on the type level;
++ allow the bundle builders to push extra transactions into their collection automatically to encode a signature of
+  a certain size.
+
+The present proposal is meant as a building block for client facing code to provide higher level types that provide
+more convenient and implicit ways of constructing transactions and bundles.
+
 ## Transaction
 
 A transaction is a sequence of 15 fields of constant length. A transaction has a total length of 8019 trits. The fields'
