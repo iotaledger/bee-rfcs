@@ -1,4 +1,4 @@
-+ Feature name: `signing-scheme`
++ Feature name: `signing-scheme-traits`
 + Start date: 2019-10-28
 + RFC PR: [iotaledger/bee-rfcs#26](https://github.com/iotaledger/bee-rfcs/pull/26)
 + Bee issue: [iotaledger/bee#0000](https://github.com/iotaledger/bee/issues/0000)
