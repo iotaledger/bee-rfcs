@@ -567,6 +567,7 @@ impl OutgoingBundleBuilder {
     /// [Why is the bundle hash normalized?](https://iota.stackexchange.com/questions/1588/why-is-the-bundle-hash-normalized).
     /// 
     /// # M-Bug
+    ///
     /// Due to the implementation of the signature scheme, the normalized bundle hash can't contain a `M` (or `13`)
     /// because it could expose a significant part of the private key, making it easier for attackers to forge signatures.
     /// The bundle hash is then repetitively generated with a slight modification until its normalization doesn't contain a `M`.
@@ -646,19 +647,23 @@ impl SealedOutgoingBundleBuilder {
         sponge.squeeze()
     }
 
-    /// Perform the proof of work calculation, updating the `nonce` field in each of the contained
-    /// `TransactionBuilder`s.
+    /// Chains the contained transactions, filling the `nonce` fields via proof of work and then hashing transactions
+    /// to reference successive transactions.
+    ///
+    /// Using some type `P: ProofOfWork`, this function peforms proof of work and updates the `nonce` field in each of
+    /// the contained `TransactionBuilder`s. The transactions' hashes can then be calculated, and a chain is established
+    /// between transactions by putting the hash of a transaction into its downstream neighbor.
     ///
     /// Proof of Work (PoW) allows your transactions to be accepted by the network. On the IOTA network, PoW is only
-    /// a rate control mechanism.  After PoW, a bundle is ready to be sent to the network. Given a `trunk` and
+    /// a rate control mechanism. After PoW, a bundle is ready to be sent to the network. Given a `trunk` and
     /// a `branch` returned by [`getTransactionsToApprove`], the process iterates over each transaction of the bundle,
-    ///  sets some attachment related fields and does individual PoW.
+    /// sets some attachment related fields and does individual PoW.
     ///
     /// [`getTransactionsToApprove`]: https://docs.iota.org/docs/node-software/0.1/iri/references/api-reference#gettransactionstoapprove
     ///
     /// TODO: This function relies on some `Sponge` and `ProofOfWork` traits, which are not yet defined. The code below lays out
     ///       how proof of work is thought to be used.
-    pub fn perform_proof_of_work<S: Sponge, P: ProofOfWork>(
+    pub fn chain<S: Sponge, P: ProofOfWork>(
         mut self,
         trunk_tip: TransactionHash,
         branch_tip: TransactionHash,
@@ -772,7 +777,7 @@ impl SealedOutgoingBundleBuilder {
     /// + for input transactions, the signature is valid;
     /// 
     /// TODO: `IOTA_SUPPLY` used below is some global constant which needs to be defined and set externally.
-    pub fn validate<S: Sponge>(&mut self, sponge: S) -> Result<(), OutgoingBundleError> {
+    pub fn validate<S: Sponge>(&mut self, sponge: S) -> Result<Self, OutgoingBundleError> {
         unimplemented!()
 
         let mut value = 0;
@@ -824,7 +829,7 @@ impl SealedOutgoingBundleBuilder {
         //       through those transactions in the bundle builder and verify their signatures.
         bundle_builder.validate_withdrawal_transactions()?;
 
-        Ok(())
+        Ok(Self)
     }
 
     pub fn build(self) -> Result<Bundle, OutgoingBundleError> {
@@ -833,65 +838,56 @@ impl SealedOutgoingBundleBuilder {
 }
 ```
 
-## Workflow, how we use this
+## How we use this
 
 In this section, we describe the algorithms needed to build a `Bundle`. The work flow depends on whether one is
 receiving a bundle (and its constituent transactions), or creating a new one to send it. `IncomingBundleBuilder` encodes
 receipt of a bundle, while `OutgoingBundleBuilder` encodes sending.
 
-The workflow for an incoming bundle would looke like this in rust pseudocode:
+### Workflow of `IncomingBundleBuilder`
 
-```
-// receive: {add transaction}+ -> validate -> build`
+The workflow for an incoming bundle would looke like this:
 
+```rust
+// Push transactions into the the incoming bundle builder
 for transaction in transactions {
     incoming_bundle_builder.push(transaction);
 }
 
-// The build step validates the contained transactions and builds the final `Bundle`. An invalid or incomplete
-// collection of transactions will fail the build. A builder not containing any transactions is incomplete.
-let bundle = incoming_bundle_builder.build()?;
+// Validate the bundle; this can be skipped if the transactions come from a trusted source.
+let bundle = match incoming_bundle_builder.validate() {
+    Ok(()) => incoming_bundle_builder.build()?,
+    Err(e) => Err(e)?,
+};
 ```
+
+### Workflow of `OutgoingBundleBuilder`
 
 The construction of an outgoing bundle would happen like this:
 
 ```rust
-// send: {add transaction builders}+ -> insert_bundle_hash (-> sign)? -> pow -> validate -> build`
-//
-// + `sign` is optional because data transactions don't have to be signed
-//
-//
-// for builder in transaction_builders {
-//     outgoing_bundle_builder.push(builder);
-// }
-//
-// let bundle = outgoing_bundle_builder
-//      .insert_bundle_hash()?
-//      // We expect the user of this builder to explicitly sign the bundle with their data, as we don't want to store
-//      // this information inside the builder struct.
-//      .sign(SignatureData)?
-//      .pow()?
-//      // Validation is part of the build step.
-//      .build()?;
+send: {add transaction builders}+ -> insert_bundle_hash (-> sign)? -> pow -> validate -> build`
+
++ `sign` is optional because data transactions don't have to be signed
+
+// Push transaction drafts into the builder
+for builder in transaction_builders {
+    outgoing_bundle_builder.push(builder);
+}
+
+let bundle = outgoing_bundle_builder
+    // Seals the bundle builder to prevent pushing any more transaction builders into it.
+    .seal()?
+    // Withdrawal transactions are signed here. If there are no transactions that need to be signed, this step can be
+    // skipped.
+    .sign(signature_scheme, seed, wallet)?
+    // Attach to the tangle, chain transactions to each other by performing proof of work and calculating transaction hashes via the sponge.
+    .chain(trunk_tip, branch_tip, proof_of_work, sponge)?
+    // Checks if all transactions contained in the sealed builder are consistent.
+    .validate(sponge)?
+    // Constructs the final `Bundle`.
+    .build()?;
 ```
-
-
-## (Missing) interfaces
-
-This RFC is intended to be self contained and thus does not rely on the existence of any traits or types defined outside
-of this proposal. There are however a few aspects of this proposal that would benefit from additional interface
-definitions to make its types easier and more idiomatic to use, or in order to make it more typesafe. We list these here:
-
-+ `Transaction` and its fields are heavily tied to the message format of `iri v1.8.1`, the fixed nature of its fields
-  and the representation of each of its fields as `one byte per trit` is the obvious choice. However, equipping the
-  field types with more semantics, for example implementing it in terms of a `BinaryCodedTernary` trait might be useful
-  to enforce invariants.
-+ Serialization (and deserialization) of transactions and bundles and its builders is done by concatenating the bytes of
-  all its fields. It might be useful in the future to define traits to allow external code to take a transaction and
-  serialize it.
-+ `OutgoingBundleBuilder::proof_of_work` takes an `Fn(&mut [u8; 8019]) -> Result<(), Box<&dyn error::Error>>`. A future
-  RFC should implement an interface instead, for example a `ProofOfWork` trait, and implement the method in terms of it
-  to a) not tie it to strongly to the current transaction length, and b) to properly type its errors. 
 
 # Drawbacks
 
@@ -917,6 +913,10 @@ definitions to make its types easier and more idiomatic to use, or in order to m
   suboptimal for performance. Is it more useful to take borrows, either `&Self` or `&mut Self`, instead?
 + `getTransactionsToApprove` function: the function executing proof of work on `SealedOutgoingBundleBuilder` is talking about
   getting tip and branch from the mentionede function. Should it be part of this RFC or assumed external?
++ Should the `chain` function on `SealedOutgoingBundleBuilder` be renamed to `attach`? Is there a better name?
++ When validating and building the `SealedOutgoingBundleBuilder`, does it make sense to validate withdrawal transactions one
+  more time? Should there be an extra type, e.g. `SealedSignedOutgoingBundleBuilder`, where we encode on the type level
+  that the transaction is verified?
 
 # Blockers
 
@@ -926,3 +926,17 @@ definitions to make its types easier and more idiomatic to use, or in order to m
 + `ProofOfWork` interface (to calculate and fill the nonce)
 + `Sponge` interface (to calculate bundle and transaction hashes)
 + `Constants`: There are global constant which need to be defined and set externally; example: `IOTA_SUPPLY` 
+
+## Other, less specified blockers
+
+This RFC is intended to be self contained and thus does not rely on the existence of any traits or types defined outside
+of this proposal. There are however a few aspects of this proposal that would benefit from additional interface
+definitions to make its types easier and more idiomatic to use, or in order to make it more typesafe. We list these here:
+
++ `Transaction` and its fields are heavily tied to the message format of `iri v1.8.1`, the fixed nature of its fields
+  and the representation of each of its fields as `one byte per trit` is the obvious choice. However, equipping the
+  field types with more semantics, for example implementing it in terms of a `BinaryCodedTernary` trait might be useful
+  to enforce invariants.
++ Serialization (and deserialization) of transactions and bundles and its builders is done by concatenating the bytes of
+  all its fields. It might be useful in the future to define traits to allow external code to take a transaction and
+  serialize it.
