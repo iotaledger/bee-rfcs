@@ -13,7 +13,32 @@
 
 # Detailed design
 
-<!-- TODO -->
+```rust
+pub trait PrivateKey {
+    type PublicKey;
+    type Signature;
+
+    fn generate_public_key(&self) -> Self::PublicKey;
+    fn sign(&self, message: &[i8]) -> Self::Signature;
+}
+```
+
+```rust
+pub trait PublicKey {
+    type Signature;
+    type Error;
+
+    fn verify(&self, message: &[i8], signature: &Self::Signature) -> Result<(), Self::Error>;
+}
+```
+
+```rust
+pub trait Signature {
+    type PublicKey;
+
+    fn recover_public_key(&self, message: &[i8]) -> Self::PublicKey;
+}
+```
 
 # Drawbacks
 
