@@ -8,21 +8,8 @@
 # Summary
 
 The fundamental communication unit in the IOTA protocol is the transaction. Messages, including payment settlements and
-plain data, are propagated through the IOTA network in transactions. Message that are too large are split up into
-several transactions.
-
-A transaction is 8019 trits large in total, out of which 6551 trits are available to store a payload. The payload is
-defined to either hold a signature fragment or a message fragment. Since it has a limited size, a user often needs more
-than one transaction to execute an operation. For example, signatures with [security level 2 or 3](Security levels)
-don't fit in a single transaction, and user-provided messages may exceed the maximum payload capacity so they need to be
-fragmented across multiple transactions. Moreover, because the total amount of tokens stored in the ledger has to stay
-constant, *input transactions* (which are called thus because an address is *put into* a transfer as a source of tokens,
-thus removing them from the address) have to always be matched with *output transactions* such that their total value is
-zero. For these reasons, transactions have to be processed as a whole in groups called bundles. A bundle is an atomic
-operation in the sense that either all or none of its transactions are accepted by the network. Even single transactions
-are propagated through the network within a bundle.
-
-By analogy with IP fragmentation, a bundle corresponds to a packet, while transactions correspond to fragments.
+plain data, are propagated through the IOTA network in transactions. Message that are too large are split up into bundles
+of several transactions and sent one by one.
 
 This RFC proposes a `Transaction` type and a `Bundle` type to represent the transaction and bundle formats used by the
 IOTA Reference Implementation as of release [`iri v1.8.1`]. We also propose the `TransactionBuilder`,
@@ -30,6 +17,8 @@ IOTA Reference Implementation as of release [`iri v1.8.1`]. We also propose the 
 types, respectively. We distinguish between incoming and outgoing bundles because one is concerned with verifying the
 veracity of an existing message being received, while the other one is concerned with constructing a new message
 intended to be sent, which includes setting a number of fields like the bundle hash.
+
+By analogy with IP fragmentation, a bundle corresponds to a packet, while transactions correspond to fragments.
 
 Useful links:
 
@@ -58,6 +47,17 @@ simultaneously.
 We thus do not consider generalizations over or interfaces for transactions, but only propose a basic `Transaction`
 type. All mentions of *transactions* in general or the `Transaction` type in particular will be implicitly in reference
 to that format used by `iri v1.8.1`.
+
+A transaction is 8019 trits large in total, out of which 6551 trits are available to store a payload. The payload is
+defined to either hold a signature fragment or a message fragment. Since it has a limited size, a user often needs more
+than one transaction to execute an operation. For example, signatures with [security level 2 or 3](Security levels)
+don't fit in a single transaction, and user-provided messages may exceed the maximum payload capacity so they need to be
+fragmented across multiple transactions. Moreover, because the total amount of tokens stored in the ledger has to stay
+constant, *input transactions* (which are called thus because an address is *put into* a transfer as a source of tokens,
+thus removing them from the address) have to always be matched with *output transactions* such that their total value is
+zero. For these reasons, transactions have to be processed as a whole in groups called bundles. A bundle is an atomic
+operation in the sense that either all or none of its transactions are accepted by the network. Even single transactions
+are propagated through the network within a bundle.
 
 The `Transaction` and `Bundle` types are intended to be final and immutable. This contract is enforced by not exposing
 any methods that allow manipulating their fields directly. `Transaction`s are intended to be constructed through
