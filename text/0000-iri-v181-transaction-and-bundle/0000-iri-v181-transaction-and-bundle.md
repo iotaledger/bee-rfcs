@@ -150,8 +150,6 @@ impl Transaction {
     pub fn value(&self) -> &Value {
         &self.value
     }
-
-    ...
 }
 ```
 
@@ -189,8 +187,7 @@ impl fmt::Display for TagError {
         use TagError::*;
 
         let msg: Cow<'_, str> = match self {
-            InvalidTryteChar =>
-                "Tried converting invalid tryte character from string. Only one of '9ABCDEFGHIJKLMNOPQRSTUVWXYZ' may represent a tryte.".into(),
+            InvalidBinaryEncodedTrit => "Failed to parse u8; only 0b0000_0000, 0b0000_0001, 0b1111_1111 are valid values.".into(),
 
             WrongLength { expected, given } =>
                 format!("Expected {} characters, found {} in String").into(),
@@ -240,7 +237,8 @@ impl<'_> TryFrom<&'_ [u8]> for Tag {
 ### `TransactionBuilder` struct
 
 The `TransactionBuilder` allows setting all the fields of a transaction, and verifies and builds a correct `Transaction`
-type.
+type. The order of the fields in `TransactionBuilder` follows the table showing the different fields of a transaction,
+the same as `Transaction`.
 
 ```rust
 pub struct TransactionBuilder {
@@ -262,11 +260,12 @@ pub struct TransactionBuilder {
 }
 ```
 
-Its setter methods are implemented using generic type parameters `T: TryInto<{FieldType}>` to provide some convenience
-when setting fieds from byte slices. The `TryFrom` implementations for each field type ensure that the byte slices
-only encode correct trits. This can be circumvented by calling a setter method with an explicitly constructed object.
-For example, when setting the `tag` field, calling `transaction_builder.tag(Tag::from_unchecked(&bad_slice))` would
-create set `tag` to a value that was not checked to only contained valid bytes.
+`TransactionBuilder`'s setter methods are implemented using generic type parameters `T: TryInto<{FieldType}>` to provide
+some convenience when setting fieds from byte slices. The `TryFrom` implementations for each field type ensure that the
+byte slices only encode correct trits. We allow to the checks when setting the fields from trusted sources by explicitly
+constructing the target object. For example, when setting the `tag` field on a `builder: TransactionBuilder` object with
+`trusted_bytes: &[u8]`, calling `builder.tag(Tag::from_unchecked(trusted_bytes))` sets the `tag` field to a value that
+was not verified to only contained valid bytes.
 
 ```rust
 enum TransactionBuilderError {
@@ -304,25 +303,37 @@ impl TransactionBuilder {
         self.tag.replace(tag.try_into()?);
         self
     }
+
+    /// Signs the `TransactionBuilder` by using the signature scheme `S` with some seed and input.
+    ///
+    /// TODO: This depends on one trait `SignatureScheme` which is not implemented yet.
+    fn sign<I, S>(&mut self, signature_scheme: S, seed: S::Seed, input: I) -> Result<&mut Self, TransactionBuilderError>
+    where
+        S: SignatureScheme<I>,
+    {
+        unimplemented!();
+
+        signature_scheme.sign(self, seed, input)?
+    }
 }
 ```
 
 ### `Error` types
 
-The `TransactionBuilderError` enum contains variants for each of its fields, encoding that an error can
-occur when setting any of them. In addition, it shall contain errors that can occur during verification
-or construction. We leave the specification of these extra error variants to the implementation phase.
+The `TransactionBuilderError` enum contains variants for each of its fields, encoding that an error can occur when
+setting any of them. In addition, it shall contain errors that can occur during verification or construction. We leave
+the specification of these extra error variants to the implementation phase.
 
 ## `Bundle`
 
 Bundles are immutable groups of immutable transactions. Once a bundle is created and validated, it shouldn't be changed.
 An instantiated `Bundle` object represents a syntactically and semantically valid IOTA bundle, and can only be created
-via the `IncomingBundleBuilder` and `OutgoingBundleBuilder` builder patterns. We distinguish between these builders,
-because the `IncomingBundleBuilder` is concerned with absorbing a number of final `Transaction`s coming in over the
-wire, and verifying their correctness before combining them into a final `Bundle`. The `OutgoingBundleBuilder` is
-concerned with taking in a number of not yet ready transactions represented by `TransactionBuilder`s, and then first
-inserting the bundle hash, and finally calculating the nonce via proof of work on each transaction before constructing
-the final `Bundle`.
+via the `IncomingBundleBuilder` and `OutgoingBundleBuilder` builder patterns. `IncomingBundleBuilder` is concerned with
+absorbing a number of final `Transaction`s coming in over the wire, and verifying their correctness before combining
+them into a final `Bundle`. `OutgoingBundleBuilder` is concerned with taking in a number of not yet ready transactions
+represented by `TransactionBuilder`s, and then first inserting the bundle hash (and thus sealing the builder, not
+allowing to push any more transaction builders), and finally calculating the nonce via proof of work on each transaction
+before constructing the final `Bundle`.
 
 ### `Bundle` struct
 
@@ -360,7 +371,7 @@ impl Bundle {
 }
 ```
 
-### `IncomingBundleBuilder` and `OutgoingBundleBuilder` struct
+### `IncomingBundleBuilder`
 
 The `IncomingBundleBuilder` offers a simple way to absorb transactions coming over the wire, and
 construct a `Bundle` after verifying that the transactions are consistent.
@@ -373,33 +384,86 @@ pub struct IncomingBundleBuilder {
 
 ```rust
 impl IncomingBundleBuilder {
+    /// Pushes a new transaction coming over the wire into the bundle builder.
     pub push(&mut self, transaction: Transaction) -> &mut Self {
         self.transactions.push(transaction);
         self
     }
 
+    /// Calculate the bundle hash using some sponge.
+    ///
+    /// A bundle hash ties different transactions together. By having this common hash in their `bundle` field, it makes it
+    /// clear that these transactions should be processed as a whole.
+    ///
+    /// The hash of a bundle is derived from the bundle essence of each of its transactions. A bundle essence is a `486` trits
+    /// subset of the transaction fields.
+    ///
+    /// | Name          | Size      |
+    /// | ------------- | --------- |
+    /// | address       | 243 trits |
+    /// | value         | 81 trits  |
+    /// | obsolete_tag  | 81 trits  |
+    /// | timestamp     | 27 trits  |
+    /// | current_index | 27 trits  |
+    /// | last_index    | 27 trits  |
+    ///
+    /// The bundle hash is generated with a sponge by iterating through the bundle, from `0` to `last_index`, absorbing the
+    /// bundle essence of each transaction and eventually squeezing the bundle hash from the sponge.
+    ///
+    /// NOTE: `iri v1.8.1` uses `Kerl` as a sponge.
+    ///
+    /// TODO: This function relies on some `Sponge` trait, which is not yet defined. The code below lays out
+    ///       how the sponge is thought to be used.
+    pub fn calculate_hash<S: Sponge<Output=BundleHash>>(&self, mut sponge: S) -> S::Output {
+        for transaction in bundle_builder {
+            sponge.absorb(transaction.essence());
+        }
+        sponge.squeeze()
+    }
+
+    /// Validates if the transactions inside the bundle builder are all consistent, and if they form a valid bundle.
     pub fn validate(&self) -> Result<(), IncomingBundleError> {
         unimplemented!()
     }
 
-    pub fn build(self) -> Bundle {
+    /// Constructs a final, validated bundle from all contained transactions.
+    pub fn build(&self) -> Bundle {
         unimplemented!()
     }
 }
 ```
 
-The `OutgoingBundleBuilder` is more involved compared to its twin. Its a low level datastructure that allows pushing not
-yet finished transactions into it. Once all `TransactionBuilder`s are collected, the `OutgoingBundleBuilder` is
-responsible for setting the bundle hash on each transaction, setting the transaction indices, signing transactions that
-remove IOTA tokens from an address, setting the nonce field on all transactions, and finally verifying and building
-a `Bundle`.
+### `SignatureInputs`
+
+Information that is required to sign those transactions in a bundle that withdraw funds from an address.
+
+```rust
+struct SignatureInputs {
+    address: Address,
+    security_level: u8,
+    private_key_index: PrivateKeyIndex,
+}
+```
+
+### `OutgoingBundleBuilder` and `SealedOutgoingBundleBuilder` struct
+
+The `OutgoingBundleBuilder` and `SealedOutgoingBundleBuilder` are more involved compared to their incoming bundle
+sibling. `OutgoingBundleBuilder` allows pushing not yet finished transactions into it. Once all `TransactionBuilder`s
+are collected, the `OutgoingBundleBuilder` is sealed by calculating and setting the bundle hash on each of its contained
+transaction drafts and setting their indices, turning it into a `SealedOutgoingBundleBuilder`.
+`SealedOutgoingBundleBuilder` then sets transaction indices, signs transactions removing IOTA tokens from an address,
+sets nonce fields, and finally verifies and builds a `Bundle`.
 
 ```rust
 pub struct OutgoingBundleBuilder {
     transaction_builders: TransactionBuilders,
 }
 
-struct TransasctionBuilders(Vec<TransactionBuilder>);
+pub struct SealedOutgoingBundleBuilder {
+    transaction_builders: TransactionBuilders,
+}
+
+struct TransactionBuilders(Vec<TransactionBuilder>);
 ```
 
 As with `Transactions`, we make `TransactionBuilders` an opaque newtype that for the time being wraps a vector of
@@ -407,22 +471,337 @@ As with `Transactions`, we make `TransactionBuilders` an opaque newtype that for
 
 ```rust
 impl OutgoingBundleBuilder {
-    pub push(&mut self, transaction_builder: TransactionBuilder) -> &mut Self {
-        self.transaction_builders.push(transaction_builders);
+    /// Push a new `TransactionBuilder` into the builder.
+    ///
+    /// Takes ownership of `Self` to allow for chaining with `seal`. For example:
+    ///
+    /// ```rust
+    /// let sealed_outgoing_bundle_builder = outgoing_bundle_builder
+    ///     .push(transaction_builder_1)
+    ///     .push(transaction_builder_2)
+    ///     .push(transaction_builder_3)
+    ///     .seal();
+    /// ```
+    pub push(self, transaction_builder: TransactionBuilder) -> Self {
+        self.transaction_builders.push(transaction_builder);
         self
     }
 
-    pub fn sign(&mut self, signature_inputs: SignatureInputs) -> Result<(), OutgoingBundleError> {
-        unimplemented!()
+    /// Calculate the bundle hash using some sponge.
+    ///
+    /// A bundle hash ties different transactions together. By having this common hash in their `bundle` field, it makes it
+    /// clear that these transactions should be processed as a whole.
+    ///
+    /// The hash of a bundle is derived from the bundle essence of each of its transactions. A bundle essence is a `486` trits
+    /// subset of the transaction fields.
+    ///
+    /// | Name          | Size      |
+    /// | ------------- | --------- |
+    /// | address       | 243 trits |
+    /// | value         | 81 trits  |
+    /// | obsolete_tag  | 81 trits  |
+    /// | timestamp     | 27 trits  |
+    /// | current_index | 27 trits  |
+    /// | last_index    | 27 trits  |
+    ///
+    /// The bundle hash is generated with a sponge by iterating through the bundle, from `0` to `last_index`, absorbing the
+    /// bundle essence of each transaction and eventually squeezing the bundle hash from the sponge.
+    ///
+    /// NOTE: `iri v1.8.1` uses `Kerl` as a sponge.
+    ///
+    /// NOTE: This function is defined on: `SealedOutgoingBundleBuilder`, `OutgoingBundleBuilder`, and `IncomingBundleBuilder`.
+    ///
+    /// TODO: This function relies on some `Sponge` trait, which is not yet defined. The code below lays out
+    ///       how the sponge is thought to be used.
+    pub calculate_hash<S: Sponge<Output=BundleHash>>(&self, mut sponge: S) -> S::Output {
+        unimplemented!();
+
+        // Pseudocode of how `calculate_hash` should look.
+
+        for transaction_draft in bundle_builder {
+            sponge.absorb(transaction_draft.essence());
+        }
+        sponge.squeeze()
     }
 
-    pub fn proof_of_work<F: Fn(&mut [u8; 8019]) -> Result<(), Box<&dyn error::Error>>>(&mut self, pow_fn: F) -> ... {
-        let mut serialized: [u8; 8019] = self.serialize();
-        pow_fn(&mut serialized);
+    /// Seals the bundle builder and sets the bundle hash on all transaction builders contained in it.
+    ///
+    /// This function calculates the bundle hash from its contained transactions and sets it for all of them, sets
+    /// the transactions' indices, ensures that the M-Bug does not occur, and prevents any extra transactions from being
+    /// pushed into it.
+    ///
+    /// Finalizing a bundle means computing the bundle hash, verifying that it matches the security requirement and setting it
+    /// to all the transactions of the bundle. After finalization, transactions of a bundle are ready to be safely attached to
+    /// the tangle. Finalization is also the place to set the transaction indexes since the bundle essence contains all
+    /// `current_index` and `last_index` and we wouldn't be able to alter them after the bundle hash has been calculated.
+    /// 
+    /// # Normalization
+    ///
+    /// During signing scheme, the share of the private key being leaked is not uniform, introducing a risk
+    /// to leak a critically large part of it. By normalizing the hash, we ensure that exactly half of the private key is
+    /// leaked. The actual normalization algorithm is provided in the signing scheme RFC.
+    /// Useful links: [Addresses and signatures](https://docs.iota.org/docs/dev-essentials/0.1/concepts/addresses-and-signatures),
+    /// [Why is the bundle hash normalized?](https://iota.stackexchange.com/questions/1588/why-is-the-bundle-hash-normalized).
+    /// 
+    /// # M-Bug
+    /// Due to the implementation of the signature scheme, the normalized bundle hash can't contain a `M` (or `13`)
+    /// because it could expose a significant part of the private key, making it easier for attackers to forge signatures.
+    /// The bundle hash is then repetitively generated with a slight modification until its normalization doesn't contain a `M`.
+    /// This modification is usually operated by incrementing the `obsolete_tag` of the first transaction of the bundle since
+    /// this field is not being used for any other reason. Useful links:
+    /// [Why is the normalized hash considered insecure when containing the char 'M'](https://iota.stackexchange.com/questions/1241/why-is-the-normalized-hash-considered-insecure-when-containing-the-char-m).
+    /// 
+    /// *Since signature size depends on the security level, a single signature can spread out to up to 3 transactions.
+    /// `inputs` is an object that contains all unused addresses of a seed with a sufficient balance.*
+    /// 
+    /// TODO: This function relies on some `Sponge` trait, which is not yet defined. The code below lays out
+    ///       how the sponge is thought to be used.
+    pub fn seal<S: Sponge<Output=BundleHash>>(self, sponge: S) -> Result<SealedOutgoingBundleBuilder, OutgoingBundleBuilderError> {
+        unimplemented!()
+
+        let mut current_index = 0;
+
+        for transaction_draft in bundle_builder {
+            transaction_draft.current_index = current_index++;
+            transaction_draft.last_index = bundle_builder.size() - 1;
+        }
+
+        let final_hash = loop {
+            // Use the `calculate_hash` function defined above.
+            let hash = bundle_builder.calculate_hash();
+            // See paragraphs on Normalization and M-Bug below pseudocode
+            if hash.normalize().find('M') {
+                bundle_builder
+                    .first_transaction()
+                    .increment_obsolete_tag();
+            } else {
+                break hash;
+            }
+        };
+
+        for transaction_draft in &mut bundle_builder {
+            transaction_draft.bundle = final_hash;
+        }
+    }
+}
+
+impl SealedOutgoingBundleBuilder {
+    /// Calculate the bundle hash using some sponge.
+    ///
+    /// A bundle hash ties different transactions together. By having this common hash in their `bundle` field, it makes it
+    /// clear that these transactions should be processed as a whole.
+    ///
+    /// The hash of a bundle is derived from the bundle essence of each of its transactions. A bundle essence is a `486` trits
+    /// subset of the transaction fields.
+    ///
+    /// | Name          | Size      |
+    /// | ------------- | --------- |
+    /// | address       | 243 trits |
+    /// | value         | 81 trits  |
+    /// | obsolete_tag  | 81 trits  |
+    /// | timestamp     | 27 trits  |
+    /// | current_index | 27 trits  |
+    /// | last_index    | 27 trits  |
+    ///
+    /// The bundle hash is generated with a sponge by iterating through the bundle, from `0` to `last_index`, absorbing the
+    /// bundle essence of each transaction and eventually squeezing the bundle hash from the sponge.
+    ///
+    /// NOTE: `iri v1.8.1` uses `Kerl` as a sponge.
+    ///
+    /// NOTE: This function is defined on: `SealedOutgoingBundleBuilder`, `OutgoingBundleBuilder`, and `IncomingBundleBuilder`.
+    ///
+    /// TODO: This function relies on some `Sponge` trait, which is not yet defined. The code below lays out
+    ///       how the sponge is thought to be used.
+    pub fn calculate_hash<S: Sponge<Output=BundleHash>>(&self, mut sponge: S) -> S::Output {
+        unimplemented!();
+
+        // Pseudocode of how `calculate_hash` should look.
+
+        for transaction_draft in bundle_builder {
+            sponge.absorb(transaction_draft.essence());
+        }
+        sponge.squeeze()
     }
 
-    pub fn validate(&self) -> Result<(), OutgoingBundleError> {
+    /// Perform the proof of work calculation, updating the `nonce` field in each of the contained
+    /// `TransactionBuilder`s.
+    ///
+    /// Proof of Work (PoW) allows your transactions to be accepted by the network. On the IOTA network, PoW is only
+    /// a rate control mechanism.  After PoW, a bundle is ready to be sent to the network. Given a `trunk` and
+    /// a `branch` returned by [`getTransactionsToApprove`], the process iterates over each transaction of the bundle,
+    ///  sets some attachment related fields and does individual PoW.
+    ///
+    /// [`getTransactionsToApprove`]: https://docs.iota.org/docs/node-software/0.1/iri/references/api-reference#gettransactionstoapprove
+    ///
+    /// TODO: This function relies on some `Sponge` and `ProofOfWork` traits, which are not yet defined. The code below lays out
+    ///       how proof of work is thought to be used.
+    pub fn perform_proof_of_work<S: Sponge, P: ProofOfWork>(
+        mut self,
+        trunk_tip: TransactionHash,
+        branch_tip: TransactionHash,
+        proof_of_work: P,
+        sponge: S,
+    ) -> Result<Self, OutgoingBundleError> {
         unimplemented!()
+
+        // Iterates over all transactions starting from the head, setting trunks, branches, timestamps, tags, and nonce.
+        //
+        // NOTE: We do not provide an implementation here.
+        let builder_iterator = self.iter_from_head();
+
+        // Set the head transaction
+        let head_transaction = builder_iterator.next().ok_or("builder does not contain any transaction builders")?;
+        head_transaction.trunk(trunk_tip);
+        head_transaction.branch(branch_tip);
+
+        head_transaction.attachment_timestamp = timestamp();
+        head_transaction.attachment_timestamp_lower = 0;
+        head_transaction.attachment_timestamp_upper = 3812798742493;
+
+        if head_transaction.tag.is_empty() {
+            head_transaction.tag = transaction_draft.obsolete_tag;
+        }
+        head_transaction.set_nonce_from_proof_of_work(proof_of_work);
+
+        // `next_local_trunk` is the hash that will be used as value of the current transaction pointing to the previous
+        // one.
+        let mut next_local_trunk = head_transaction.calculate_hash(sponge);
+
+        // Set the rest of the transactions
+        for transaction_draft in builder_iterator {
+            transaction_draft.branch(trunk_tip);
+            transaction_draft.trunk(branch_tip);
+
+            transaction_draft.attachment_timestamp = timestamp();
+            transaction_draft.attachment_timestamp_lower = 0;
+            transaction_draft.attachment_timestamp_upper = 3812798742493;
+
+            if transaction_draft.tag.is_empty() {
+                transaction_draft.tag = transaction_draft.obsolete_tag;
+            }
+
+            transaction_draft.set_nonce_from_proof_of_work(proof_of_work);
+            next_local_trunk = transaction_draft.calculate_hash(sponge);
+        }
+    }
+
+    /// Signs those transaction drafts contained in the builder that withdraw funds from an address.
+    ///
+    /// Only the owner of the seed from which the source address is generated has the right to remove funds from it. The
+    /// seed is thus used to generate the signature, which in turn is inserteed in those transaction drafts that withdraw
+    /// funds. Bundles that contain withdrawing transactions that have missing or bad signatures will be considered invalid
+    /// and thus rejected.
+    ///
+    /// TODO: This function relies on some `SignatureScheme` trait, which is not yet defined. The code below lays out
+    ///       how the signing scheme is thought to be used.
+    ///
+    /// TODO: This function relies on some `Wallet` trait, which is not yet defined. It's supposed to provide some
+    ///       `f: Wallet W -> Tx Address A -> Signature Scheme Inputs I`
+    pub fn sign<I, S, W>(self, signature_scheme: S, seed: S::Seed, wallet: Wallet) -> Result<Self, OutgoingBundleError>
+    where
+        S: SignatureScheme<I>,
+        W: Wallet<A, Output=S::I>,
+    {
+        unimplemented!();
+
+        // Pseudocode how `sign` should be used.
+
+        let mut current_index = 0
+
+        // TODO: Explain what this loop is trying to achieve.
+        for transaction_draft in self {
+            if transaction_draft.value < 0 {
+                if transaction_draft.current_index >= current_index {
+                    let input = inputs[transaction_draft.address];
+
+                    // NOTE: The specific arguments to the signature scheme depend on the implementation of `SignatureScheme`.
+                    //
+                    // NOTE: The specific arguments to wallet depend on the implementation of `Wallet`.
+                    let fragments = transaction_draft.sign(signature_scheme, seed, wallet.get(transaction_draft.address));
+
+                    for fragment in fragments {
+                        bundle_builder[current_index].signature = fragment;
+                        current_index = current_index + 1
+                    }
+                }
+            } else {
+                current_index = current_index + 1;
+            }
+        }
+    }
+
+    /// Validate a bundle, returning `Ok` if it's valid, and `Err` if not.
+    ///
+    /// Validating a bundle means checking the syntactic and semantic integrity of a bundle as a whole and of its constituent
+    /// transactions. As bundles are atomic transfers, either all or none of the transactions will be accepted by the network.
+    /// After validation, transactions of a bundle are candidates to be included to the ledger.
+    /// 
+    /// For a bundle to be considered valid, the following assertions must be true:
+    /// 
+    /// + bundle has the correct length;
+    /// + transactions share the same bundle hash;
+    /// + transactions absolute value doesn't exceed total IOTA supply;
+    /// + bundle absolute sum never exceeds total IOTA supply;
+    /// + order of transactions in the bundle is the same as announced by `current_index` and `last_index`;
+    /// + input/output transactions have an address ending in `0` i.e. has been generated with Kerl;
+    /// + bundle inputs and outputs are balanced i.e. the bundle sum equals `0`;
+    /// + announced bundle hash matches the computed bundle hash;
+    /// + for input transactions, the signature is valid;
+    /// 
+    /// TODO: `IOTA_SUPPLY` used below is some global constant which needs to be defined and set externally.
+    pub fn validate<S: Sponge>(&mut self, sponge: S) -> Result<(), OutgoingBundleError> {
+        unimplemented!()
+
+        let mut value = 0;
+        let mut current_index = 0;
+
+        // NOTE: We are not defining `first_transaction` here but leave it to the implementation phase.
+        if bundle_builder.len() != bundle_builder.first_transaction().last_index + 1 {
+            Err(InvalidLength)?
+        }
+
+        let bundle_hash = bundle_builder.first_transaction().bundle_hash;
+        let last_index = bundle_builder.first_transaction().last_index;
+
+        for transaction_draft in bundle_builder {
+            if transaction_draft.bundle_hash != bundle_hash {
+                Err(InvalidHash)?
+            }
+
+            if abs(transaction_draft.value) > IOTA_SUPPLY {
+                Err(InvalidTransactionValue)?
+            }
+
+            value += transaction_draft.value;
+            if abs(value) > IOTA_SUPPLY {
+                Err(InvalidValue)?
+            }
+
+            if transaction_draft.current_index != current_index++ {
+                Err(InvalidIndex)?
+            }
+
+            if transaction_draft.last_index != last_index {
+                Err(InvalidIndex)?
+            }
+
+            if transaction_draft.value != 0 && transaction_draft.address.last != 0 {
+                Err(InvalidAddress)?
+        }
+
+        if value != 0 {
+            Err(InvalidValue)?
+        }
+
+        if bundle_hash != self.calculate_hash() {
+            Err(InvalidHash)?
+        }
+
+        // NOTE: We do not provide an example of `validate_withdrawal_transactions`. Its purpose is to walk
+        //       through those transactions in the bundle builder and verify their signatures.
+        bundle_builder.validate_withdrawal_transactions()?;
+
+        Ok(())
     }
 
     pub fn build(self) -> Result<Bundle, OutgoingBundleError> {
@@ -431,7 +810,7 @@ impl OutgoingBundleBuilder {
 }
 ```
 
-## Algorithms
+## Workflow, how we use this
 
 In this section, we describe the algorithms needed to build a `Bundle`. The work flow depends on whether one is
 receiving a bundle (and its constituent transactions), or creating a new one to send it. `IncomingBundleBuilder` encodes
@@ -473,242 +852,6 @@ The construction of an outgoing bundle would happen like this:
 //      .build()?;
 ```
 
-### Calculate hash
-
-*Client side and server side operation.*
-
-A bundle hash ties different transactions together. By having this common hash in their `bundle` field, it makes it
-clear that these transactions should be processed as a whole.
-
-The hash of a bundle is derived from the bundle essence of each of its transactions. A bundle essence is a `486` trits
-subset of the transaction fields.
-
-| Name          | Size      |
-| ------------- | --------- |
-| address       | 243 trits |
-| value         | 81 trits  |
-| obsolete_tag  | 81 trits  |
-| timestamp     | 27 trits  |
-| current_index | 27 trits  |
-| last_index    | 27 trits  |
-
-The bundle hash is generated with a sponge by iterating through the bundle, from `0` to `last_index`, absorbing the
-bundle essence of each transaction and eventually squeezing the bundle hash from the sponge.
-
-Rust pseudocode:
-
-```rust
-fn calculate_hash(bundle_builder: BundleBuilder) -> BundleHash {
-    let mut sponge: Sponge<Kerl> = Sponge::new();
-
-    for transaction_draft in bundle_builder {
-        sponge.absorb(transaction_draft.essence());
-    }
-
-    sponge.squeeze()
-}
-```
-
-### Finalize
-
-*Client side operation.*
-
-Finalizing a bundle means computing the bundle hash, verifying that it matches the security requirement and setting it
-to all the transactions of the bundle. After finalization, transactions of a bundle are ready to be safely attached to
-the tangle. Finalization is also the place to set the transaction indexes since the bundle essence contains all
-`current_index` and `last_index` and we wouldn't be able to alter them after the bundle hash has been calculated.
-
-Rust pseudocode:
-
-```rust
-fn finalize(bundle_builder: BundleBuilder)
-    let mut current_index = 0;
-
-    for transaction_draft in bundle_builder {
-        transaction_draft.current_index = current_index++;
-        transaction_draft.last_index = bundle_builder.size() - 1;
-    }
-
-    let final_hash = loop {
-        // Use the `calculate_hash` function defined above.
-        let hash = calculate_hash(&bundle_builder);
-        // See paragraphs on Normalization and M-Bug below pseudocode
-        if hash.normalize().find('M') {
-            bundle_builder
-                .first_transaction()
-                .increment_obsolete_tag();
-        } else {
-            break hash;
-        }
-    };
-
-    for transaction_draft in &mut bundle_builder {
-        transaction_draft.bundle = final_hash;
-    }
-}
-```
-**Normalization**: during signing scheme, the share of the private key being leaked is not uniform, introducing a risk
-to leak a critically large part of it. By normalizing the hash, we ensure that exactly half of the private key is
-leaked. The actual normalization algorithm is provided in the signing scheme RFC.
-Useful links: [Addresses and signatures](https://docs.iota.org/docs/dev-essentials/0.1/concepts/addresses-and-signatures),
-[Why is the bundle hash normalized?](https://iota.stackexchange.com/questions/1588/why-is-the-bundle-hash-normalized).
-
-**M-Bug**: due to the implementation of the signature scheme, the normalized bundle hash can't contain a `M` (or `13`)
-because it could expose a significant part of the private key, making it easier for attackers to forge signatures.
-The bundle hash is then repetitively generated with a slight modification until its normalization doesn't contain a `M`.
-This modification is usually operated by incrementing the `obsolete_tag` of the first transaction of the bundle since
-this field is not being used for any other reason. Useful links:
-[Why is the normalized hash considered insecure when containing the char 'M'](https://iota.stackexchange.com/questions/1241/why-is-the-normalized-hash-considered-insecure-when-containing-the-char-m).
-
-### Sign
-
-*Client side operation.*
-
-Signing a bundle allow you to prove that you are the owner of the address you are trying to move funds from. With no
-signature or a bad signature, the bundle won't be considered valid and the funds won't be moved. Only the owner of the
-right seed is able to generate the right signature for this address.
-
-Rust pseudocode:
-
-```rust
-fn sign(bundle_builder: BundleBuilder, seed: Seed, inputs: Inputs) {
-    let mut current_index = 0
-
-    // TODO: Explain what this loop is trying to achieve.
-    for transaction_draft in bundle_builder {
-        if transaction_draft.value < 0 {
-            if transaction_draft.current_index >= current_index {
-                let input = inputs[transaction_draft.address];
-                // FIXME: This `sign` function below seems to be a different sign function compares to the one above?
-                //        It has a different signature.
-                let fragments = sign(seed, input.index, input.security, transaction_draft.bundle);
-                for fragment in fragments {
-                    bundle_builder[current_index].signature = fragment;
-                    current_index = current_index + 1
-                }
-            }
-        } else {
-            current_index = current_index + 1;
-        }
-    }
-}
-```
-
-*Since signature size depends on the security level, a single signature can spread out to up to 3 transactions.
-`inputs` is an object that contains all unused addresses of a seed with a sufficient balance.*
-
-### Proof of Work
-
-*Client side operation.*
-
-Proof of Work (PoW) allows your transactions to be accepted by the network. On the IOTA network, PoW is only a rate
-control mechanism.  After PoW, a bundle is ready to be sent to the network. Given a `trunk` and a `branch` returned by
-[getTransactionsToApprove](https://docs.iota.org/docs/node-software/0.1/iri/references/api-reference#gettransactionstoapprove)
-and a minimum weight magnitude `mwm` which represents the difficulty of the PoW, the process iterates over each
-transaction of the bundle, sets some attachment related fields and does individual PoW.
-
-Rust pseudocode:
-
-```rust
-fn calculate_proof_of_work(bundle_builder: BundleBuilder, mut trunk: TransactionHash, mut branch: TransactionHash, mwm: MinimumWeightMagnitude, pow: Fn(...)->...) {
-    for transaction_draft in rev(&mut bundle_builder) {
-        transaction_draft.trunk = trunk;
-        transaction_draft.branch = branch;
-        if transaction_draft.current_index == transaction_draft.last_index {
-            branch = trunk;
-        }
-        transaction_draft.attachment_timestamp = timestamp();
-        transaction_draft.attachment_timestamp_lower = 0;
-        transaction_draft.attachment_timestamp_upper = 3812798742493;
-        if transaction_draft.tag.is_empty() {
-            transaction_draft.tag = transaction_draft.obsolete_tag;
-        }
-        trunk = transaction_draft.pow(mwm);
-    }
-}
-```
-
-Useful links: [Minimum weight magnitude](https://docs.iota.org/docs/dev-essentials/0.1/concepts/minimum-weight-magnitude).
-
-### Validate
-
-*Client side and server side operation.*
-
-Validating a bundle means checking the syntactic and semantic integrity of a bundle as a whole and of its constituent
-transactions. As bundles are atomic transfers, either all or none of the transactions will be accepted by the network.
-After validation, transactions of a bundle are candidates to be included to the ledger.
-
-For a bundle to be considered valid, the following assertions must be true:
-
-+ bundle has announced size;
-+ transactions share the same bundle hash;
-+ transactions absolute value doesn't exceed total IOTA supply;
-+ bundle absolute sum never exceeds total IOTA supply;
-+ order of transactions in the bundle is the same as announced by `current_index` and `last_index`;
-+ input/output transactions have an address ending in `0` i.e. has been generated with Kerl;
-+ bundle inputs and outputs are balanced i.e. the bundle sum equals `0`;
-+ announced bundle hash matches the computed bundle hash;
-+ for input transactions, the signature is valid;
-
-Rust pseudocode:
-
-```rust
-fn validate(bundle_builder: BundleBuilder) -> Result<(), BundleValidationError> {
-    use BundleValidationError::*;
-    let mut value = 0;
-    let mut current_index = 0;
-
-    if bundle_builder.length() != bundle_builder.first_transaction().last_index + 1 {
-        Err(InvalidLength)?
-    }
-
-    let bundle_hash = bundle_builder.first_transaction().bundle_hash;
-    let last_index = bundle_builder.first_transaction().last_index;
-
-    for transaction_draft in bundle_builder {
-        if transaction_draft.bundle_hash != bundle_hash {
-            Err(InvalidHash)?
-        }
-
-        if abs(transaction_draft.value) > IOTA_SUPPLY {
-            Err(InvalidTransactionValue)?
-        }
-
-        value += transaction_draft.value;
-        if abs(value) > IOTA_SUPPLY {
-            Err(InvalidValue)?
-        }
-
-        if transaction_draft.current_index != current_index++ {
-            Err(InvalidIndex)?
-        }
-
-        if transaction_draft.last_index != last_index {
-            Err(InvalidIndex)?
-        }
-
-        if transaction_draft.value != 0 && transaction_draft.address.last != 0 {
-            Err(InvalidAddress)?
-    }
-
-    if value != 0 {
-        Err(InvalidValue)?
-    }
-
-    // Use the `calculate_hash` function defined above.
-    if bundle_hash != calculate_hash(bundle_builder) {
-        Err(InvalidHash)?
-    }
-
-    if !validate_bundle_signatures(bundle_builder) {
-        Err(InvalidSignature)?
-    }
-
-    Ok(())
-```
-
-**Note:** `validate_bundle_signatures` is a function that actually checks the validity of signatures. It is defined in
-the signing scheme RFC.
 
 ## (Missing) interfaces
 
@@ -745,6 +888,18 @@ definitions to make its types easier and more idiomatic to use, or in order to m
   it should be easy to extend it in the future.
 + Hiding the fields of `Transaction` and `Bundle` behind opaque types allows us to flesh them out in the future.
 
-# Unresolved questions
+# Open questions
 
-+ How does remote PoW works ?
++ The design of the builders currently take ownership and return `Self`. This is nice for chaining calls, but might
+  suboptimal for performance. Is it more useful to take borrows, either `&Self` or `&mut Self`, instead?
++ `getTransactionsToApprove` function: the function executing proof of work on `SealedOutgoingBundleBuilder` is talking about
+  getting tip and branch from the mentionede function. Should it be part of this RFC or assumed external?
+
+# Blockers
+
++ `SignatureScheme` (includes normalization) interface (to sign withdrawal transactions)
++ `Wallet`: some interface that ties in with `SignatureScheme` to provide a map from a transaction address to the inputs
+  of the signature scheme.
++ `ProofOfWork` interface (to calculate and fill the nonce)
++ `Sponge` interface (to calculate bundle and transaction hashes)
++ `Constants`: There are global constant which need to be defined and set externally; example: `IOTA_SUPPLY` 
