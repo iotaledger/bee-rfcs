@@ -37,6 +37,8 @@ We thus provide 3 traits `PrivateKey`, `PublicKey` and `Signature`.
 
 ## `PrivateKey` trait
 
+<!-- TODO -->
+
 ```rust
 pub trait PrivateKey {
     type PublicKey;
@@ -49,6 +51,8 @@ pub trait PrivateKey {
 
 ## `PublicKey` trait
 
+<!-- TODO -->
+
 ```rust
 pub trait PublicKey {
     type Signature;
@@ -59,6 +63,8 @@ pub trait PublicKey {
 ```
 
 ## `Signature` trait
+
+<!-- TODO -->
 
 ```rust
 pub trait Signature {
@@ -78,4 +84,5 @@ pub trait Signature {
 
 # Unresolved questions
 
-<!-- TODO -->
+- Should we prefix `Signing` to the `PrivateKey` and `PublicKey` traits since we expect encryption keys to be developed
+at some point (e.g. NTRU for MAM) ?
