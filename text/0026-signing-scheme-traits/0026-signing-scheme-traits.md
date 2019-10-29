@@ -30,6 +30,13 @@ Useful links:
 
 # Detailed design
 
+The proposed traits are at the very core of asymmetric cryptography in which a pair of private and public keys are used
+to create and verify digital signatures. Public keys and signatures are public while private keys remain secret.
+
+We thus provide 3 traits `PrivateKey`, `PublicKey` and `Signature`.
+
+## `PrivateKey` trait
+
 ```rust
 pub trait PrivateKey {
     type PublicKey;
@@ -40,6 +47,8 @@ pub trait PrivateKey {
 }
 ```
 
+## `PublicKey` trait
+
 ```rust
 pub trait PublicKey {
     type Signature;
@@ -48,6 +57,8 @@ pub trait PublicKey {
     fn verify(&self, message: &[i8], signature: &Self::Signature) -> Result<(), Self::Error>;
 }
 ```
+
+## `Signature` trait
 
 ```rust
 pub trait Signature {
