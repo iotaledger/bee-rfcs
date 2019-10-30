@@ -14,11 +14,9 @@ of several transactions and sent one by one.
 This RFC proposes a `Transaction` type and a `Bundle` type to represent the transaction and bundle formats used by the
 IOTA Reference Implementation as of release [`iri v1.8.1`]. We also propose the `TransactionBuilder`,
 `IncomingBundleBuilder`, and `OutgoingBundleBuilder` types following the builder pattern to construct both message
-types, respectively. We distinguish between incoming and outgoing bundles because one is concerned with verifying the
-veracity of an existing message being received, while the other one is concerned with constructing a new message
-intended to be sent, which includes setting a number of fields like the bundle hash.
-
-By analogy with IP fragmentation, a bundle corresponds to a packet, while transactions correspond to fragments.
+types, respectively. We distinguish between incoming and outgoing bundles because one is concerned with verifying an
+existing message being received, while the other one is concerned with constructing a new message intended to be sent,
+which includes setting a number of fields like the bundle hash.
 
 Useful links:
 
@@ -32,12 +30,56 @@ Useful links:
 
 # Motivation
 
-IOTA is a transaction settlement and data transfer layer for IoT (the Internet of Things). Messages on the network are
-`Bundle`s of individual `Transaction`s, which in turn are sent one at a time and are stored in a distributed ledger
-called the *Tangle*. Each `Transaction` encodes data such as sender and receiver addresses, referenced transactions in
-the Tangle, `Bundle` hash, timestamps, and other information required to verify and process each transaction. With
+IOTA is a transaction settlement and data transfer layer for the Internet of Things. Messages on the network are
+`Bundle`s of one or more `Transaction`s, which in turn are sent one at a time and are stored in a distributed ledger
+called the *Tangle*. Each transaction encodes data such as sender and receiver addresses, referenced transactions in
+the Tangle, bundle hash, timestamps, and other information required to verify and process each transaction. With
 `Transaction` and `Bundle` representing the units of communication within the IOTA network, we need to be able to
 construct and represent them in memory.
+
+The current design proposal intends to be as simple as possible, provide an idiomatic Rust interface, and use existing
+IOTA terminology where appplicable. The present types are not intended to be used by end users, but rather as building
+blocks for higher level APIs. As such, the different kinds of transactions are not encoded as Rust types, and the bundle
+builders do not contain any logic to implicitly push more transactions into their stack. For a bundle to be buildable,
+all required transactions have to be present when validating and building. Otherwise the build will fail.
+
+As an example, a simple `Bundle` that intends to transfer funds, withdrawing tokens from one address and depositing them
+in another would be constructed like this:
+
+```rust
+let mut outgoing_bundle_builder = OutgoingBundleBuilder::new();
+
+let mut withdrawing_tx_builder = TransactionBuilder::new();
+let mut depositing_tx_builder = TransactionBuilder::new();
+
+// The transactions here only need to set addresses, values, and tags. All other fields, such as the signature
+// of the withdrawing transaction, will be filled in by the bundle builder.
+withdrawing_tx_builder
+    .address(address_providing_funds)
+    .value(value_to_transfer)
+    .tag(custom_tag);
+
+depositing_tx_builder
+    .address(address_receiving_funds)
+    .value(value_to_transfer)
+    .tag(custom_tag);
+
+let outgoing_bundle = outgoing_bundle_builder
+    .push(withdrawing_tx_builder)
+    .push(depositing_tx_builder)
+    // Seal the bundle, adding indices to its transactions and assigning a bundle hash. This also prevents
+    // pushing more transactions into the bundle.
+    .seal()?
+    // Withdrawal transactions are signed, providing some signature scheme, seed, and wallet. If none are present, this
+    // step can be skipped.
+    .sign(signature_scheme, seed, wallet)?
+    // Attach to the tangle, chain transactions to each other by performing proof of work and calculating transaction hashes via the sponge.
+    .chain_and_attach(trunk_tip, branch_tip, proof_of_work, sponge)?
+    // Check if all transactions contained in the sealed builder are consistent.
+    .validate(sponge)?
+    // Construct the final `Bundle`.
+    .build()?;
+```
 
 At the time of this RFC, the transaction format used by the IOTA network is defined by [`iri v1.8.1`]. The transaction
 format might change in the future, but for the time being it is not yet understood how a common interface between
@@ -47,25 +89,6 @@ simultaneously.
 We thus do not consider generalizations over or interfaces for transactions, but only propose a basic `Transaction`
 type. All mentions of *transactions* in general or the `Transaction` type in particular will be implicitly in reference
 to that format used by `iri v1.8.1`.
-
-A transaction is 8019 trits large in total, out of which 6551 trits are available to store a payload. The payload is
-defined to either hold a signature fragment or a message fragment. Since it has a limited size, a user often needs more
-than one transaction to execute an operation. For example, signatures with [security level 2 or 3](Security levels)
-don't fit in a single transaction, and user-provided messages may exceed the maximum payload capacity so they need to be
-fragmented across multiple transactions. Moreover, because the total amount of tokens stored in the ledger has to stay
-constant, *input transactions* (which are called thus because an address is *put into* a transfer as a source of tokens,
-thus removing them from the address) have to always be matched with *output transactions* such that their total value is
-zero. For these reasons, transactions have to be processed as a whole in groups called bundles. A bundle is an atomic
-operation in the sense that either all or none of its transactions are accepted by the network. Even single transactions
-are propagated through the network within a bundle.
-
-The `Transaction` and `Bundle` types are intended to be final and immutable. This contract is enforced by not exposing
-any methods that allow manipulating their fields directly. `Transaction`s are intended to be constructed through
-the `TransactionBuilder` builder pattern, while `Bundle`s can be created either via the `IncomingBundleBuilder` or
-`OutgoingBundleBuilder`. The `IncomingBundleBuilder` takes in existing `Transaction`s, compiles them, and verifies
-their veracity before constructing a `Bundle` type. The `OutgoingBundleBuilder` takes in `TransactionBuilder`s,
-and is primarily responsible for filling in all information that can only be set in the actual finalization
-of the outgoing message into a `Bundle`, such as the bundle hash.
 
 [`iri v1.8.1`]: https://github.com/iotaledger/iri/releases/tag/v1.8.1-RELEASE
 
@@ -93,6 +116,25 @@ but we don't, for example:
 
 The present proposal is meant as a building block for client facing code to provide higher level types that provide
 more convenient and implicit ways of constructing transactions and bundles.
+
+A transaction is 8019 trits large in total, out of which 6551 trits are available to store a payload. The payload is
+defined to either hold a signature fragment or a message fragment. Since it has a limited size, a user often needs more
+than one transaction to execute an operation. For example, signatures with [security level 2 or 3](Security levels)
+don't fit in a single transaction, and user-provided messages may exceed the maximum payload capacity so they need to be
+fragmented across multiple transactions. Moreover, because the total amount of tokens stored in the ledger has to stay
+constant, *input transactions* (which are called thus because an address is *put into* a transfer as a source of tokens,
+thus removing them from the address) have to always be matched with *output transactions* such that their total value is
+zero. For these reasons, transactions have to be processed as a whole in groups called bundles. A bundle is an atomic
+operation in the sense that either all or none of its transactions are accepted by the network. Even single transactions
+are propagated through the network within a bundle.
+
+The `Transaction` and `Bundle` types are intended to be final and immutable. This contract is enforced by not exposing
+any methods that allow manipulating their fields directly. `Transaction`s are intended to be constructed through
+the `TransactionBuilder` builder pattern, while `Bundle`s can be created either via the `IncomingBundleBuilder` or
+`OutgoingBundleBuilder`. The `IncomingBundleBuilder` takes in existing `Transaction`s, compiles them, and verifies
+their veracity before constructing a `Bundle` type. The `OutgoingBundleBuilder` takes in `TransactionBuilder`s,
+and is primarily responsible for filling in all information that can only be set in the actual finalization
+of the outgoing message into a `Bundle`, such as the bundle hash.
 
 ## Transaction
 
@@ -663,7 +705,7 @@ impl SealedOutgoingBundleBuilder {
     ///
     /// TODO: This function relies on some `Sponge` and `ProofOfWork` traits, which are not yet defined. The code below lays out
     ///       how proof of work is thought to be used.
-    pub fn chain<S: Sponge, P: ProofOfWork>(
+    pub fn chain_and_attach<S: Sponge, P: ProofOfWork>(
         mut self,
         trunk_tip: TransactionHash,
         branch_tip: TransactionHash,
@@ -838,7 +880,7 @@ impl SealedOutgoingBundleBuilder {
 }
 ```
 
-## How we use this
+## How this is used
 
 In this section, we describe the algorithms needed to build a `Bundle`. The work flow depends on whether one is
 receiving a bundle (and its constituent transactions), or creating a new one to send it. `IncomingBundleBuilder` encodes
@@ -866,10 +908,6 @@ let bundle = match incoming_bundle_builder.validate() {
 The construction of an outgoing bundle would happen like this:
 
 ```rust
-send: {add transaction builders}+ -> insert_bundle_hash (-> sign)? -> pow -> validate -> build`
-
-+ `sign` is optional because data transactions don't have to be signed
-
 // Push transaction drafts into the builder
 for builder in transaction_builders {
     outgoing_bundle_builder.push(builder);
@@ -882,7 +920,7 @@ let bundle = outgoing_bundle_builder
     // skipped.
     .sign(signature_scheme, seed, wallet)?
     // Attach to the tangle, chain transactions to each other by performing proof of work and calculating transaction hashes via the sponge.
-    .chain(trunk_tip, branch_tip, proof_of_work, sponge)?
+    .chain_and_attach(trunk_tip, branch_tip, proof_of_work, sponge)?
     // Checks if all transactions contained in the sealed builder are consistent.
     .validate(sponge)?
     // Constructs the final `Bundle`.
