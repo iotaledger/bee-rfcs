@@ -5,7 +5,24 @@
 
 # Summary
 
-<!-- TODO -->
+Asymmetric cryptography is mainly used for two purposes:
+
++ **Confidentiality**. Messages are encrypted with a public key and only the owner of the matching private key is able
+  to decrypt it;
++ **Authenticity**. Messages are signed with a private key and can be verified by anyone with the matching public key;
+
+In the IOTA network, asymmetric cryptography is used to authenticate the transfer of tokens or data. For a payment
+settlement to be accepted by the network, a proof that the initiator of the transfer is the actual tokens owner has to
+be provided, this proof is the digital signature of the transfer. In the IOTA core protocol, data transfer signatures
+are not enforced but some second layer protocol like MAM may rely on data digital signatures.
+
+In this RFC we will only focus on the authenticity aspect of asymmetric cryptography.
+
+Useful links:
+
++ [Asymmetric cryptography](https://en.wikipedia.org/wiki/Public-key_cryptography)
++ [Digital signature](https://en.wikipedia.org/wiki/Digital_signature)
++ [Addresses and signatures](https://docs.iota.org/docs/dev-essentials/0.1/concepts/addresses-and-signatures)
 
 # Motivation
 
