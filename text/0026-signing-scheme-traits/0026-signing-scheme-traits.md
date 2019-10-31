@@ -84,9 +84,8 @@ pub trait PrivateKey {
 ```rust
 pub trait PublicKey {
     type Signature;
-    type Error;
 
-    fn verify(&self, message: &[i8], signature: &Self::Signature) -> Result<(), Self::Error>;
+    fn verify(&self, message: &[i8], signature: &Self::Signature) -> bool;
 }
 ```
 
@@ -117,3 +116,4 @@ pub trait Signature {
 - Should we prefix `Signing` to the `PrivateKey` and `PublicKey` traits since we expect encryption keys to be developed
 at some point (e.g. NTRU for MAM) ?
 - Should `PublicKey` provide an `address` function that return an `Address` type ?
+- `verify` currently returns `bool`, we may consider returning an `Error` type if need be ?
