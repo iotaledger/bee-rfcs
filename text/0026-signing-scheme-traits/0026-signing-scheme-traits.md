@@ -52,6 +52,10 @@ to create and verify digital signatures. Public keys and signatures are public w
 
 We thus provide 3 traits `PrivateKey`, `PublicKey` and `Signature`.
 
+Associated types are being used to bind implementations of these 3 traits together within a signing scheme. For example,
+a `PrivateKey` implementation of a signing scheme shouldn't be used with a `PublicKey` implementation of another
+signing scheme. 
+
 ## `PrivateKey` trait
 
 <!-- TODO -->
