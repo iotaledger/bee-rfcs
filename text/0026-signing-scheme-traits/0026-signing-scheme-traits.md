@@ -60,6 +60,11 @@ signing scheme.
 
 ### `PrivateKey` trait
 
+The creation of a private key differs a lot from a signing scheme to another so we do not enforce a spececific way to
+to build one with a trait method. We expect each private key implementation to provide a `new` method with appropriate
+parameters. Once a private key is created, it is responsible for the creation of public keys and signatures which are
+enforced by trait methods.
+
 <!-- TODO -->
 
 ```rust
@@ -97,6 +102,8 @@ pub trait Signature {
 }
 ```
 
+## Implementation & workflow
+
 # Drawbacks
 
 <!-- TODO -->
@@ -109,3 +116,4 @@ pub trait Signature {
 
 - Should we prefix `Signing` to the `PrivateKey` and `PublicKey` traits since we expect encryption keys to be developed
 at some point (e.g. NTRU for MAM) ?
+- Should `PublicKey` provide an `address` function that return an `Address` type ?
