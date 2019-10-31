@@ -47,16 +47,18 @@ Useful links:
 
 # Detailed design
 
-The proposed traits are at the very core of asymmetric cryptography in which a pair of private and public keys are used
+The proposed design is at the very core of asymmetric cryptography in which a pair of private and public keys are used
 to create and verify digital signatures. Public keys and signatures are public while private keys remain secret.
 
-We thus provide 3 traits `PrivateKey`, `PublicKey` and `Signature`.
+## Traits
+
+Following a common asymmetric cryptography pattern, we provide 3 traits `PrivateKey`, `PublicKey` and `Signature`.
 
 Associated types are being used to bind implementations of these 3 traits together within a signing scheme. For example,
 a `PrivateKey` implementation of a signing scheme shouldn't be used with a `PublicKey` implementation of another
-signing scheme. 
+signing scheme.
 
-## `PrivateKey` trait
+### `PrivateKey` trait
 
 <!-- TODO -->
 
@@ -70,7 +72,7 @@ pub trait PrivateKey {
 }
 ```
 
-## `PublicKey` trait
+### `PublicKey` trait
 
 <!-- TODO -->
 
@@ -83,7 +85,7 @@ pub trait PublicKey {
 }
 ```
 
-## `Signature` trait
+### `Signature` trait
 
 <!-- TODO -->
 
