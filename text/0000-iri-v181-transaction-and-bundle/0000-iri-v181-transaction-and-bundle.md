@@ -12,11 +12,11 @@ plain data, are propagated through the IOTA network in transactions. Message tha
 of several transactions and sent one by one.
 
 This RFC proposes a `Transaction` type and a `Bundle` type to represent the transaction and bundle formats used by the
-IOTA Reference Implementation as of release [`iri v1.8.1`]. We also propose the `TransactionBuilder`,
-`IncomingBundleBuilder`, and `OutgoingBundleBuilder` types following the builder pattern to construct both message
-types, respectively. We distinguish between incoming and outgoing bundles because one is concerned with verifying an
-existing message being received, while the other one is concerned with constructing a new message intended to be sent,
-which includes setting a number of fields like the bundle hash.
+IOTA Reference Implementation as of release [`iri v1.8.1`]. To construct these types, this proposal also includes the
+builder patterns `TransactionBuilder`, `IncomingBundleBuilder`, `OutgoingBundleBuilder`, and
+`SealedOutgoingBundleBuilder`. `IncomingBundleBuilder` is concerned with constructing and verifying complete messages
+coming in externally, while `OutgoingBundleBuilder` and its sealed version are for constructing a bundle from scratch to
+be sent to the IOTA network. This includes signing its transactions, setting the bundle hash and other relevant fields.
 
 Useful links:
 
@@ -34,8 +34,8 @@ IOTA is a transaction settlement and data transfer layer for the Internet of Thi
 `Bundle`s of one or more `Transaction`s, which in turn are sent one at a time and are stored in a distributed ledger
 called the *Tangle*. Each transaction encodes data such as sender and receiver addresses, referenced transactions in
 the Tangle, bundle hash, timestamps, and other information required to verify and process each transaction. With
-`Transaction` and `Bundle` representing the units of communication within the IOTA network, we need to be able to
-construct and represent them in memory.
+`Transaction` and `Bundle` representing the units of communication within the IOTA network, one needs to be able
+to construct them and represent in memory.
 
 The current design proposal intends to be as simple as possible, provide an idiomatic Rust interface, and use existing
 IOTA terminology where appplicable. The present types are not intended to be used by end users, but rather as building
@@ -86,9 +86,9 @@ format might change in the future, but for the time being it is not yet understo
 different versions transaction formats should be implemented, or if the network will support several transaction types
 simultaneously.
 
-We thus do not consider generalizations over or interfaces for transactions, but only propose a basic `Transaction`
-type. All mentions of *transactions* in general or the `Transaction` type in particular will be implicitly in reference
-to that format used by `iri v1.8.1`.
+This proposal thus does not consider generalizations over or interfaces for transactions, but only propose a basic
+`Transaction` type. All mentions of *transactions* in general or of the `Transaction` type in particular will be
+implicitly in reference to the format used by `iri v1.8.1`.
 
 [`iri v1.8.1`]: https://github.com/iotaledger/iri/releases/tag/v1.8.1-RELEASE
 
@@ -105,17 +105,16 @@ This RFC proposes the implementation of the following types:
   `TransactionBuilder`s, i.e. transactions that are not yet fully constructed and will be finalized during the
   construction process of the entire `Bundle`.
 
-In this proposal we keep the representation of the various types relatively simple and flat. We assume that the user is
-responsible for pushing the appropriate number of transaction drafts into a bundle builder and don't encode this on the
-type level. During the construction phase we check that all transactions are consistent and adhere to IOTA convention,
-but we don't, for example:
+This proposal keeps the representation of the various types flat. It is assumed that the user is responsible for pushing
+the appropriate number of transaction drafts into a bundle builder. During the construction phase, all transactions are
+checked for consistency and for adherence to IOTA conventions. This proposal does not however:
 
-+ attempt to represent different the different types of transactions on the type level;
++ attempt to represent different the different types of transactions at the type level;
 + allow the bundle builders to push extra transactions into their collection automatically to encode a signature of
   a certain size.
 
-The present proposal is meant as a building block for client facing code to provide higher level types that provide
-more convenient and implicit ways of constructing transactions and bundles.
+The proposed types are meant as building blocks for higher level abstractions in client facing code to provide more
+convenient and implicit ways of constructing transactions and bundles.
 
 A transaction is 8019 trits large in total, out of which 6551 trits are available to store a payload. The payload is
 defined to either hold a signature fragment or a message fragment. Since it has a limited size, a user often needs more
@@ -218,12 +217,12 @@ impl Transaction {
 }
 ```
 
-We treat the types of the `Transaction` struct's fields as opaque newtypes for now so that we can flesh them out during
-the implementation phase or in future RFCs. Because this RFC implements the transaction format as of iri v1.8.1, the
-newtypes shall be constructed from byte slices of a certain length matching that of the reference implementation.
-Conversion methods shall only verify that the passed byte slices (or fixed-size arrays or vectors of bytes) are of
-appropriate length and that each contained byte correctly encodes a balanced trit (this is also refered to as `T1B1`
-binary-coded ternary encoding).
+The fields in the `Transaction` struct are opaque newtypes so that they can be fleshed out during the implementation
+phase or in future RFCs without requireing breaking changes. Because this RFC implements the transaction format as of
+iri v1.8.1, the newtypes shall be constructed from byte slices of a certain length matching that of the reference
+implementation. Conversion methods shall only verify that the passed byte slices (or fixed-size arrays or vectors of
+bytes) are of appropriate length and that each contained byte correctly encodes a balanced trit (this is also refered to
+as `T1B1` binary-coded ternary encoding).
 
 ```rust
 pub struct SignatureOrMessageFragment([u8; 6561]);
@@ -237,9 +236,9 @@ pub struct TransactionHash([u8; 243]);
 pub struct Nonce([u8; 81]);
 ```
 
-Below is an example implementation for the `Tag` type. We only consider conversion from byte slices, `&[u8]`. Checked
-conversions ensuring that each byte encodes `-1`, `0`, or `+1` are implemented in terms of the `TryFrom` trait,
-while we also provide `Tag::from_unchecked` as an unchecked faster constructor method.
+Below is an example implementation for the `Tag` type. Only conversions from byte slices, `&[u8]`, are considered.
+Checked conversions ensuring that each byte encodes `-1`, `0`, or `+1` are implemented in terms of the `TryFrom` trait,
+while a `Tag::from_unchecked` function is provided as an unchecked faster constructor method.
 
 ```rust
 enum TagError {
@@ -327,10 +326,11 @@ pub struct TransactionBuilder {
 
 `TransactionBuilder`'s setter methods are implemented using generic type parameters `T: TryInto<{FieldType}>` to provide
 some convenience when setting fieds from byte slices. The `TryFrom` implementations for each field type ensure that the
-byte slices only encode correct trits. We allow to the checks when setting the fields from trusted sources by explicitly
-constructing the target object. For example, when setting the `tag` field on a `builder: TransactionBuilder` object with
-`trusted_bytes: &[u8]`, calling `builder.tag(Tag::from_unchecked(trusted_bytes))` sets the `tag` field to a value that
-was not verified to only contained valid bytes.
+byte slices only encode correct trits. If the data comes from a trusted source, the checks can be circumvented by
+explicitly constructing the target object and that one in the setter. For example, when setting the `tag` field on
+a `builder: TransactionBuilder` object with `trusted_bytes: &[u8]`, calling
+`builder.tag(Tag::from_unchecked(trusted_bytes))` sets the `tag` field to a value that was not verified to only
+contained valid bytes.
 
 ```rust
 enum TransactionBuilderError {
@@ -386,8 +386,8 @@ impl TransactionBuilder {
 ### `Error` types
 
 The `TransactionBuilderError` enum contains variants for each of its fields, encoding that an error can occur when
-setting any of them. In addition, it shall contain errors that can occur during verification or construction. We leave
-the specification of these extra error variants to the implementation phase.
+setting any of them. In addition, it shall contain errors that can occur during verification or construction. The
+specification of the concrete error types are left to be elaborated in the implementation phase.
 
 ## `Bundle`
 
@@ -408,11 +408,11 @@ There is a natural order to transactions in a bundle that can be represented in 
 
 + each transaction has a `current_index` and a `last_index`. `current_index` goes from `0` to `last_index`. A bundle can
   then simply be represented by a data structure that contiguously keeps the order like `Vec`;
-+ each transaction is chained to the next one through its `trunk` which means we can consider data structures like
-  `HashMap` or `BTreeMap`;
++ each transaction is chained to the next one through its `trunk` hash, which means one can consider using
+  a datastructure like `HashMap`.
 
-For the purpose of this RFC, we opt for the simplest implementation in terms of `Vec` but hide the details behind
-a newtype and leave the details of the underlying datastructure open to be changed in the future.
+This RFC opts for using the simplest implementation in terms of `Vec`, but hides the implementation details behind
+a newtype. This way, the underlying datastructures can be changed in the future without breaking dependent code.
 
 ```rust
 pub struct Transactions(Vec<Transaction>)
@@ -531,7 +531,7 @@ pub struct SealedOutgoingBundleBuilder {
 struct TransactionBuilders(Vec<TransactionBuilder>);
 ```
 
-As with `Transactions`, we make `TransactionBuilders` an opaque newtype that for the time being wraps a vector of
+As with `Transactions`, `TransactionBuilders` are an opaque newtype that for the time being wraps a vector of
 `TransactionBuilder`s.
 
 ```rust
@@ -882,9 +882,9 @@ impl SealedOutgoingBundleBuilder {
 
 ## How this is used
 
-In this section, we describe the algorithms needed to build a `Bundle`. The work flow depends on whether one is
-receiving a bundle (and its constituent transactions), or creating a new one to send it. `IncomingBundleBuilder` encodes
-receipt of a bundle, while `OutgoingBundleBuilder` encodes sending.
+This section shows how to construct a `Bundle`. The work flow depends on whether one is receiving a bundle (and its
+constituent transactions), or creating a new one to send it. `IncomingBundleBuilder` encodes receipt of a bundle, while
+`OutgoingBundleBuilder` encodes sending.
 
 ### Workflow of `IncomingBundleBuilder`
 
@@ -949,12 +949,12 @@ let bundle = outgoing_bundle_builder
 
 + The design of the builders currently take ownership and return `Self`. This is nice for chaining calls, but might
   suboptimal for performance. Is it more useful to take borrows, either `&Self` or `&mut Self`, instead?
-+ `getTransactionsToApprove` function: the function executing proof of work on `SealedOutgoingBundleBuilder` is talking about
-  getting tip and branch from the mentionede function. Should it be part of this RFC or assumed external?
++ `getTransactionsToApprove` function: the function executing proof of work on `SealedOutgoingBundleBuilder` is talking
+  about getting tip and branch from the mentionede function. Should it be part of this RFC or assumed external?
 + Should the `chain` function on `SealedOutgoingBundleBuilder` be renamed to `attach`? Is there a better name?
-+ When validating and building the `SealedOutgoingBundleBuilder`, does it make sense to validate withdrawal transactions one
-  more time? Should there be an extra type, e.g. `SealedSignedOutgoingBundleBuilder`, where we encode on the type level
-  that the transaction is verified?
++ When validating and building the `SealedOutgoingBundleBuilder`, does it make sense to validate withdrawal transactions
+  one more time? Should there be an extra type, e.g. `SealedSignedOutgoingBundleBuilder`, where we encode on the type
+  level that the transaction is verified?
 
 # Blockers
 
