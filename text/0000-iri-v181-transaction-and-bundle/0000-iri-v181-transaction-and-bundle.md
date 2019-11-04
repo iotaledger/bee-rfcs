@@ -7,16 +7,18 @@
 
 # Summary
 
-The fundamental communication unit in the IOTA protocol is the transaction. Messages, including payment settlements and
-plain data, are propagated through the IOTA network in transactions. Messages that are too large are split up into
-bundles of several transactions and sent one by one.
+The fundamental communication unit in the IOTA protocol is the transaction. Messages can either represent payment
+settlements or serve as plain data carriers. In IOTA terminology, messages are referred to as *bundles*, which ---
+depending on the message size --- consist of one or more *transactions*. A transaction is the smallest unit of
+communication, and has a fixed size. 
 
 This RFC proposes a `Transaction` type and a `Bundle` type to represent the transaction and bundle formats used by the
 IOTA Reference Implementation as of release [`iri v1.8.1`]. To construct these types, this proposal also includes the
 builder patterns `TransactionBuilder`, `IncomingBundleBuilder`, `OutgoingBundleBuilder`, and
 `SealedOutgoingBundleBuilder`. `IncomingBundleBuilder` is concerned with constructing and verifying complete messages
 coming in externally, while `OutgoingBundleBuilder` and its sealed version are for constructing a bundle from scratch to
-be sent to the IOTA network. This includes signing its transactions, setting the bundle hash and other relevant fields.
+be sent to the IOTA network. This includes signing its transactions, calculating the bundle hash, and setting other
+relevant fields depending on context.
 
 Useful links:
 
@@ -106,12 +108,13 @@ This RFC proposes the implementation of the following types:
   construction process of the entire `Bundle`.
 
 This proposal keeps the representation of the various types flat. It is assumed that the user is responsible for pushing
-the appropriate number of transaction drafts into a bundle builder. During the construction phase, all transactions are
-checked for consistency and for adherence to IOTA conventions. This proposal does not however:
+the appropriate number of transaction drafts into a bundle builder. During construction, all transactions are
+checked for consistency and for adherence to IOTA conventions. Among the higher level logic that this proposal
+does not intend to provide are:
 
-+ attempt to represent different the different types of transactions at the type level;
-+ allow the bundle builders to push extra transactions into their collection automatically to encode a signature of
-  a certain size.
++ representation of different types of transactions at the type level;
++ allowing the bundle builders to push extra transactions into their collection automatically to encode signatures or
+  messages exceeding the maximum capacity of one transaction.
 
 The proposed types are meant as building blocks for higher level abstractions in client facing code to provide more
 convenient and implicit ways of constructing transactions and bundles.
@@ -131,7 +134,7 @@ The `Transaction` and `Bundle` types are intended to be final and immutable. Thi
 any methods that allow manipulating their fields directly. `Transaction`s are intended to be constructed through
 the `TransactionBuilder` builder pattern, while `Bundle`s can be created either via the `IncomingBundleBuilder` or
 `OutgoingBundleBuilder`. The `IncomingBundleBuilder` takes in existing `Transaction`s, compiles them, and verifies
-their veracity before constructing a `Bundle` type. The `OutgoingBundleBuilder` takes in `TransactionBuilder`s,
+them before constructing a `Bundle` type. The `OutgoingBundleBuilder` takes in `TransactionBuilder`s,
 and is primarily responsible for filling in all information that can only be set in the actual finalization
 of the outgoing message into a `Bundle`, such as the bundle hash.
 
@@ -140,25 +143,25 @@ of the outgoing message into a `Bundle`, such as the bundle hash.
 A transaction is a sequence of 15 fields of constant length. A transaction has a total length of 8019 trits. The fields'
 name, description, and size are summarized in the table below, in their order of appearance in a transaction.
 
-| Name                              | Description                                             | Size (in trits) | Set by (functions detailed below)             |
-| ---                               | ---                                                     | ---             | ---
-| `signature_or_message_fragment`   | contains a signature fragment of the transfer           |                 |                                               |
-|                                   | or user-defined message fragment                        | 6561            | `add_message` or `sign`                       |
-| `address`                         | receiver (output) if value > 0,
-|                                   | or sender (input) if value < 0                          | 243             | `add_message` or `add_input` or `add_output`  |
-| `value`                           | the transferred amount in IOTA                          | 81              | `add_message` or `add_input` or `add_output`  |
-| `obsolete_tag`                    | currently only used for the M-Bug (see later)           | 81              | `finalize`                                    |
-| `timestamp`                       | the time when the transaction was issued                | 27              | `add_message` or `add_input` or `add_output`  |
-| `current_index`                   | the index of the transaction in its bundle              | 27              | `finalize`                                    |
-| `last_index`                      | the index of the last transaction in the bundle         | 27              | `finalize`                                    |
-| `bundle`                          | the hash of the bundle essence                          | 243             | `finalize`                                    |
-| `trunk`                           | the hash of the first transaction referenced/approved   | 243             | `calculate_proof_of_work`                     |
-| `branch`                          | the hash of the second transaction referenced/approved  | 243             | `calculate_proof_of_work`                     |
-| `tag`                             | arbitrary user-defined value                            | 81              | `add_message` or `add_input` or `add_output`  |
-| `attachment_timestamp`            | the timestamp for when Proof-of-Work is completed       | 27              | `calculate_proof_of_work`                     |
-| `attachment_timestamp_lowerbound` | *not specified*                                         | 27              | `calculate_proof_of_work`                     |
-| `attachment_timestamp_upperbound` | *not specified*                                         | 27              | `calculate_proof_of_work`                     |
-| `nonce`                           | the Proof-of-Work nonce of the transaction              | 81              | `calculate_proof_of_work`                     |
+| Name                              | Description                                             | Size (in trits) |
+| ---                               | ---                                                     | ---             |
+| `signature_or_message_fragment`   | contains a signature fragment of the transfer           |                 |
+|                                   | or user-defined message fragment                        | 6561            |
+| `address`                         | receiver (output) if value > 0,                         |                 |
+|                                   | or sender (input) if value < 0                          | 243             |
+| `value`                           | the transferred amount in IOTA                          | 81              |
+| `obsolete_tag`                    | currently only used for the M-Bug (see later)           | 81              |
+| `timestamp`                       | the time when the transaction was issued                | 27              |
+| `current_index`                   | the index of the transaction in its bundle              | 27              |
+| `last_index`                      | the index of the last transaction in the bundle         | 27              |
+| `bundle`                          | the hash of the bundle essence                          | 243             |
+| `trunk`                           | the hash of the first transaction referenced/approved   | 243             |
+| `branch`                          | the hash of the second transaction referenced/approved  | 243             |
+| `tag`                             | arbitrary user-defined value                            | 81              |
+| `attachment_timestamp`            | the timestamp for when Proof-of-Work is completed       | 27              |
+| `attachment_timestamp_lowerbound` | *not specified*                                         | 27              |
+| `attachment_timestamp_upperbound` | *not specified*                                         | 27              |
+| `nonce`                           | the Proof-of-Work nonce of the transaction              | 81              |
 
 Each transaction is uniquely identified by its *transaction hash*, which is calculated based on all fields of the
 transaction. Note that the transaction hash is not part of the transaction.
@@ -189,17 +192,14 @@ pub struct Transaction {
 }
 ```
 
-The `Transaction` type only contains two constructor methods getter methods for read-only borrows of its fields.
+The `Transaction` type should be equipped with constructor methods to instantiate an object of its type from a type
+implementing `std::io::Read`. We leave it to the implementation phase to define other appropriate methods. Other than
+that it contains getter methods for read-only borrows of its fields.
 
 ```rust
 impl Transaction {
-    /// Create a `Transaction` from a reader.
+    /// Create a `Transaction` from a reader object.
     pub fn from_reader<R: std::io::Read>(reader: R) -> Result<Self, TransactionError> {
-        unimplemented!()
-    }
-
-    /// Create a `Transaction` from a slice of bytes
-    pub fn from_slice(stream: &[u8]) -> Result<Self, TransactionError> {
         unimplemented!()
     }
 
@@ -219,10 +219,10 @@ impl Transaction {
 
 The fields in the `Transaction` struct are opaque newtypes so that they can be fleshed out during the implementation
 phase or in future RFCs without requireing breaking changes. Because this RFC implements the transaction format as of
-iri v1.8.1, the newtypes shall be constructed from byte slices of a certain length matching that of the reference
+`iri v1.8.1`, the newtypes shall be constructed from byte slices of a certain length matching that of the reference
 implementation. Conversion methods shall only verify that the passed byte slices (or fixed-size arrays or vectors of
-bytes) are of appropriate length and that each contained byte correctly encodes a balanced trit (this is also refered to
-as `T1B1` binary-coded ternary encoding).
+bytes) are of appropriate length and that each contained byte correctly encodes a balanced trit (this is also referred
+to as `T1B1` binary-coded ternary encoding).
 
 ```rust
 pub struct SignatureOrMessageFragment([u8; 6561]);
@@ -236,9 +236,9 @@ pub struct TransactionHash([u8; 243]);
 pub struct Nonce([u8; 81]);
 ```
 
-Below is an example implementation for the `Tag` type. Only conversions from byte slices, `&[u8]`, are considered.
-Checked conversions ensuring that each byte encodes `-1`, `0`, or `+1` are implemented in terms of the `TryFrom` trait,
-while a `Tag::from_unchecked` function is provided as an unchecked faster constructor method.
+Below is an example implementation for the `Tag`, with conversion from a `&[u8]`. An implementation in terms of `&[i8]`
+would look similar. Checked conversions ensuring that each byte encodes `-1`, `0`, or `+1` are implemented in terms of
+the `TryFrom` trait, while a `Tag::from_unchecked` function is provided as an unchecked faster constructor method.
 
 ```rust
 enum TagError {
@@ -368,18 +368,6 @@ impl TransactionBuilder {
         self.tag.replace(tag.try_into()?);
         self
     }
-
-    /// Signs the `TransactionBuilder` by using the signature scheme `S` with some seed and input.
-    ///
-    /// TODO: This depends on one trait `SignatureScheme` which is not implemented yet.
-    fn sign<I, S>(&mut self, signature_scheme: S, seed: S::Seed, input: I) -> Result<&mut Self, TransactionBuilderError>
-    where
-        S: SignatureScheme<I>,
-    {
-        unimplemented!();
-
-        signature_scheme.sign(self, seed, input)?
-    }
 }
 ```
 
@@ -487,6 +475,8 @@ impl IncomingBundleBuilder {
     }
 
     /// Validates if the transactions inside the bundle builder are all consistent, and if they form a valid bundle.
+    ///
+    /// NOTE: This shares logic with `SealedOutgoingBundleBuilder`, so one should be implementable in terms of the other.
     pub fn validate(&self) -> Result<(), IncomingBundleError> {
         unimplemented!()
     }
@@ -583,8 +573,8 @@ impl OutgoingBundleBuilder {
 
         // Pseudocode of how `calculate_hash` should look.
 
-        for transaction_draft in bundle_builder {
-            sponge.absorb(transaction_draft.essence());
+        for transaction_builder in bundle_builder {
+            sponge.absorb(transaction_builder.essence());
         }
         sponge.squeeze()
     }
@@ -627,9 +617,9 @@ impl OutgoingBundleBuilder {
 
         let mut current_index = 0;
 
-        for transaction_draft in bundle_builder {
-            transaction_draft.current_index = current_index++;
-            transaction_draft.last_index = bundle_builder.size() - 1;
+        for transaction_builder in bundle_builder {
+            transaction_builder.current_index = current_index++;
+            transaction_builder.last_index = bundle_builder.size() - 1;
         }
 
         let final_hash = loop {
@@ -645,8 +635,8 @@ impl OutgoingBundleBuilder {
             }
         };
 
-        for transaction_draft in &mut bundle_builder {
-            transaction_draft.bundle = final_hash;
+        for transaction_builder in &mut bundle_builder {
+            transaction_builder.bundle = final_hash;
         }
     }
 }
@@ -683,8 +673,8 @@ impl SealedOutgoingBundleBuilder {
 
         // Pseudocode of how `calculate_hash` should look.
 
-        for transaction_draft in bundle_builder {
-            sponge.absorb(transaction_draft.essence());
+        for transaction_builder in bundle_builder {
+            sponge.absorb(transaction_builder.essence());
         }
         sponge.squeeze()
     }
@@ -703,7 +693,7 @@ impl SealedOutgoingBundleBuilder {
     ///
     /// [`getTransactionsToApprove`]: https://docs.iota.org/docs/node-software/0.1/iri/references/api-reference#gettransactionstoapprove
     ///
-    /// TODO: This function relies on some `Sponge` and `ProofOfWork` traits, which are not yet defined. The code below lays out
+    /// TODO: This function relies on some `Sponge` and `ProofOfWork` traits, which are not yet defined. The code below
     ///       how proof of work is thought to be used.
     pub fn chain_and_attach<S: Sponge, P: ProofOfWork>(
         mut self,
@@ -724,12 +714,13 @@ impl SealedOutgoingBundleBuilder {
         head_transaction.trunk(trunk_tip);
         head_transaction.branch(branch_tip);
 
+        // FIXME: Explain these numbers.
         head_transaction.attachment_timestamp = timestamp();
         head_transaction.attachment_timestamp_lower = 0;
         head_transaction.attachment_timestamp_upper = 3812798742493;
 
         if head_transaction.tag.is_empty() {
-            head_transaction.tag = transaction_draft.obsolete_tag;
+            head_transaction.tag = transaction_builder.obsolete_tag;
         }
         head_transaction.set_nonce_from_proof_of_work(proof_of_work);
 
@@ -738,20 +729,23 @@ impl SealedOutgoingBundleBuilder {
         let mut next_local_trunk = head_transaction.calculate_hash(sponge);
 
         // Set the rest of the transactions
-        for transaction_draft in builder_iterator {
-            transaction_draft.branch(trunk_tip);
-            transaction_draft.trunk(branch_tip);
+        for transaction_builder in builder_iterator {
+            transaction_builder.branch(trunk_tip);
+            transaction_builder.trunk(next_local_trunk);
 
-            transaction_draft.attachment_timestamp = timestamp();
-            transaction_draft.attachment_timestamp_lower = 0;
-            transaction_draft.attachment_timestamp_upper = 3812798742493;
+            transaction_builder.attachment_timestamp = timestamp();
 
-            if transaction_draft.tag.is_empty() {
-                transaction_draft.tag = transaction_draft.obsolete_tag;
+
+            // FIXME: Explain these numbers.
+            transaction_builder.attachment_timestamp_lower = 0;
+            transaction_builder.attachment_timestamp_upper = 3812798742493;
+
+            if transaction_builder.tag.is_empty() {
+                transaction_builder.tag = transaction_builder.obsolete_tag;
             }
 
-            transaction_draft.set_nonce_from_proof_of_work(proof_of_work);
-            next_local_trunk = transaction_draft.calculate_hash(sponge);
+            transaction_builder.set_nonce_from_proof_of_work(proof_of_work);
+            next_local_trunk = transaction_builder.calculate_hash(sponge);
         }
     }
 
@@ -779,15 +773,16 @@ impl SealedOutgoingBundleBuilder {
         let mut current_index = 0
 
         // TODO: Explain what this loop is trying to achieve.
-        for transaction_draft in self {
-            if transaction_draft.value < 0 {
-                if transaction_draft.current_index >= current_index {
-                    let input = inputs[transaction_draft.address];
+        for transaction_builder in self {
+            if transaction_builder.value < 0 {
+                if transaction_builder.current_index >= current_index {
+                    let input = inputs[transaction_builder.address];
 
                     // NOTE: The specific arguments to the signature scheme depend on the implementation of `SignatureScheme`.
                     //
                     // NOTE: The specific arguments to wallet depend on the implementation of `Wallet`.
-                    let fragments = transaction_draft.sign(signature_scheme, seed, wallet.get(transaction_draft.address));
+                    // FIXME: The sign function has to operate on several transactions, so this is not the right way of doing it.
+                    let fragments = transaction_builder.sign(signature_scheme, seed, wallet.get(transaction_builder.address));
 
                     for fragment in fragments {
                         bundle_builder[current_index].signature = fragment;
@@ -833,29 +828,29 @@ impl SealedOutgoingBundleBuilder {
         let bundle_hash = bundle_builder.first_transaction().bundle_hash;
         let last_index = bundle_builder.first_transaction().last_index;
 
-        for transaction_draft in bundle_builder {
-            if transaction_draft.bundle_hash != bundle_hash {
+        for transaction_builder in bundle_builder {
+            if transaction_builder.bundle_hash != bundle_hash {
                 Err(InvalidHash)?
             }
 
-            if abs(transaction_draft.value) > IOTA_SUPPLY {
+            if abs(transaction_builder.value) > IOTA_SUPPLY {
                 Err(InvalidTransactionValue)?
             }
 
-            value += transaction_draft.value;
+            value += transaction_builder.value;
             if abs(value) > IOTA_SUPPLY {
                 Err(InvalidValue)?
             }
 
-            if transaction_draft.current_index != current_index++ {
+            if transaction_builder.current_index != current_index++ {
                 Err(InvalidIndex)?
             }
 
-            if transaction_draft.last_index != last_index {
+            if transaction_builder.last_index != last_index {
                 Err(InvalidIndex)?
             }
 
-            if transaction_draft.value != 0 && transaction_draft.address.last != 0 {
+            if transaction_builder.value != 0 && transaction_builder.address.last != 0 {
                 Err(InvalidAddress)?
         }
 
@@ -955,6 +950,11 @@ let bundle = outgoing_bundle_builder
 + When validating and building the `SealedOutgoingBundleBuilder`, does it make sense to validate withdrawal transactions
   one more time? Should there be an extra type, e.g. `SealedSignedOutgoingBundleBuilder`, where we encode on the type
   level that the transaction is verified?
++ Should the builders actually be generalized over different types of signature schemes, hashes, etc? Given that this is
+  supposed to be an implementation of specific transaction and bundle versions, we might need to tie the transaction
+  directly to those types. Examples of such functions include: `calculate_hash`, `sign`.
++ Work out how to sign groups of transactions taken together (signatur levels 1, 2, and 3 require the same number of transactions).
++ Explain constants used throughout the code.
 
 # Blockers
 
