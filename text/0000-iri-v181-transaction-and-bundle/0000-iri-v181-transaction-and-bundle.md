@@ -500,7 +500,7 @@ struct SignatureInputs {
 }
 ```
 
-### `OutgoingBundleBuilder` and `SealedOutgoingBundleBuilder` struct
+### `OutgoingBundleBuilder` and `SealedOutgoingBundleBuilder`
 
 The `OutgoingBundleBuilder` and `SealedOutgoingBundleBuilder` are more involved compared to their incoming bundle
 sibling. `OutgoingBundleBuilder` allows pushing not yet finished transactions into it. Once all `TransactionBuilder`s
