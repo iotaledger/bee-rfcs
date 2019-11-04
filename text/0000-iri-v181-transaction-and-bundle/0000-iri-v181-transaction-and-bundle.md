@@ -8,8 +8,8 @@
 # Summary
 
 The fundamental communication unit in the IOTA protocol is the transaction. Messages, including payment settlements and
-plain data, are propagated through the IOTA network in transactions. Message that are too large are split up into bundles
-of several transactions and sent one by one.
+plain data, are propagated through the IOTA network in transactions. Messages that are too large are split up into
+bundles of several transactions and sent one by one.
 
 This RFC proposes a `Transaction` type and a `Bundle` type to represent the transaction and bundle formats used by the
 IOTA Reference Implementation as of release [`iri v1.8.1`]. To construct these types, this proposal also includes the
