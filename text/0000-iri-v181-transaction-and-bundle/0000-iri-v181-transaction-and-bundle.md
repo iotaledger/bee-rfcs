@@ -143,25 +143,25 @@ of the outgoing message into a `Bundle`, such as the bundle hash.
 A transaction is a sequence of 15 fields of constant length. A transaction has a total length of 8019 trits. The fields'
 name, description, and size are summarized in the table below, in their order of appearance in a transaction.
 
-| Name                              | Description                                             | Size (in trits) |
-| ---                               | ---                                                     | ---             |
-| `signature_or_message_fragment`   | contains a signature fragment of the transfer           |                 |
-|                                   | or user-defined message fragment                        | 6561            |
-| `address`                         | receiver (output) if value > 0,                         |                 |
-|                                   | or sender (input) if value < 0                          | 243             |
-| `value`                           | the transferred amount in IOTA                          | 81              |
-| `obsolete_tag`                    | currently only used for the M-Bug (see later)           | 81              |
-| `timestamp`                       | the time when the transaction was issued                | 27              |
-| `current_index`                   | the index of the transaction in its bundle              | 27              |
-| `last_index`                      | the index of the last transaction in the bundle         | 27              |
-| `bundle`                          | the hash of the bundle essence                          | 243             |
-| `trunk`                           | the hash of the first transaction referenced/approved   | 243             |
-| `branch`                          | the hash of the second transaction referenced/approved  | 243             |
-| `tag`                             | arbitrary user-defined value                            | 81              |
-| `attachment_timestamp`            | the timestamp for when Proof-of-Work is completed       | 27              |
-| `attachment_timestamp_lowerbound` | *not specified*                                         | 27              |
-| `attachment_timestamp_upperbound` | *not specified*                                         | 27              |
-| `nonce`                           | the Proof-of-Work nonce of the transaction              | 81              |
+| Name                              | Description                                            | Size (in trits) |
+| ---                               | ---                                                    | ---             |
+| `signature_or_message_fragment`   | contains a signature fragment of the transfer          |                 |
+|                                   | or user-defined message fragment                       | 6561            |
+| `address`                         | receiver (output) if value > 0,                        |                 |
+|                                   | or sender (input) if value < 0                         | 243             |
+| `value`                           | the transferred amount in IOTA                         | 81              |
+| `obsolete_tag`                    | currently only used for the M-Bug (see later)          | 81              |
+| `timestamp`                       | the time when the transaction was issued               | 27              |
+| `current_index`                   | the index of the transaction in its bundle             | 27              |
+| `last_index`                      | the index of the last transaction in the bundle        | 27              |
+| `bundle`                          | the hash of the bundle essence                         | 243             |
+| `trunk`                           | the hash of the first transaction referenced/approved  | 243             |
+| `branch`                          | the hash of the second transaction referenced/approved | 243             |
+| `tag`                             | arbitrary user-defined value                           | 81              |
+| `attachment_timestamp`            | the timestamp for when Proof-of-Work is completed      | 27              |
+| `attachment_timestamp_lowerbound` | *not specified*                                        | 27              |
+| `attachment_timestamp_upperbound` | *not specified*                                        | 27              |
+| `nonce`                           | the Proof-of-Work nonce of the transaction             | 81              |
 
 Each transaction is uniquely identified by its *transaction hash*, which is calculated based on all fields of the
 transaction. Note that the transaction hash is not part of the transaction.
@@ -435,6 +435,10 @@ pub struct IncomingBundleBuilder {
 }
 ```
 
+In this block we list all methods that we expect to be part of `IncomingBundleBuilder`. It is not exhaustive and we
+expect the specifics to change during the implementation phase. Methods with more information are listed in their
+sections below this one.
+
 ```rust
 impl IncomingBundleBuilder {
     /// Pushes a new transaction coming over the wire into the bundle builder.
@@ -443,48 +447,61 @@ impl IncomingBundleBuilder {
         self
     }
 
-    /// Calculate the bundle hash using some sponge.
-    ///
-    /// A bundle hash ties different transactions together. By having this common hash in their `bundle` field, it makes it
-    /// clear that these transactions should be processed as a whole.
-    ///
-    /// The hash of a bundle is derived from the bundle essence of each of its transactions. A bundle essence is a `486` trits
-    /// subset of the transaction fields.
-    ///
-    /// | Name          | Size      |
-    /// | ------------- | --------- |
-    /// | address       | 243 trits |
-    /// | value         | 81 trits  |
-    /// | obsolete_tag  | 81 trits  |
-    /// | timestamp     | 27 trits  |
-    /// | current_index | 27 trits  |
-    /// | last_index    | 27 trits  |
-    ///
-    /// The bundle hash is generated with a sponge by iterating through the bundle, from `0` to `last_index`, absorbing the
-    /// bundle essence of each transaction and eventually squeezing the bundle hash from the sponge.
-    ///
-    /// NOTE: `iri v1.8.1` uses `Kerl` as a sponge.
-    ///
-    /// TODO: This function relies on some `Sponge` trait, which is not yet defined. The code below lays out
-    ///       how the sponge is thought to be used.
-    pub fn calculate_hash<S: Sponge<Output=BundleHash>>(&self, mut sponge: S) -> S::Output {
-        for transaction in bundle_builder {
-            sponge.absorb(transaction.essence());
-        }
-        sponge.squeeze()
-    }
-
-    /// Validates if the transactions inside the bundle builder are all consistent, and if they form a valid bundle.
-    ///
-    /// NOTE: This shares logic with `SealedOutgoingBundleBuilder`, so one should be implementable in terms of the other.
-    pub fn validate(&self) -> Result<(), IncomingBundleError> {
+    /// Constructs a final, validated Bundle from all contained transactions.
+    pub fn build(&self) -> Result<Bundle, IncomingBundleBuilderError> {
         unimplemented!()
     }
+}
+```
 
-    /// Constructs a final, validated bundle from all contained transactions.
-    pub fn build(&self) -> Bundle {
-        unimplemented!()
+The functions below are all intended as methods on `IncomingBundleBuilder`.
+
+#### `IncomingBundleBuilder::calculate_hash`
+
+Calculates the bundle hash using some `S: Sponge`. A bundle hash ties different transactions together. By having this
+common hash in their `bundle` field, it makes it clear that these transactions should be processed as a whole.
+
+The hash of a bundle is derived from the bundle essence of each of its transactions. The bundle essence of each
+transaction is a subset of its fields, with a total size of `486` trits, see the table below.
+
+| Name            | Size (in trits) |
+| ---             | ---             |
+| `address`       | 243             |
+| `value`         | 81              |
+| `obsolete_tag`  | 81              |
+| `timestamp`     | 27              |
+| `current_index` | 27              |
+| `last_index`    | 27              |
+
+The bundle hash is generated with a sponge by iterating through the bundle, from `0` to `last_index`, absorbing the
+bundle essence of each transaction and eventually squeezing the bundle hash from the sponge.
+
++ **NOTE:** `iri v1.8.1` uses [`Kerl`] as a sponge. A Rust implementation is the matter of a different RFC.
++ **TODO:** This function relies on some `Sponge` trait, which is not yet defined. The code below lays out how the
+  sponge is thought to be used.
+
+[`Kerl`]: https://github.com/iotaledger/kerl
+
+```rust
+pub fn calculate_hash<S: Sponge<Output=BundleHash>>(&self, mut sponge: S) -> S::Output {
+    for transaction in bundle_builder {
+        // Transaction::essence is not specifically defined in this RFC.
+        sponge.absorb(transaction.essence());
     }
+    sponge.squeeze()
+}
+```
+
+#### `IncomingBundleBuilder::validate`
+
+Validates if the transactions inside the bundle builder are all consistent, and if they form a valid bundle.
+
+**NOTE:** This shares logic with `SealedOutgoingBundleBuilder::validate`, so one might be implementable in terms of the
+other.
+
+```rust
+pub fn validate(&self) -> Result<(), IncomingBundleError> {
+    unimplemented!()
 }
 ```
 
