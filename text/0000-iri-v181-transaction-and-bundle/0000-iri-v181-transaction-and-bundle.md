@@ -168,7 +168,7 @@ transaction. Note that the transaction hash is not part of the transaction.
 
 Because modifying the fields of a transaction would invalidate its hash, `Transaction` is immutable after creation.
 
-### `Transaction` struct
+### `Transaction`
 
 A transaction is represented by the `Transaction` struct and follows the structure presented in the table above:
 
@@ -298,7 +298,7 @@ impl<'_> TryFrom<&'_ [u8]> for Tag {
 }
 ```
 
-### `TransactionBuilder` struct
+### `TransactionBuilder`
 
 The `TransactionBuilder` allows setting all the fields of a transaction, and verifies and builds a correct `Transaction`
 type. The order of the fields in `TransactionBuilder` follows the table showing the different fields of a transaction,
@@ -388,7 +388,7 @@ represented by `TransactionBuilder`s, and then first inserting the bundle hash (
 allowing to push any more transaction builders), and finally calculating the nonce via proof of work on each transaction
 before constructing the final `Bundle`.
 
-### `Bundle` struct
+### `Bundle`
 
 As bundles are immutable, they shouldn't be modifiable outside of the scope of the bundle module.
 
@@ -502,18 +502,6 @@ other.
 ```rust
 pub fn validate(&self) -> Result<(), IncomingBundleError> {
     unimplemented!()
-}
-```
-
-### `SignatureInputs`
-
-Information that is required to sign those transactions in a bundle that withdraw funds from an address.
-
-```rust
-struct SignatureInputs {
-    address: Address,
-    security_level: u8,
-    private_key_index: PrivateKeyIndex,
 }
 ```
 
