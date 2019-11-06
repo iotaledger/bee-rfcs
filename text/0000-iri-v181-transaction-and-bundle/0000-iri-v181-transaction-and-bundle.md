@@ -955,9 +955,12 @@ consider this because it would create many permutations of possible transactions
   suboptimal for performance. Is it more useful to take borrows, either `&Self` or `&mut Self`, instead?
 + `getTransactionsToApprove` function: the function executing proof of work on `SealedBundleBuilder` is talking about
   getting tip and branch from the mentionede function. Should it be part of this RFC or assumed external?
-+ Should the builders actually be generalized over different types of signature schemes, hashes, etc? Given that this is
-  supposed to be an implementation of specific transaction and bundle versions, we might need to tie the transaction
-  directly to those types. Examples of such functions include: `calculate_hash`, `sign`.
++ Should the builders actually be generalized over different types of signature schemes, hashes, etc? Given that this
+  proposal is for a specific transaction/bundle format, being generic over signature schemes, proof of work, hashes
+  might not make sense. For example, using a different hashing scheme would be breaking change with respect to `iri
+  v1.8.1`. Because such a change is very severe, it would probably coincide with a change in the general transaction
+  structure to do everything in one go. Thus, introducing a `Transaction` generic over some these types might be
+  something that we don't ever encounter.
 + Work out how to sign groups of transactions taken together (signature levels 1, 2, and 3 require the same number of
   transactions).
 + Explain constants used throughout the code.
