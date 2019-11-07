@@ -20,7 +20,9 @@ builder following patterns:
 + `IncomingBundleBuilder`,
 + `OutgoingBundleBuilder`,
 + `SealedBundleBuilder`,
-+ `SignedBundleBuilder`.
++ `SignedBundleBuilder`,
++ `AttachedBundleBuilder`,
++ `ValidatedBundleBuilder`.
 
 `IncomingBundleBuilder` is concerned with constructing and verifying complete messages coming in externally, while
 `OutgoingBundleBuilder`, `SealedBundleBuilder`, and `SignedBundleBuilder` are together responsible for constructing
@@ -513,6 +515,8 @@ is sealed by calculating and setting the bundle hash on each of its contained tr
 indices, turning it into a `SealedBundleBuilder` (see its design below).
 
 ```rust
+// NOTE: SealedBundleBuilder, `SignedBundleBuilder`, `AttachedBundleBuilder`, and `ValidatedBundleBuilder` all follow
+//       the same pattern.
 pub struct OutgoingBundleBuilder {
     transaction_builders: TransactionBuilders,
 }
@@ -622,6 +626,8 @@ pub fn seal(self, sponge: Kerl) -> Result<SealedBundleBuilder, OutgoingBundleBui
     for transaction_builder in &mut bundle_builder {
         transaction_builder.bundle = final_hash;
     }
+
+    Ok(SealedBundleBuilder::from(self))
 }
 ```
 
@@ -633,12 +639,6 @@ signals that all the fields required to identify a valid bundle are set.
 After `OutgoingBundleBuilder` has collected all required transactions, it is sealed to create a `SealedBundleBuilder`.
 `SealedBundleBuilder` is concerned with signing transactions that remove IOTA tokens from an address, settings nonce
 fields, and verifying that all transactions are valid and the bundle is complete, before building a final `Bundle`.
-
-```rust
-pub struct SealedBundleBuilder {
-    transaction_builders: TransactionBuilders,
-}
-```
 
 #### `SealedBundleBuilder::chain_and_attach`
 
@@ -665,7 +665,7 @@ pub fn chain_and_attach<P, S>(
     branch_tip: TransactionHash,
     proof_of_work: PearlDiver,
     sponge: CurlP,
-) -> Result<Self, OutgoingBundleError>
+) -> Result<AttachedBundleBuilder, OutgoingBundleError>
 {
     unimplemented!()
 
@@ -711,13 +711,15 @@ pub fn chain_and_attach<P, S>(
         transaction_builder.set_nonce_from_proof_of_work(proof_of_work);
         next_local_trunk = transaction_builder.calculate_hash(sponge);
     }
+
+    Ok(AttachedBundleBuilder::from(self))
 }
 ```
 
-#### `SealedBundleBuilder::sign`
+#### `AttachedBundleBuilder::sign`
 
 Signs those transaction builders contained in the builder that withdraw funds from an address and transitions
-`SealedBundleBuilder` to `SignedBundleBuilder`.
+`AttachedBundleBuilder` to `SignedBundleBuilder`.
 
 The purpose of this function is not only to sign those transactions that require a signature, but also to signal that
 all other remaining transactions can remain unsigned.
@@ -763,6 +765,8 @@ pub fn sign<I, S, W>(self, signature_scheme: WinternitzScheme, seed: SignatureSe
             current_index = current_index + 1;
         }
     }
+
+    Ok(SignedBundleBuilder::from(self))
 }
 ```
 
@@ -770,12 +774,6 @@ pub fn sign<I, S, W>(self, signature_scheme: WinternitzScheme, seed: SignatureSe
 
 `SignedBundleBuilder` encodes on the type level that all transactions within the bundle that need to be signed have been
 signed, and that all other contained transactions do not require a signature.
-
-```rust
-pub struct SealedBundleBuilder {
-    transaction_builders: TransactionBuilders,
-}
-```
 
 #### `SealedBundleBuilder::validate`
 
@@ -799,7 +797,7 @@ For a bundle to be considered valid, the following assertions must be true:
 + **TODO:** `IOTA_SUPPLY` used below is some global constant which needs to be defined and set externally.
 
 ```rust
-pub fn validate(&mut self) -> Result<Self, OutgoingBundleError>
+pub fn validate(&mut self) -> Result<ValidatedBundleBuilder, OutgoingBundleError>
 {
     unimplemented!()
 
@@ -848,7 +846,7 @@ pub fn validate(&mut self) -> Result<Self, OutgoingBundleError>
         Err(InvalidHash)?
     }
 
-    Ok(Self)
+    Ok(ValidatedBundleBuilder::from(self))
 }
 ```
 
@@ -874,17 +872,27 @@ let bundle = match incoming_bundle_builder.validate() {
     Err(e) => Err(e)?,
 };
 ```
+
 ### Workflow of `OutgoingBundleBuilder`
 
-The construction of an outgoing bundle would happen like this:
+The construction of an outgoing bundle would be encoded on the type level by moving through the following types:
+
+```
+OutgoingBundleBuilder -> SealedBundleBuilder -> SignedBundleBuilder -> AttachedBundleBuilder -> ValidatedBundleBuilder -> Bundle
+```
+
+A user of the library would not however need to know about the specifics of these types as they are never bound directly:
 
 ```rust
+
+let mut bundle_builder = OutgoingBundleBuilder::new();
+
 // Push transaction drafts into the builder
 for builder in transaction_builders {
     outgoing_bundle_builder.push(builder);
 }
 
-let bundle = outgoing_bundle_builder
+let bundle = bundle_builder
     // Seals the bundle builder to prevent pushing any more transaction builders into it.
     .seal()?
     // skipped.
@@ -913,18 +921,23 @@ let bundle = outgoing_bundle_builder
 + Hiding the fields of `Transaction`, `Bundle`, and the builders behind opaque types allows us to flesh them out in the
   future.
 + The construction of an outgoing bundle is done in steps by walking through the types `OutgoingBundleBuilder`,
-  `SealedBundleBuilder`, and `SignedBundleBuilder`, before finally constructing a `Bundle`. This encodes on the
-  type level that invariants are upheld.
+  `SealedBundleBuilder`, `SignedBundleBuilder`, `AttachedBundleBuilder`, and `ValidatedBundleBuilder` before finally
+  constructing a `Bundle`. This encodes on the type level that invariants are upheld. By only allowing to go through the
+  stages linearly, the final validation function does not need to validate the correctness of hashes, signatures, etc.
 
 ## Alternatives
 
-An alternative to the present design would be to create a smarter bundle builder, that works by taking a message
-(be it a withdrawal of tokens or any other information) and automatically creating the required transaction drafts
-and pushing them onto its stack. However, at present it is not clear how this interface would look like and it would
-introduce a lot of complexity early on. The present design does allows for building such an API on top of it.
-
-Another alternative would be to introduce more types that encode various types of transactions. This proposal does not
-consider this because it would create many permutations of possible transactions, overly expanding the design scope.
++ **Smarter bundle builder:** An alternative to the present design would be to create a smarter bundle builder, that
+  works by taking a message (be it a withdrawal of tokens or any other information) and automatically creating the
+  required transaction drafts and pushing them onto its stack. However, at present it is not clear how this interface
+  would look like and it would introduce a lot of complexity early on. The present design is intended to allow for
+  building such an API on top of it.
++ **Generic builders:** The present transaction and bundle builders could be made generic over hashing
+  functions/sponges, proof of work algorithms, and signing schemes. This would basically amount to having a fixed
+  `Transaction` format following `iri v1.8.1`, but with different ways to fill its fields. This was decided to be not
+  meaningful, because using, e.g., different sponges would constitute a breaking change with respect to the current IOTA
+  main net. If such a step were to be taken, it would probably come with a change in the transaction structure, and thus
+  require a completely new type, rendering the more general form of the present `Transaction` useless.
 
 # Open questions
 
@@ -932,16 +945,9 @@ consider this because it would create many permutations of possible transactions
   suboptimal for performance. Is it more useful to take borrows, either `&Self` or `&mut Self`, instead?
 + `getTransactionsToApprove` function: the function executing proof of work on `SealedBundleBuilder` is talking about
   getting tip and branch from the mentionede function. Should it be part of this RFC or assumed external?
-+ Should the builders actually be generalized over different types of signature schemes, hashes, etc? Given that this
-  proposal is for a specific transaction/bundle format, being generic over signature schemes, proof of work, hashes
-  might not make sense. For example, using a different hashing scheme would be breaking change with respect to `iri
-  v1.8.1`. Because such a change is very severe, it would probably coincide with a change in the general transaction
-  structure to do everything in one go. Thus, introducing a `Transaction` generic over some these types might be
-  something that we don't ever encounter.
 + Work out how to sign groups of transactions taken together (signature levels 1, 2, and 3 require the same number of
   transactions).
 + Explain constants used throughout the code.
-+ Should additional builders be created, such as `AttachedBundleBuilder` and maybe `VerifiedBundleBuilder`?
 + Should the verification of the validity of fields in the outgoing builder be split up into the different transition
   phases?
 + Should a `TransactionBuilder` only expose those fields that are not set within a bundle builder?
