@@ -452,11 +452,6 @@ impl IncomingBundleBuilder {
         self.transactions.push(transaction);
         self
     }
-
-    /// Constructs a final, validated Bundle from all contained transactions.
-    pub fn build(&self) -> Result<Bundle, IncomingBundleBuilderError> {
-        unimplemented!()
-    }
 }
 ```
 
@@ -464,8 +459,8 @@ The functions below are all intended as methods on `IncomingBundleBuilder`.
 
 #### `IncomingBundleBuilder::calculate_hash`
 
-Calculates the bundle hash using some `S: Sponge`. A bundle hash ties different transactions together. By having this
-common hash in their `bundle` field, it makes it clear that these transactions should be processed as a whole.
+Calculates the bundle hash using [`Kerl`] as a sponge. A bundle hash ties different transactions together. By having
+this common hash in their `bundle` field, it makes it clear that these transactions should be processed as a whole.
 
 The hash of a bundle is derived from the bundle essence of each of its transactions. The bundle essence of each
 transaction is a subset of its fields, with a total size of `486` trits, see the table below.
@@ -482,14 +477,13 @@ transaction is a subset of its fields, with a total size of `486` trits, see the
 The bundle hash is generated with a sponge by iterating through the bundle, from `0` to `last_index`, absorbing the
 bundle essence of each transaction and eventually squeezing the bundle hash from the sponge.
 
-+ **NOTE:** `iri v1.8.1` uses [`Kerl`] as a sponge. A Rust implementation is the matter of a different RFC.
-+ **TODO:** This function relies on some `Sponge` trait, which is not yet defined. The code below lays out how the
-  sponge is thought to be used.
++ **TODO:** `iri v1.8.1` uses [`Kerl`] as a sponge. A Rust implementation is the matter of a different RFC, and is not
+  yet defined. The code below lays out how the sponge is thought to be used.
 
 [`Kerl`]: https://github.com/iotaledger/kerl
 
 ```rust
-pub fn calculate_hash<S: Sponge<Output=BundleHash>>(&self, mut sponge: S) -> S::Output {
+pub fn calculate_hash(&self, mut sponge: Kerl) -> S::Output {
     for transaction in bundle_builder {
         // Transaction::essence is not specifically defined in this RFC.
         sponge.absorb(transaction.essence());
@@ -559,22 +553,16 @@ subset of the transaction fields.
 The bundle hash is generated with a sponge by iterating through the bundle, from `0` to `last_index`, absorbing the
 bundle essence of each transaction and eventually squeezing the bundle hash from the sponge.
 
-+ **NOTE:** `iri v1.8.1` uses `Kerl` as a sponge.
-+ **NOTE:** This function is defined on: `SealedBundleBuilder`, `OutgoingBundleBuilder`, and
-  `IncomingBundleBuilder`.
-+ **TODO:** This function relies on some `Sponge` trait, which is not yet defined. The code below lays out how the
-  sponge is thought to be used.
++ **TODO:** `iri v1.8.1` uses [`Kerl`] as a sponge. A Rust implementation is the matter of a different RFC, and is not
+  yet defined. The code below lays out how the sponge is thought to be used.
+
+[`Kerl`]: https://github.com/iotaledger/kerl
 
 ```rust
-pub calculate_hash<S: Sponge<Output=BundleHash>>(&self, mut sponge: S) -> S::Output {
+pub calculate_hash(&self, mut sponge: Kerl) -> S::Output {
     unimplemented!();
 
-    // Pseudocode of how `calculate_hash` should look.
-
-    for transaction_builder in bundle_builder {
-        sponge.absorb(transaction_builder.essence());
-    }
-    sponge.squeeze()
+    // Same as IncomingBundleBuilder::calculate_hash
 }
 ```
 
@@ -600,16 +588,15 @@ this field is not being used for any other reason. Useful links: [Why is the nor
 containing the char
 'M'](https://iota.stackexchange.com/questions/1241/why-is-the-normalized-hash-considered-insecure-when-containing-the-char-m).
 
-+ **TODO:** This function relies on some `Sponge` trait, which is not yet defined. The code below lays out how the
-  sponge is thought to be used.
++ **TODO:** `iri v1.8.1` uses [`Kerl`] as a sponge. A Rust implementation is the matter of a different RFC, and is not
+  yet defined. The code below lays out how the sponge is thought to be used.
 + **FIXME:** This pseudo code does not take into account that depending on the security level, the signature is
   calculated from one or more transactions.
 
+[`Kerl`]: https://github.com/iotaledger/kerl
+
 ```rust
-pub fn seal<S>(self, sponge: S) -> Result<SealedBundleBuilder, OutgoingBundleBuilderError>
-where
-    S: Sponge<Output=BundleHash>
-{
+pub fn seal(self, sponge: Kerl) -> Result<SealedBundleBuilder, OutgoingBundleBuilderError> {
     unimplemented!()
 
     let mut current_index = 0;
@@ -658,31 +645,27 @@ pub struct SealedBundleBuilder {
 Chains the contained transactions, filling the `nonce` fields via proof of work and then hashing transactions to
 reference successive transactions.
 
-Using some type `P: ProofOfWork`, this function peforms proof of work and updates the `nonce` field in each of the
-contained `TransactionBuilder`s. The transactions' hashes can then be calculated, and a chain is established between
+Using `PearlDiver` as proof of work algorithm, this function peforms proof of work and updates the `nonce` field in each
+of the contained `TransactionBuilder`s. The transaction hash can then be calculated, and a chain is established between
 transactions by putting the hash of a transaction into its downstream neighbor.
 
-Proof of work allows your transactions to be accepted by the network. After proof of work, a bundle is ready to be sent
-to the network. Given a `trunk` and a `branch` returned by [`getTransactionsToApprove`], the process iterates over each
-transaction of the bundle, sets some attachment related fields and performs proof of work on each individual
-transaction.
+After proof of work, a bundle is ready to be sent to and accepted by the network. Given a `trunk` and a `branch`
+returned by [`getTransactionsToApprove`], the process iterates over each transaction of the bundle, sets some attachment
+related fields and performs proof of work on each individual transaction.
 
 [`getTransactionsToApprove`]: https://docs.iota.org/docs/node-software/0.1/iri/references/api-reference#gettransactionstoapprove
 
-+ **TODO:** This function relies on some `Sponge` and `ProofOfWork` traits, which are not yet defined. The code below
-  shows how `chain_and_attach` is thought to be used.
++ **TODO:** This function relies on `Curl-P` for the calculation of transaction hashes, and `PearlDiver` as a proof of work algorithm, which are
+both not defined yet. `chain_and_attach` uses them to show how they are thought to be used.
 
 ```rust
 pub fn chain_and_attach<P, S>(
     mut self,
     trunk_tip: TransactionHash,
     branch_tip: TransactionHash,
-    proof_of_work: P,
-    sponge: S,
+    proof_of_work: PearlDiver,
+    sponge: CurlP,
 ) -> Result<Self, OutgoingBundleError>
-where
-    P: ProofOfWork,
-    S: Sponge,
 {
     unimplemented!()
 
@@ -743,18 +726,15 @@ Only the owner of the seed from which the source address is generated has the ri
 thus used to generate the signature, which in turn is inserted in those transaction drafts that withdraw funds. Bundles
 that contain withdrawing transactions that have missing or bad signatures will be considered invalid and thus rejected.
 
-+ **TODO:** This function relies on some `SignatureScheme` trait, which is not yet defined. The code below lays out how
-  the signing scheme is thought to be used.
-+ **TODO:** This function relies on some `Wallet` trait, which is not yet defined. It's supposed to provide some
-  `f: Wallet W -> Tx Address A -> Signature Scheme Inputs I`
++ **TODO:** This function relies on IOTAs `WinternitzScheme` signature scheme and a `Wallet` that is supposed to provide the input
+  necessary to sign a transaction together with the signature scheme. Both are not defined yet, and the code below is
+  intended to demonstrate how both are to be used.
+    + The wallet is supposed to provide some function `f: Wallet -> Tx Address -> Signature Scheme Inputs`
 + **FIXME:** The code below does not yet take into account that a signature can include one or more transactions.
 
 ```rust
-pub fn sign<I, S, W>(self, signature_scheme: S, seed: S::Seed, wallet: W)
+pub fn sign<I, S, W>(self, signature_scheme: WinternitzScheme, seed: SignatureSeed, wallet: Wallet)
 -> Result<SignedBundleBuilder, OutgoingBundleError>
-where
-    S: SignatureScheme<I>,
-    W: Wallet<A, Output=S::I>,
 {
     unimplemented!();
 
@@ -870,11 +850,6 @@ pub fn validate(&mut self) -> Result<Self, OutgoingBundleError>
 
     Ok(Self)
 }
-
-    pub fn build(self) -> Result<Bundle, OutgoingBundleError> {
-        unimplemented!()
-    }
-}
 ```
 
 ## How this is used
@@ -941,6 +916,8 @@ let bundle = outgoing_bundle_builder
   `SealedBundleBuilder`, and `SignedBundleBuilder`, before finally constructing a `Bundle`. This encodes on the
   type level that invariants are upheld.
 
+## Alternatives
+
 An alternative to the present design would be to create a smarter bundle builder, that works by taking a message
 (be it a withdrawal of tokens or any other information) and automatically creating the required transaction drafts
 and pushing them onto its stack. However, at present it is not clear how this interface would look like and it would
@@ -971,12 +948,11 @@ consider this because it would create many permutations of possible transactions
 
 # Blockers
 
-+ `SignatureScheme` (includes normalization) interface (to sign withdrawal transactions)
-+ `Wallet`: some interface that ties in with `SignatureScheme` to provide a map from a transaction address to the inputs
-  of the signature scheme.
-+ `ProofOfWork` interface (to calculate and fill the nonce)
-+ `Sponge` interface (to calculate bundle and transaction hashes)
-+ `Constants`: There are global constant which need to be defined and set externally; example: `IOTA_SUPPLY` 
++ `WinternitzScheme` as a signature scheme with normalization, to sign withdrawal transactions;
++ `Wallet`: a map from a transaction address to the inputs of the `WinternitzScheme` signature scheme;
++ `PearlDiver` proof of work algorithm to calculate and fill the nonce;
++ `Kerl` and `Curl-P` sponges to calculate various hashes;
++ `Constants`: There are global constant which need to be defined and set externally; example: `IOTA_SUPPLY`.
 
 ## Other, less specified blockers
 
