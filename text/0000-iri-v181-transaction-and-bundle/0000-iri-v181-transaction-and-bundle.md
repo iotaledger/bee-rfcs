@@ -3,7 +3,7 @@
 + RFC PR: [iotaledger/bee-rfcs#3](https://github.com/iotaledger/bee-rfcs/pull/3),
   [iotaledger/bee-rfcs#18](https://github.com/iotaledger/bee-rfcs/pull/18),
   [iotaledger/bee-rfcs#20](https://github.com/iotaledger/bee-rfcs/pull/20)
-+ Bee issue: [iotaledger/bee#0000](https://github.com/iotaledger/bee/issues/0000)
++ Bee issue: [iotaledger/bee#63](https://github.com/iotaledger/bee/issues/63)
 
 # Summary
 
