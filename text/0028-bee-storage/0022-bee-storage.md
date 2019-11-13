@@ -29,7 +29,7 @@ use cases:
 
 # Detailed design
 
-```
+```rust
 
 use std::{collections::HashMap, collections::HashSet, rc::Rc};
 
