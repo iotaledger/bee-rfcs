@@ -76,6 +76,12 @@ pub enum StorageError {
     //...
 }
 
+pub enum ConnectionError {
+    InvalidUrl,
+    UnknownError,
+    //...
+}
+
 type HashesToApprovers = HashMap<TxHash, Vec<TxHash>>;
 type MissingHashesToRCApprovers = HashMap<TxHash, Vec<Rc<TxHash>>>;
 //This is a mapping between an iota address and it's balance change
@@ -84,7 +90,12 @@ type MissingHashesToRCApprovers = HashMap<TxHash, Vec<Rc<TxHash>>>;
 //another way to decide on a check point where to store an address's delta if we want to snapshot
 type StateDeltaMap = HashMap<TxAddress, i64>;
 
-pub trait Storage {
+pub trait Connection<Conn> {
+    fn establish_connection(url: &str) -> Result<Conn, ConnectionError>;
+    fn destroy_connection(connection: Conn) -> Result<(), ConnectionError>;
+}
+
+pub trait Storable {
     //**Operations over transaction's schema**//
 
     fn insert_transaction(&self, tx: &Tx) -> Result<(), StorageError>;
@@ -127,6 +138,43 @@ pub trait Storage {
     ) -> Result<(), StorageError>;
 
     fn load_state_delta(&self, index: u32) -> Result<StateDeltaMap, StorageError>;
+}
+
+pub struct Storage<Conn: Connection<Conn>> {
+    connection:   Conn,
+}
+
+impl Storage<DummyConnection> {
+    fn establish_connection(&mut self, url: &str) -> Result<(), ConnectionError> {
+        self.connection = DummyConnection::establish_connection(url)?;
+        Ok(())
+    }
+    fn destroy_connection(connection: DummyConnection) -> Result<(), ConnectionError> {
+        Ok(())
+    }
+}
+
+pub struct DummyConnection {}
+
+impl DummyConnection {
+    fn new() -> Self {
+        Self {}
+    }
+}
+
+impl Connection<DummyConnection> for DummyConnection {
+    fn establish_connection(url: &str) -> Result<DummyConnection, ConnectionError> {
+        Ok(DummyConnection::new())
+    }
+    fn destroy_connection(connection: DummyConnection) -> Result<(), ConnectionError> {
+        Ok(())
+    }
+}
+
+type DummyStorage = Storage<DummyConnection>;
+
+impl Storable for DummyStorage {
+    //Implement all methods here
 }
 
 #[cfg(test)]
