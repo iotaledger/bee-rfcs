@@ -5,116 +5,120 @@
 
 # Summary
 
-IOTA is a permissionless and feeless network which unavoidably makes it vulnerable to spam and sybil attacks. To make such
-attacks more costly this RFC proposes a spam protection mechanism based on Proof-of-Work (PoW) where only those
-messages are accepted and propagated by the honest nodes that include a valid nonce value. That nonce serves as a
-proof to show that a predefined amount of computational work has been done upfront either by the publisher itself or
-by some PoW service provider on its behalf.
+IOTA is a distributed ledger technology (DLT), in which the transactions that are happening on the network are disseminated employing a gossip protocol. Each node can serve as an entry point for new transactions (issued by its clients), which will then ideally be gossiped to all other nodes in the network (or shard) and become part of the ledger state. Gossipping a received transaction is a service granted to each individual node. But since there are no fees in IOTA, and no restrictions on who can join the network, this opens up opportunities for exploitation.
+
+To mainly address accidental spam (e.g. from a malfunctioning node), this RFC proposes a CPU-bound Proof-of-Work (PoW) mechanism based on the ternary hash function Curl-P-81 and [Hashcash](https://en.wikipedia.org/wiki/Hashcash) with a globally fixed (but adjustable) difficulty. 
 
 # Motivation
 
-Since IOTA is a permissionless and feeless network it needs methods of protecting itself against spam from
-intentionally or even unintentionally misbehaving network participants (nodes or clients) that otherwise could
-disrupt the network rather cheaply. Furthermore, this mechanism is currently (at the time of this writing) used in
-the IOTA mainnet, and necessary to build compatible nodes with this framework.
-
-### Job stories:
-
-When I - as a client - want to send a message, for example a value transaction, I want to be able to find and include
-a valid nonce, so that my transaction is accepted and propagated by all honest nodes in the network.
-
-When I - as a node - receive a network message from the gossip pipeline, I want to be able to check if its contained
-nonce value satisfies the pre-defined network difficulty, so that I can decide whether to discard or process that
-message.
+It must be stressed that this proposal is by no means a definitive answer to an attacker that can make use of hardware accelerated PoW. However, this mechanism - which is called `PearlDiver` - is currently used in the IOTA mainnet (at the time of writing: IRI v1.8.2) to prevent simple forms of spam. For compatibility reasons it is therefore required to be implemented in the Bee node framework as well.
 
 # Detailed design
 
-## Hasher
-A hash function always operates on some kind of input data, usually but not necessarily on some kind of `u8` array - and deterministically produces another piece of data - the hash - for example a `u64` that usually takes much less space, and therefore can be used as a label for the data it was derived from. In Rust such a hash function can be generalized using the following trait:
+The Rust implementation of `PearlDiver` as proposed here is supposed to be as type-safe, efficient, and Rust idiomatic as possible.
+
+## `PearlDiver` overview 
+For some transaction data `PearlDiver` finds a piece of data - called a `nonce` - that, when appended and hashed together with the transaction data results in a hash with a certain property. Finding that `nonce` is intended to be a CPU intensive task that requires brute-force, i.e. sampling the search space of possible nonces and rehashing many times. Validating a "powed" transaction however can happen with a single function call, and is therefore orders of magnitude faster. This allows to quickly identify invalid transactions, whereby "invalid" in terms of Hashcash based PoW means a transaction with a nonce, that results in a transaction hash without that property.
+
+## `PearlDiver` algorithm
+The basic `PearlDiver` algorithm looks like this:
+
+Given some pre-defined hash constraint `C`, a transaction `T` with a nonce set to 0, and its serialized representation called `data`:
+1. hash `data` yielding `H`
+2. check if `H` satisfies `C` (e.g. at least last 14 trits are 0). There are two cases:
+   1. `C` is satisfied -> stop the algorithm, 
+   2. otherwise -> select the next nonce from the search space, modify `data` with it, and return to 1.
+
+## `PearlDiver` assumptions
+
+Instead of making `PearlDiver` extremely generic from the get-go, this proposal makes the following assumptions, and leaves everything else to future RFCs or improvement proposals.
+
+`PearlDiver`
+* receives transactions in serialized form using the `t1b1` ternary encoding, and has to convert that into `ptrits`/`t8b2`/ binary-coded ternary (BCT) prior to its execution,
+* employs a Curl-P-81 implementation that operates on `ptrits`,
+* allows to employ all available CPU cores on the system,
+* supports async/non-blocking operation
+
+## The `HashValidator` trait
+
+In IOTA two hash validation schemes are of importance:
+* *Hashcash* (the number of zero trits at the end of a transaction hash)
+* *Hamming* (TODO)
+
+To allow implementing various of those schemes the following trait is introduced:
 
 ```Rust
-pub trait Hasher {
-    type Data;
-    type Hash;
-
-    fn hash(&mut self, data: &Self::Data) -> Self::Hash;
+trait HashValidator {
+    fn is_valid(&self, hash: &BCTHash) -> bool;
 }
 ```
 
-Notive that by making `Data` and `Hash` associated types this RFC doesn't make any commitment to the underlying representation which allows for a very flexible design.
+This trait requires to implement a method `is_valid` which contains the logic for the hash validation. It expects a reference to a bct-encoded hash, which is also the output of the BCT-Curl implementation. 
 
-## Sampler
+`PearlDiver` is bound to a type implementing that trait to determine when a search has successfully completed, that is, when a valid nonce has been found.
 
-The `Sampler` trait allows implementing different types that mutate the input data handed to the hasher on each try. The standard sampler used in IOTA simply starts with a zero nonce and increments it until it finds a valid one. There are, however, other samplers possible, like a random sampler.
+**Code Example:**
 
 ```Rust
-pub trait Sampler {
-    type Data;
+struct Hashcash {
+    min_weight_magnitude: usize,
+};
 
-    fn next(&mut self, data: &mut Self::Data);
+impl HashValidator for Hashcash {
+    fn is_valid(&self, hash: &BCTHash) -> bool {
+        // TODO
+    }
 }
 ```
 
-Like in the `Hasher` trait we now have to make `Data` an associated type as well, so it can always be compatible when used together in `PearlDiver`.
+## The `BCTNonceSampler` struct
 
-## Tester
-
-The `Tester` trait allows implementing different types that place  plug different validation schemes into `PearlDiver`, like the `Hashcash` or the `Hamming` validation scheme.
+This RFC proposes a `BCTNonceSampler` struct, that can be configured to start walking the search space at a pre-defined index, and in pre-defined steps. This is used to create disjoint subsets of the whole search space, that concurrent threads can process without doing double work. Since the underlying ...
 
 ```Rust
-pub trait Tester {
-    type Hash;
 
-    fn is_valid(&self, hash: &Self::Hash) -> bool;
+struct BCTNonceSampler {
+    start: usize,
+    step: usize,
 }
+
+impl BCTNonceSampler {
+    pub fn new(start: usize, step: usize) -> Self {
+        Self {
+            start,
+            step,
+        }
+    }
+}
+
 ```
 
-As with `Sampler` the `Tester` trait needs an associated type so it can always be implemented in a compatible way and operate on something served by a type implementing the `Hasher` trait. 
-
-## PearlDiver
-
-With the traits above a type can now be defined that is called `PearlDiver`. It encapsulates the following algorithm:
-
-Starting with some serialized transaction data (which also encodes a zero nonce):
-1. hash the data
-2. check if the hash satisifies some pre-defined and adjustable constraint
-   1. hash satisfies constraint => stop the algorithm 
-   2. hash doesn't satisfy constraint 
-      1. select another nonce 
-      2. goto 1.
+## The `PearlDiver` struct
 
 This RFC proposes the following `PearlDiver` type:
 
 ```Rust
-pub struct PearlDiver<H, S, T, D, R>
+struct PearlDiver<V>
 where
-    H: Hasher<Data = D, Hash = R>,
-    S: Sampler<Data = D>,
-    T: Tester<Hash = R>,
+    V: HashValidator,
 {
-    hasher: H,
-    sampler: S,
-    tester: T,
+    validator: V,
+    hasher: BCTCurl,
+    sampler: 
 }
 
-impl<H, S, T, D, R> PearlDiver<H, S, T, D, R>
+impl<V> PearlDiver<V>
 where
-    H: Hasher<Data = D, Hash = R>,
-    S: Sampler<Data = D>,
-    T: Tester<Hash = R>,
+    V: HashValidator,
 {
-    pub fn new(hasher: H, sampler: S, tester: T) -> Self {
-        Self {
-            hasher,
-            sampler,
-            tester,
-        }
+    pub fn new(validator: V) -> Self {
+        Self { validator }
     }
 
-    pub fn search(&mut self, mut data: &mut D) {
+    pub fn search(&mut self, mut data: &mut BCTTransaction) {
         loop {
             let hash = self.hasher.hash(data);
-            if self.tester.is_valid(&hash) {
+            if self.validator.is_valid(&hash) {
                 break;
             } else {
                 self.sampler.next(&mut data);
