@@ -5,12 +5,14 @@
 
 # Summary
 
-[...]
+The IOTA Tangle is a distributed ledger. Participating nodes use a gossip protocol to exchange messages between them.
+Each node can therefore have several neighboring nodes with which it communicates.
+In an Internet-of-Things environment, a node might need to understand different protocols  (TCP, UDP, Bluetooth, ...) in order to interact with its surroundings.
+This RFC proposes a generic, asynchronous networking interface which abstracts specific communication protocols. Furthermore it provides an easy and convenient way to exchange messages between neighboring nodes.
 
 # Motivation
 
-Ihe IOTA Tangle is a distributed ledger. It uses a gossip protocol to share messages among the participating nodes.
-Each node can have several neighboring nodes. To send messages from one node to another node, a networking interface is required.
+Each node can have several neighboring nodes. To send or receive messages from one node to another node, a networking interface is required.
 In the current state of the IOTA mainnet, nodes only accept TCP connections. This however could change, especially to suite the needs of Internet of Things (IoT).
 In an IoT environment for example, there could exist devices which listen to TCP, whereas others only have UDP or Bluetooth ports to connect.
 The goal of this RFC is to provide a generic networking interface. It should provide an relatively convenient way for nodes to peer and exchange information with its neighbors.
@@ -35,7 +37,7 @@ pub trait Connection: Sized {
 
     fn connect(config: Self::InitConfig) -> Result<Self, Self::Error>;
     fn send(&mut self, msg: Message) -> Result<(), Self::Error>;
-    fn recv(&mut self) -> Result<Message, Self::Error>;
+    fn recv(&mut self, size: u64) -> Result<Message, Self::Error>;
     fn try_recv(&mut self) -> Option<Result<Message, Self::Error>>;
     fn disconnect(self);
 
@@ -49,7 +51,11 @@ Furthermore, each connection contains its own `Error` type.
 **Example**: a TCP connection could be defined as follows:
 
 ```rust
-pub struct TcpConnection;
+pub struct TcpConnection {
+
+    stream: TcpStream,
+
+}
 
 impl Connection for TcpConnection {
 
@@ -57,19 +63,26 @@ impl Connection for TcpConnection {
     type Error = ();
 
     fn connect(config: Self::InitConfig) -> Result<Self, Self::Error> {
-        unimplemented!()
+                
+        let mut stream = TcpStream::connect(ip_address, port)?;
+        Ok(TcpConnection{ stream })
+        
     }
 
     fn send(&mut self, msg: Message) -> Result<(), Self::Error> {
-        unimplemented!()
+       self.stream.write(msg.bytes())?;
     }
 
-    fn recv(&mut self) -> Result<Message, Self::Error> {
-        unimplemented!()
+    fn recv(&mut self, size: u64) -> Result<Message, Self::Error> {
+       self.stream.read(&mut [0; size])?;
     }
 
     fn try_recv(&mut self) -> Option<Result<Message, Self::Error>> {
         unimplemented!()
+    }
+    
+    fn disconnect(self) {
+        self.stream.shutdown(std::net::Shutdown::Both)?;      
     }
 
 }
@@ -190,3 +203,4 @@ Not doing this means no networking layer which implies nodes can not share infor
 - Which parts should be async and which not?
 - Should we use different error types for different functions in the connection?
 - Do we need the PeerConnection enum, or could we go directly with Connection trait or maybe an trait object which can be stored in the map of the router?
+- Should we use [u8] for message or is it indeed better to use the `Message` type?
