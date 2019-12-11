@@ -6,26 +6,30 @@
 # Summary
 
 The IOTA Tangle is a distributed ledger. Participating nodes use a gossip protocol to exchange messages between them.
-Each node can therefore have several neighboring nodes with which it communicates.
-In an Internet-of-Things environment, a node might need to understand different protocols  (TCP, UDP, Bluetooth, ...) in order to interact with its surroundings.
-This RFC proposes a generic, asynchronous networking interface which abstracts specific communication protocols. Furthermore it provides an easy and convenient way to exchange messages between neighboring nodes.
+Each node can therefore have several neighboring nodes, also called peers, with which it communicates.
+In an Internet-of-Things (IoT) environment, a node might also need to understand different protocols (TCP, UDP, NFC, Bluetooth ...) in order to interact with its surroundings.
+Interoperability on the Internet of Things is therefore crucial for communication between objects.
+This RFC proposes a generic networking interface which abstracts underlying protocols, independent of their nature. It enables protocol additions without losing any functionality and provides an relatively simple and convenient way to exchange messages between neighboring nodes. It should be noted, this RFC proposes a synchronous solution and represents the initial step towards an asynchronous solution. The asynchronous solution will have its own elaboration in a subsequent RFC.
 
 # Motivation
 
 Each node can have several neighboring nodes. To send or receive messages from one node to another node, a networking interface is required.
-In the current state of the IOTA mainnet, nodes only accept TCP connections. This however could change, especially to suite the needs of Internet of Things (IoT).
+In the current state of the IOTA mainnet (at the time of writing: IRI v1.8.2), nodes only accept TCP connections. This however could change, especially to suite the needs of Internet-of-Things.
 In an IoT environment for example, there could exist devices which listen to TCP, whereas others only have UDP or Bluetooth ports to connect.
 The goal of this RFC is to provide a generic networking interface. It should provide an relatively convenient way for nodes to peer and exchange information with its neighbors.
 Furthermore, this networking interface should be able to handle different types of connections at the same time, independent of their nature.
 
 # Detailed design
 
-It is assumed that all types of connection have certain similarities:
+It is assumed that all types of protocols have following similarities:
 
-- a connection needs to be opened / initialized
 - there must exist a functionality to send data over it
-- there must exist a functionality to read data from it
-- after a connection is no longer needed, it will get dissolved
+- there must exist a functionality to get data from it
+
+Furthermore, there might also exist:
+
+- a setup phase, which happens before the actual communication e.g. initialization of parameters
+- a teardown phase, which happens after the communication e.g. dissolution / deletion
 
 As a result, the following trait is defined:
 
@@ -35,11 +39,17 @@ pub trait Connection: Sized {
     type InitConfig;
     type Error;
 
-    fn connect(config: Self::InitConfig) -> Result<Self, Self::Error>;
+    // allows to send data to the peer
     fn send(&mut self, msg: Message) -> Result<(), Self::Error>;
+    
+    // allows to receive data from the peer
     fn recv(&mut self, size: u64) -> Result<Message, Self::Error>;
-    fn try_recv(&mut self) -> Option<Result<Message, Self::Error>>;
-    fn disconnect(self);
+    
+    // serves as protocol initialization
+    fn setup(config: Self::InitConfig) -> Result<Self, Self::Error>;
+    
+    // serves for dissolution
+    fn teardown(self);
 
 }
 ```
@@ -62,7 +72,7 @@ impl Connection for TcpConnection {
     type InitConfig = (IpAdress, Port);
     type Error = ();
 
-    fn connect(config: Self::InitConfig) -> Result<Self, Self::Error> {
+    fn setup(config: Self::InitConfig) -> Result<Self, Self::Error> {
                 
         let mut stream = TcpStream::connect(ip_address, port)?;
         Ok(TcpConnection{ stream })
@@ -74,14 +84,10 @@ impl Connection for TcpConnection {
     }
 
     fn recv(&mut self, size: u64) -> Result<Message, Self::Error> {
-       self.stream.read(&mut [0; size])?;
-    }
-
-    fn try_recv(&mut self) -> Option<Result<Message, Self::Error>> {
-        unimplemented!()
+       self.stream.read(&mut [0; 1500])?;
     }
     
-    fn disconnect(self) {
+    fn teardown(self) {
         self.stream.shutdown(std::net::Shutdown::Both)?;      
     }
 
@@ -199,8 +205,7 @@ Not doing this means no networking layer which implies nodes can not share infor
 
 # Unresolved questions
 
-- How modular do we want this crate to be?
-- Which parts should be async and which not?
 - Should we use different error types for different functions in the connection?
+- Use associated types in traits instead generics?
 - Do we need the PeerConnection enum, or could we go directly with Connection trait or maybe an trait object which can be stored in the map of the router?
 - Should we use [u8] for message or is it indeed better to use the `Message` type?
