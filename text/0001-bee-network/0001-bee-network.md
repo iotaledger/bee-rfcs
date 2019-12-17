@@ -33,93 +33,104 @@ Furthermore, there might also exist:
 
 As a result, the following trait is defined:
 
+*protocol.rs*
 ```rust
-pub trait Connection: Sized {
-
-    type InitConfig;
-    type Error;
+pub trait Protocol: Sized {
 
     // allows to send data to the peer
-    fn send(&mut self, msg: Message) -> Result<(), Self::Error>;
-    
+    fn send(&mut self, msg: Vec<u8>) -> Result<(), Error>;
+
     // allows to receive data from the peer
-    fn recv(&mut self, size: u64) -> Result<Message, Self::Error>;
-    
-    // serves as protocol initialization
-    fn setup(config: Self::InitConfig) -> Result<Self, Self::Error>;
-    
+    fn recv(&mut self) -> Result<Vec<u8>, Error>;
+
+    // serves for protocol initialization
+    fn setup(config: ProtocolConfig) -> Result<Self, Error>;
+
     // serves for dissolution
     fn teardown(self);
 
 }
+
+pub enum ProtocolType {
+    Tcp(TcpProtocol),
+}
+
+pub enum ProtocolConfig {
+    Tcp(TcpConfig),
+}
 ```
 
-As shown in the above `Connection` trait, each connection will be initialized by its `InitConfig`.
-This `InitConfig` contains all parameters that are needed to initialize/open up the connection.
-Furthermore, each connection contains its own `Error` type.
+As shown in the above `Protocol` trait, each protocol will be initialized by its `ProtocolConfig`.
+This `ProtocolConfig` contains all parameters that are needed to initialize/open up a connection to a peer.
+The networking interface can be simply extended by adding desired protocols to the defined enums.
 
-**Example**: a TCP connection could be defined as follows:
+**Example**: the TCP protocol could be defined as follows:
 
+*tcp.rs*
 ```rust
-pub struct TcpConnection {
-
+pub struct TcpProtocol {
     stream: TcpStream,
+}
+
+impl Protocol for TcpProtocol {
+
+    fn send(&mut self, msg: Vec<u8>) -> Result<(), Error> {
+
+        self.stream.write(msg.as_slice())?;
+        Ok(())
+
+    }
+
+    fn recv(&mut self) -> Result<Vec<u8>, Error> {
+        let mut buf = Vec::new();
+        self.stream.read_to_end(&mut buf)?;
+        Ok(buf)
+    }
+
+    fn setup(config: ProtocolConfig) -> Result<Self, Error> {
+
+        if let ProtocolConfig::Tcp(config) = config {
+
+            let stream = TcpStream::connect(config.address)?;
+            Ok(TcpProtocol{ stream })
+
+        } else {
+
+            Err(Error::new(ErrorKind::InvalidInput, "Invalid config file provided"))
+
+        }
+
+    }
+
+    fn teardown(self) {
+        self.stream.shutdown(Shutdown::Both);
+    }
 
 }
 
-impl Connection for TcpConnection {
-
-    type InitConfig = (IpAdress, Port);
-    type Error = ();
-
-    fn setup(config: Self::InitConfig) -> Result<Self, Self::Error> {
-                
-        let mut stream = TcpStream::connect(ip_address, port)?;
-        Ok(TcpConnection{ stream })
-        
-    }
-
-    fn send(&mut self, msg: Message) -> Result<(), Self::Error> {
-       self.stream.write(msg.bytes())?;
-    }
-
-    fn recv(&mut self, size: u64) -> Result<Message, Self::Error> {
-       self.stream.read(&mut [0; 1500])?;
-    }
-    
-    fn teardown(self) {
-        self.stream.shutdown(std::net::Shutdown::Both)?;      
-    }
-
+pub struct TcpConfig {
+    pub address: String,
 }
 ```
 
-All network connections are created and handled by the `Router`.
+All peer connections are created and handled by the `Router`.
 The `Router` represents the generic networking interface which offers functionality to:
 
-- connect to a peer by providing a `PeerInitConfig` only
-- send data to a certain peer, by passing the relevant `PeerId` and the desired `Message`
+- initialize a peer by providing a `ProtocolConfig` only
+- send data to a certain peer, by passing the relevant `PeerId` and the desired data vector.
 - receive data from a certain peer
 - disconnect from a certain peer
 
+*router.rs*
 ```rust
 pub struct Router {
-    connections: DashMap<PeerId, PeerConnection>,
-    id_counter: usize, //AtomicCounter,
+    connections: DashMap<PeerId, ProtocolType>,
+    id_counter: AtomicUsize,
 }
-```
 
-`PeerConnection` abstracts different types of connections and will be used as value for the **PeerId -> Connection** mapping.
-
-```rust
 #[derive(Copy, Clone, Hash, PartialEq, Eq)]
 pub struct PeerId(usize);
 
-pub enum PeerConnection {
-    Tcp(TcpConnection),
-    //Udp(UdpConnection),
-    //Bluetooth(BluetoothConnection),
-}
 ```
 
 Implementation of the `Router` would look as follows:
@@ -127,30 +138,44 @@ Implementation of the `Router` would look as follows:
 ```rust
 impl Router {
 
-    fn gen_peer_id(&mut self) -> PeerId {
-        self.id_counter += 1;
-        PeerId(self.id_counter)
+    pub fn new () -> Self {
+        Router {
+            connections: DashMap::default(),
+            id_counter: AtomicUsize::new(0)
+        }
     }
 
-    pub fn connect_peer(&mut self, config: impl Into<PeerInitConfig>) -> Result<PeerId, Error> {
+    fn gen_peer_id(&mut self) -> PeerId {
+        let prev = self.id_counter.fetch_add(1, Ordering::SeqCst);
+        PeerId(prev)
+    }
+
+    pub fn init_peer(&mut self, config: ProtocolConfig) -> Result<(), Error> {
 
         let id = self.gen_peer_id();
 
-        let conn = match config.into() {
-            PeerInitConfig::Tcp(config) => PeerConnection::Tcp(TcpConnection::connect(config)?),
+        let conn = match config {
+            ProtocolConfig::Tcp(config) => TcpProtocol::setup(protocol::ProtocolConfig::Tcp(config))?,
         };
 
-        self.connections.insert(id, conn);
+        self.connections.insert(id, protocol::ProtocolType::Tcp(conn));
 
-        Ok(id)
+        Ok(())
+
     }
 
-    pub fn send_to(&self, id: PeerId, msg: Message) -> Result<(), Error> {
-     
-        match self.connections.get_mut(&id).ok_or(Error::NoSuchPeer)?.deref_mut() {
-            PeerConnection::Tcp(tcp) => Ok(tcp.send(msg)?),
-            //PeerConnection::Udp(udp) => Ok(udp.send(msg)?),
-            //PeerConnection::Bluetooth(bt) => Ok(bt.send(msg)?),
+    pub fn send_to(&self, id: PeerId, msg: Vec<u8>) -> Result<(), Error> {
+
+        match self.connections.get_mut(&id).ok_or(ErrorKind::NotFound)?.deref_mut() {
+            ProtocolType::Tcp(tcp) => Ok(tcp.send(msg)?),
+        }
+
+    }
+
+    pub fn recv(&self, id: PeerId) -> Result<Vec<u8>, Error> {
+
+        match self.connections.get_mut(&id).ok_or(ErrorKind::NotFound)?.deref_mut() {
+            ProtocolType::Tcp(tcp) => Ok(tcp.recv()?),
         }
 
     }
@@ -158,31 +183,11 @@ impl Router {
 }
 ```
 
-Each `Connection` has its on `InitConfig` type. The `PeerInitConfig` abstracts all different `InitConfigs`.
-
-```rust
-pub enum PeerInitConfig {
-    Tcp(<TcpConnection as Connection>::InitConfig),
-    //Udp(<UdpConnection as Connection>::InitConfig),
-    //Bluetooth(<BluetoothConnection as Connection>::InitConfig),
-}
-```
-
 ### Error handling
 
-As already mentioned, each connection has its own error type. The error enum abstracts all different error types which can be propagated trough the data structures.
-```rust
-pub enum Error {
-    NoSuchPeer,
-    Tcp(<TcpConnection as Connection>::Error),
-}
+The standard library of Rust will be used for error handling. It is straightforward and provides lots of tools to handle and propagate errors.
+In the above code snippets `ErrorKinds` are used and propagated through the code.
 
-impl From<<TcpConnection as Connection>::Error> for Error {
-    fn from(e: <TcpConnection as Connection>::Error) -> Self {
-        Error::Tcp(e)
-    }
-}
-```
 
 # Advantages
 
