@@ -38,7 +38,7 @@ As a result, the following trait is defined:
 pub trait Protocol: Sized {
 
     // allows to send data to the peer
-    fn send(&mut self, msg: Vec<u8>) -> Result<(), Error>;
+    fn send(&mut self, msg: &[u8]) -> Result<(), Error>;
 
     // allows to receive data from the peer
     fn recv(&mut self) -> Result<Vec<u8>, Error>;
@@ -74,9 +74,9 @@ pub struct TcpProtocol {
 
 impl Protocol for TcpProtocol {
 
-    fn send(&mut self, msg: Vec<u8>) -> Result<(), Error> {
+    fn send(&mut self, msg: &[u8]) -> Result<(), Error> {
 
-        self.stream.write(msg.as_slice())?;
+        self.stream.write(msg)?;
         Ok(())
 
     }
@@ -136,6 +136,11 @@ pub struct PeerId(usize);
 Implementation of the `Router` would look as follows:
 
 ```rust
+pub struct Router {
+    connections: DashMap<PeerId, ProtocolType>,
+    id_counter: AtomicUsize,
+}
+
 impl Router {
 
     pub fn new () -> Self {
@@ -150,7 +155,7 @@ impl Router {
         PeerId(prev)
     }
 
-    pub fn init_peer(&mut self, config: ProtocolConfig) -> Result<(), Error> {
+    pub fn add_peer(&mut self, config: ProtocolConfig) -> Result<PeerId, Error> {
 
         let id = self.gen_peer_id();
 
@@ -160,11 +165,11 @@ impl Router {
 
         self.connections.insert(id, protocol::ProtocolType::Tcp(conn));
 
-        Ok(())
+        Ok(id.clone())
 
     }
 
-    pub fn send_to(&self, id: PeerId, msg: Vec<u8>) -> Result<(), Error> {
+    pub fn send_to(&self, id: PeerId, msg: &[u8]) -> Result<(), Error> {
 
         match self.connections.get_mut(&id).ok_or(ErrorKind::NotFound)?.deref_mut() {
             ProtocolType::Tcp(tcp) => Ok(tcp.send(msg)?),
@@ -176,6 +181,14 @@ impl Router {
 
         match self.connections.get_mut(&id).ok_or(ErrorKind::NotFound)?.deref_mut() {
             ProtocolType::Tcp(tcp) => Ok(tcp.recv()?),
+        }
+
+    }
+
+    pub fn remove_peer(&mut self, id: PeerId) -> Result<(), Error> {
+
+        match self.connections.remove(&id).ok_or(ErrorKind::NotFound)?.1 {
+            protocol::ProtocolType::Tcp(tcp) => Ok(Protocol::teardown(tcp)),
         }
 
     }
