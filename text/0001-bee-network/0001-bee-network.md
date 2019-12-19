@@ -35,7 +35,7 @@ As a result, the following trait is defined:
 
 *protocol.rs*
 ```rust
-pub trait Protocol: Sized {
+pub trait Protocol {
 
     // allows to send data to the peer
     fn send(&mut self, msg: &[u8]) -> Result<(), Error>;
@@ -44,19 +44,16 @@ pub trait Protocol: Sized {
     fn recv(&mut self) -> Result<Vec<u8>, Error>;
 
     // serves for protocol initialization
-    fn setup(config: ProtocolConfig) -> Result<Self, Error>;
+    fn setup(config: ProtocolConfig) -> Result<Self, Error> where Self: Sized;
 
     // serves for dissolution
-    fn teardown(self);
+    fn teardown(self: Box<Self>);
 
-}
-
-pub enum ProtocolType {
-    Tcp(TcpProtocol),
 }
 
 pub enum ProtocolConfig {
     Tcp(TcpConfig),
+    Udp(UdpConfig)
 }
 ```
 
@@ -102,8 +99,8 @@ impl Protocol for TcpProtocol {
 
     }
 
-    fn teardown(self) {
-        self.stream.shutdown(Shutdown::Both);
+    fn teardown(self: Box<Self>) {
+        (*self).stream.shutdown(Shutdown::Both);
     }
 
 }
@@ -123,24 +120,18 @@ The `Router` represents the generic networking interface which offers functional
 
 *router.rs*
 ```rust
+#[derive(Copy, Clone, Hash, PartialEq, Eq)]
+pub struct PeerId(pub usize);
+
 pub struct Router {
-    connections: DashMap<PeerId, ProtocolType>,
+    connections: DashMap<PeerId, Box<Protocol>>,
     id_counter: AtomicUsize,
 }
-
-#[derive(Copy, Clone, Hash, PartialEq, Eq)]
-pub struct PeerId(usize);
-
 ```
 
 Implementation of the `Router` would look as follows:
 
 ```rust
-pub struct Router {
-    connections: DashMap<PeerId, ProtocolType>,
-    id_counter: AtomicUsize,
-}
-
 impl Router {
 
     pub fn new () -> Self {
@@ -159,11 +150,16 @@ impl Router {
 
         let id = self.gen_peer_id();
 
-        let conn = match config {
-            ProtocolConfig::Tcp(config) => TcpProtocol::setup(protocol::ProtocolConfig::Tcp(config))?,
-        };
-
-        self.connections.insert(id, protocol::ProtocolType::Tcp(conn));
+        match config {
+            ProtocolConfig::Tcp(x) => {
+                let protocol = TcpProtocol::setup(protocol::ProtocolConfig::Tcp(x))?;
+                self.connections.insert(id, Box::new(protocol));
+            }
+            ProtocolConfig::Udp(x) => {
+                let protocol = UdpProtocol::setup(protocol::ProtocolConfig::Udp(x))?;
+                self.connections.insert(id, Box::new(protocol));
+            }
+        }
 
         Ok(id.clone())
 
@@ -171,25 +167,29 @@ impl Router {
 
     pub fn send_to(&self, id: PeerId, msg: &[u8]) -> Result<(), Error> {
 
-        match self.connections.get_mut(&id).ok_or(ErrorKind::NotFound)?.deref_mut() {
-            ProtocolType::Tcp(tcp) => Ok(tcp.send(msg)?),
-        }
+        let mut map_ref_mut= self.connections.get_mut(&id).ok_or(ErrorKind::NotFound)?;
+        let mut box_ref_mut = map_ref_mut.deref_mut();
+        let protocol_ref_mut = box_ref_mut.deref_mut();
+
+        Ok((protocol_ref_mut.send(msg)?))
 
     }
 
     pub fn recv(&self, id: PeerId) -> Result<Vec<u8>, Error> {
 
-        match self.connections.get_mut(&id).ok_or(ErrorKind::NotFound)?.deref_mut() {
-            ProtocolType::Tcp(tcp) => Ok(tcp.recv()?),
-        }
+        let mut map_ref_mut= self.connections.get_mut(&id).ok_or(ErrorKind::NotFound)?;
+        let mut box_ref_mut = map_ref_mut.deref_mut();
+        let protocol_ref_mut = box_ref_mut.deref_mut();
+
+        Ok(protocol_ref_mut.recv()?)
 
     }
 
     pub fn remove_peer(&mut self, id: PeerId) -> Result<(), Error> {
 
-        match self.connections.remove(&id).ok_or(ErrorKind::NotFound)?.1 {
-            protocol::ProtocolType::Tcp(tcp) => Ok(Protocol::teardown(tcp)),
-        }
+        let protocol_box = self.connections.remove(&id).ok_or(ErrorKind::NotFound)?.1;
+        Protocol::teardown(protocol_box);
+        Ok(())
 
     }
 
