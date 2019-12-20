@@ -89,7 +89,7 @@ impl Protocol for TcpProtocol {
         if let ProtocolConfig::Tcp(config) = config {
 
             let stream = TcpStream::connect(config.address)?;
-            Ok(TcpProtocol{ stream })
+            Ok(Self{ stream })
 
         } else {
 
@@ -135,7 +135,7 @@ Implementation of the `Router` would look as follows:
 impl Router {
 
     pub fn new () -> Self {
-        Router {
+        Self {
             connections: DashMap::default(),
             id_counter: AtomicUsize::new(0)
         }
@@ -223,7 +223,4 @@ Not doing this means no networking layer which implies nodes can not share infor
 
 # Unresolved questions
 
-- Should we use different error types for different functions in the connection?
-- Use associated types in traits instead generics?
-- Do we need the PeerConnection enum, or could we go directly with Connection trait or maybe an trait object which can be stored in the map of the router?
-- Should we use [u8] for message or is it indeed better to use the `Message` type?
+- Should we use &[u8] as parameter for the send function and Vec<u8> as parameter for the receive function, or instead use a `Message`(enum) type?
