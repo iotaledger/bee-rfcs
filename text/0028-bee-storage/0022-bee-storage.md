@@ -58,6 +58,7 @@ pub struct Tx {
 #[derive(Copy, Clone, Debug, Eq, PartialEq, Hash)]
 pub struct MilestoneHash(u64);
 impl MilestoneHash {
+    //Returns true if the milestone is the genesis of the Tangle
     pub fn is_genesis(&self) -> bool {
         unimplemented!()
     }
@@ -98,18 +99,18 @@ pub trait Connection<Conn> {
 pub trait Storable {
     //**Operations over transaction's schema**//
 
-    fn insert_transaction(&self, tx: &Tx) -> Result<(), StorageError>;
-    fn find_transaction(&self, tx_hash: TxHash) -> Result<Tx, StorageError>;
-    fn update_transactions_set_solid(
+    async fn insert_transaction(&self, tx: &Tx) -> Result<(), StorageError>;
+    async fn find_transaction(&self, tx_hash: TxHash) -> Result<Tx, StorageError>;
+    async fn update_transactions_set_solid(
         &self,
         transaction_hashes: HashSet<TxHash>,
     ) -> Result<(), StorageError>;
-    fn update_transactions_set_snapshot_index(
+    async fn update_transactions_set_snapshot_index(
         &self,
         transaction_hashes: HashSet<TxHash>,
         snapshot_index: u32,
     ) -> Result<(), StorageError>;
-    fn delete_transactions(&self, transaction_hashes: HashSet<TxHash>) -> Result<(), StorageError>;
+    async fn delete_transactions(&self, transaction_hashes: HashSet<TxHash>) -> Result<(), StorageError>;
 
     //This method is heavy weighted and will be used to populate Tangle struct on initialization
     fn map_existing_transaction_hashes_to_approvers(
@@ -122,22 +123,22 @@ pub trait Storable {
 
     //**Operations over milestone's schema**//
 
-    fn insert_milestone(&self, milestone: &Milestone) -> Result<(), StorageError>;
-    fn find_milestone(&self, milestone_hash: MilestoneHash) -> Result<Milestone, StorageError>;
-    fn delete_milestones(
+    async fn insert_milestone(&self, milestone: &Milestone) -> Result<(), StorageError>;
+    async fn find_milestone(&self, milestone_hash: MilestoneHash) -> Result<Milestone, StorageError>;
+    async fn delete_milestones(
         &self,
         milestone_hashes: HashSet<MilestoneHash>,
     ) -> Result<(), StorageError>;
 
     //**Operations over state_delta's schema**//
 
-    fn insert_state_delta(
+    async fn insert_state_delta(
         &self,
         state_delta: StateDeltaMap,
         index: u32,
     ) -> Result<(), StorageError>;
 
-    fn load_state_delta(&self, index: u32) -> Result<StateDeltaMap, StorageError>;
+    async fn load_state_delta(&self, index: u32) -> Result<StateDeltaMap, StorageError>;
 }
 
 pub struct Storage<Conn: Connection<Conn>> {
@@ -150,6 +151,7 @@ impl Storage<DummyConnection> {
         Ok(())
     }
     fn destroy_connection(connection: DummyConnection) -> Result<(), ConnectionError> {
+        DummyConnection::destroy_connection();
         Ok(())
     }
 }
