@@ -52,11 +52,21 @@ to create and verify digital signatures. Public keys and signatures are public w
 
 ## Traits
 
-Following a common asymmetric cryptography pattern, we provide 3 traits `PrivateKey`, `PublicKey` and `Signature`.
+Following a common asymmetric cryptography pattern, we provide 5 traits `PrivateKeyGenerator`, `PrivateKey`, `PublicKey`, `Signature` and `RecoverableSignature`.
 
 Associated types are being used to bind implementations of these 3 traits together within a signing scheme. For example,
 a `PrivateKey` implementation of a signing scheme shouldn't be used with a `PublicKey` implementation of another
 signing scheme.
+
+### `PrivateKeyGenerator` trait
+
+```rust
+pub trait PrivateKeyGenerator {
+    type PrivateKey;
+
+    fn generate(&self, seed: &[i8], index: usize) -> Self::PrivateKey;
+}
+```
 
 ### `PrivateKey` trait
 
@@ -73,7 +83,7 @@ pub trait PrivateKey {
     type Signature;
 
     fn generate_public_key(&self) -> Self::PublicKey;
-    fn sign(&self, message: &[i8]) -> Self::Signature;
+    fn sign(&mut self, message: &[i8]) -> Self::Signature;
 }
 ```
 
@@ -86,6 +96,7 @@ pub trait PublicKey {
     type Signature;
 
     fn verify(&self, message: &[i8], signature: &Self::Signature) -> bool;
+    fn to_bytes(&self) -> &[i8];
 }
 ```
 
@@ -95,10 +106,20 @@ pub trait PublicKey {
 
 ```rust
 pub trait Signature {
+    fn size(&self) -> usize;
+    fn to_bytes(&self) -> &[i8];
+}
+```
+
+### `RecoverableSignature` trait
+
+```rust
+pub trait RecoverableSignature {
     type PublicKey;
 
     fn recover_public_key(&self, message: &[i8]) -> Self::PublicKey;
 }
+
 ```
 
 ## Implementation & workflow
