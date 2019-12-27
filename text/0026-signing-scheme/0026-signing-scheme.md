@@ -1,4 +1,4 @@
-+ Feature name: `signing-scheme-traits`
++ Feature name: `signing-scheme`
 + Start date: 2019-10-28
 + RFC PR: [iotaledger/bee-rfcs#26](https://github.com/iotaledger/bee-rfcs/pull/26)
 + Bee issue: [iotaledger/bee#0000](https://github.com/iotaledger/bee/issues/0000)
@@ -362,4 +362,3 @@ let valid = public_key.verify(message, &signature);
 - Should we prefix `Signing` to the `PrivateKey` and `PublicKey` traits since we expect encryption keys to be developed
 at some point (e.g. NTRU for MAM) ?
 - Should `PublicKey` provide an `address` function that return an `Address` type ?
-- `verify` currently returns `bool`, we may consider returning an `Error` type if need be ?
