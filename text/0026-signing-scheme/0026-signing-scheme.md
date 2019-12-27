@@ -5,11 +5,11 @@
 
 # Summary
 
-Asymmetric cryptography is mainly used for two purposes:
+Asymmetric cryptography is a system that makes use of a pair of keys to allow:
 
-+ **Confidentiality**. Messages are encrypted with a public key and only the owner of the matching private key is able
++ **Confidentiality**: messages are encrypted with a public key and only the owner of the matching private key is able
   to decrypt it;
-+ **Authenticity**. Messages are signed with a private key and can be verified by anyone with the matching public key;
++ **Authenticity**: messages are signed with a private key and can be verified by anyone with the matching public key;
 
 In the IOTA network, asymmetric cryptography is used to authenticate the transfer of tokens or data. For a payment
 settlement to be accepted by the network, a proof that the initiator of the transfer is the actual tokens owner has to
@@ -22,7 +22,8 @@ Useful links:
 
 + [Asymmetric cryptography](https://en.wikipedia.org/wiki/Public-key_cryptography)
 + [Digital signature](https://en.wikipedia.org/wiki/Digital_signature)
-+ [Addresses and signatures](https://docs.iota.org/docs/dev-essentials/0.1/concepts/addresses-and-signatures)
++ [Addresses](https://docs.iota.org/docs/getting-started/0.1/clients/addresses)
++ [Signatures](https://docs.iota.org/docs/getting-started/0.1/clients/signatures)
 
 # Motivation
 
@@ -36,23 +37,27 @@ At the time of writing, the following signing schemes are being used in the IOTA
 + the second iteration of MAM uses another MSS scheme on top of WOTS to enable reusable addresses;
 + other schemes are being investigated for the ledger;
 
-Even though these implementations are very different, they all share the same behaviour, justifying the existence of the
-proposed traits.
+Even though these schemes are very different on an implementation point of view, they all share the same behaviour,
+justifying the existence of the proposed traits.
 
 Useful links:
 
 + [Lamport signature](https://en.wikipedia.org/wiki/Lamport_signature)
 + [On the Security of the Winternitz One-Time Signature Scheme](https://eprint.iacr.org/2011/191.pdf)
 + [Merkle signature scheme](https://en.wikipedia.org/wiki/Merkle_signature_scheme)
++ [EdDSA](https://en.wikipedia.org/wiki/EdDSA)
 
 # Detailed design
 
 The proposed design is at the very core of asymmetric cryptography in which a pair of private and public keys are used
 to create and verify digital signatures. Public keys and signatures are public while private keys remain secret.
 
+<!-- TODO Why traits instead of usual functions-->
+
 ## Traits
 
-Following a common asymmetric cryptography pattern, we provide 5 traits `PrivateKeyGenerator`, `PrivateKey`, `PublicKey`, `Signature` and `RecoverableSignature`.
+Following a common asymmetric cryptography pattern, we provide 5 traits `PrivateKeyGenerator`, `PrivateKey`, `PublicKey`
+, `Signature` and `RecoverableSignature`.
 
 Associated types are being used to bind implementations of these 3 traits together within a signing scheme. For example,
 a `PrivateKey` implementation of a signing scheme shouldn't be used with a `PublicKey` implementation of another
@@ -359,6 +364,8 @@ let valid = public_key.verify(message, &signature);
 
 # Unresolved questions
 
-- Should we prefix `Signing` to the `PrivateKey` and `PublicKey` traits since we expect encryption keys to be developed
++ Should we prefix `Signing` to the `PrivateKey` and `PublicKey` traits since we expect encryption keys to be developed
 at some point (e.g. NTRU for MAM) ?
-- Should `PublicKey` provide an `address` function that return an `Address` type ?
++ Should `PublicKey` provide an `address` function that return an `Address` type ?
++ Some schemes like `Ed25519` benefit from faster batch verification, justifying a later introduction of a batch
+verifier trait.
