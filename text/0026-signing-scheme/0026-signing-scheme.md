@@ -52,18 +52,27 @@ Useful links:
 The proposed design is at the very core of asymmetric cryptography in which a pair of private and public keys are used
 to create and verify digital signatures. Public keys and signatures are public while private keys remain secret.
 
-<!-- TODO Why traits instead of usual functions-->
+The [IOTA Signing Scheme](https://github.com/iotaledger/iri/blob/dev/src/main/java/com/iota/iri/crypto/ISS.java) as
+implemented in IRI and most libraries can be cumbersome and different from what we could expect from an asymmetric
+cryptography API. We then propose to replace the existing methods with a more traditional set of traits enforcing a
+shared and expected behaviour.
 
 ## Traits
 
 Following a common asymmetric cryptography pattern, we provide 5 traits `PrivateKeyGenerator`, `PrivateKey`, `PublicKey`
-, `Signature` and `RecoverableSignature`.
+, `Signature` and `RecoverableSignature` together enforcing the following features: private key generation, public key
+generation, signing and signature verification.
 
-Associated types are being used to bind implementations of these 3 traits together within a signing scheme. For example,
+Associated types are being used to bind implementations of these traits together within a signing scheme. For example,
 a `PrivateKey` implementation of a signing scheme shouldn't be used with a `PublicKey` implementation of another
 signing scheme.
 
 ### `PrivateKeyGenerator` trait
+
+The creation of a private key differs a lot from a signing scheme to another so we do not enforce a specific way to
+to build one with a trait method. We expect each private key implementation to provide a `new` method with appropriate
+parameters. Once a private key is created, it is responsible for the creation of public keys and signatures which are
+enforced by trait methods.
 
 ```rust
 pub trait PrivateKeyGenerator {
@@ -74,11 +83,6 @@ pub trait PrivateKeyGenerator {
 ```
 
 ### `PrivateKey` trait
-
-The creation of a private key differs a lot from a signing scheme to another so we do not enforce a specific way to
-to build one with a trait method. We expect each private key implementation to provide a `new` method with appropriate
-parameters. Once a private key is created, it is responsible for the creation of public keys and signatures which are
-enforced by trait methods.
 
 <!-- TODO -->
 
