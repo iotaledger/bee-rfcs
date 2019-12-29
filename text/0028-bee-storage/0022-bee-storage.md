@@ -1,6 +1,6 @@
 + Feature name: `bee-storage`
 + Start date: 2019-13-11
-+ RFC PR: [iotaledger/bee-rfcs#28](https://github.com/iotaledger/bee-rfcs/pull/)
++ RFC PR: [iotaledger/bee-rfcs#28](https://github.com/iotaledger/bee-rfcs/pull/28)
 + Bee issue:  [iotaledger/bee#65](https://github.com/iotaledger/bee/issues/65)
 
 # Summary
