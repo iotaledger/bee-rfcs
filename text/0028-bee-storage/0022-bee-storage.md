@@ -202,7 +202,7 @@ There is no reason not to have a storage module
 
 - Which backend should we implement this trait for first?
 
-- If we implement coordecide version first, milestone and snapshot_index does not exist
+- If we implement coordicide version first, milestone and snapshot_index does not exist
   
 - This is highly dependent on whether or not we are first following IRI too, but if we don't, 
   should we record state_delta? this has to be answered in the context of how we then do snapshot? (research)
