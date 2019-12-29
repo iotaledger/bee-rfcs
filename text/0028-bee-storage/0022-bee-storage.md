@@ -46,7 +46,7 @@ impl TxHash {
 #[derive(Copy, Clone, Debug, Eq, PartialEq, Hash)]
 pub struct TxAddress(u64);
 
-/// A transaction. Cannot be mutated once created.
+/// [https://github.com/iotaledger/bee-rfcs/pull/20]
 pub struct Tx {
     hash: TxHash,
     trunk: TxHash,
@@ -64,7 +64,6 @@ impl MilestoneHash {
     }
 }
 
-/// A transaction. Cannot be mutated once created.
 pub struct Milestone {
     hash: MilestoneHash,
     index: u32,
@@ -96,7 +95,7 @@ pub trait Connection<Conn> {
     fn destroy_connection(connection: Conn) -> Result<(), ConnectionError>;
 }
 
-pub trait Storable {
+pub trait StorageBackend {
     //**Operations over transaction's schema**//
 
     async fn insert_transaction(&self, tx: &Tx) -> Result<(), StorageError>;
@@ -175,7 +174,7 @@ impl Connection<DummyConnection> for DummyConnection {
 
 type DummyStorage = Storage<DummyConnection>;
 
-impl Storable for DummyStorage {
+impl StorageBackend for DummyStorage {
     //Implement all methods here
 }
 
