@@ -71,6 +71,9 @@ signing scheme.
 
 ### `PrivateKeyGenerator` trait
 
+<!-- TODO seed + index -->
+<!-- TODO creation delegation -->
+
 The creation of a private key differs a lot from a signing scheme to another so we do not enforce a specific way to
 to build one with a trait method. We expect each private key implementation to provide a `new` method with appropriate
 parameters. Once a private key is created, it is responsible for the creation of public keys and signatures which are
@@ -80,6 +83,7 @@ enforced by trait methods.
 pub trait PrivateKeyGenerator {
     type PrivateKey;
 
+    ///
     fn generate(&self, seed: &[i8], index: usize) -> Self::PrivateKey;
 }
 ```
@@ -93,7 +97,10 @@ pub trait PrivateKey {
     type PublicKey;
     type Signature;
 
+    ///
     fn generate_public_key(&self) -> Self::PublicKey;
+
+    ///
     fn sign(&mut self, message: &[i8]) -> Self::Signature;
 }
 ```
@@ -106,7 +113,10 @@ pub trait PrivateKey {
 pub trait PublicKey {
     type Signature;
 
+    ///
     fn verify(&self, message: &[i8], signature: &Self::Signature) -> bool;
+
+    ///
     fn to_bytes(&self) -> &[i8];
 }
 ```
@@ -117,23 +127,31 @@ pub trait PublicKey {
 
 ```rust
 pub trait Signature {
+    ///
     fn size(&self) -> usize;
+
+    ///
     fn to_bytes(&self) -> &[i8];
 }
 ```
 
 ### `RecoverableSignature` trait
 
+<!-- TODO -->
+
 ```rust
 pub trait RecoverableSignature {
     type PublicKey;
 
+    ///
     fn recover_public_key(&self, message: &[i8]) -> Self::PublicKey;
 }
 
 ```
 
 ## Implementation & workflow
+
+In this section we give example skeleton implementations of these traits and workflows for WOTS and MSS.
 
 ### WOTS example
 
@@ -234,6 +252,7 @@ let private_key_generator = WotsPrivateKeyGeneratorBuilder::<Kerl>::default().se
 let mut private_key = private_key_generator.generate(seed, 0);
 let public_key = private_key.generate_public_key();
 let signature = private_key.sign(message);
+let recovered_public_key = signature.recover_public_key(message);
 let valid = public_key.verify(message, &signature);
 ```
 
@@ -368,10 +387,17 @@ let valid = public_key.verify(message, &signature);
 
 <!-- TODO -->
 
++ This design fits the standards and expected APIs;
++ The main alternative is the current implementation of ISS as in IRI and most libraries;
+
 # Unresolved questions
+
+<!-- TODO -->
 
 + Should we prefix `Signing` to the `PrivateKey` and `PublicKey` traits since we expect encryption keys to be developed
 at some point (e.g. NTRU for MAM) ?
-+ Should `PublicKey` provide an `address` function that return an `Address` type ?
 + Some schemes like `Ed25519` benefit from faster batch verification, justifying a later introduction of a batch
 verifier trait.
++ Should the generator generate a pair of keys ? Can we always generate the public key from the private key ?
++ In the proposed design, we rely on the sponges implementing `Default` which for example doesn't allow different
+number of rounds for Curl unless Curl27 and Curl81 are types.
