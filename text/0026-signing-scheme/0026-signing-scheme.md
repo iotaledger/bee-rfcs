@@ -39,8 +39,8 @@ At the time of writing, the following signing schemes are being used in the IOTA
 + the second iteration of MAM uses another MSS scheme on top of WOTS to enable reusable addresses;
 + other schemes are being investigated for the ledger;
 
-Even though these schemes are very different on an implementation point of view, they all share the same behaviour,
-justifying the existence of the proposed traits.
+Even though these schemes are very different on an implementation point of view, they all share the same basic
+behaviour justifying the existence of the following proposed design composed of traits.
 
 Useful links:
 
@@ -61,9 +61,9 @@ shared and expected behaviour.
 
 ## Traits
 
-Following a common asymmetric cryptography pattern, we provide 5 traits `PrivateKeyGenerator`, `PrivateKey`, `PublicKey`
-, `Signature` and `RecoverableSignature` together enforcing the following features: private key generation, public key
-generation, signing and signature verification.
+We propose the traits `PrivateKeyGenerator`, `PrivateKey`, `PublicKey`, `Signature` and `RecoverableSignature` together
+enforcing the following features: private key generation, public key generation, signing, signature verification and
+public key recovery.
 
 Associated types are being used to bind implementations of these traits together within a signing scheme. For example,
 a `PrivateKey` implementation of a signing scheme shouldn't be used with a `PublicKey` implementation of another
