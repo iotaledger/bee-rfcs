@@ -128,16 +128,34 @@ pub trait PrivateKey {
 
 ### `PublicKey` trait
 
-<!-- TODO -->
+A public key is responsible for verifying the authenticity of a message signature; hence, having `Signature` as
+associated type. It should also be able to serialise it to bytes.
 
 ```rust
 pub trait PublicKey {
     type Signature;
 
+    /// Verifies the authenticity of a message signature
     ///
+    /// # Arguments
+    ///
+    /// * `message` - A slice that holds the message to verify the signature of
+    /// * `signature` - A signature to verify
+    ///
+    /// # Example
+    ///
+    /// ```
+    /// let valid = public_key.verify(message, &signature);
+    /// ```
     fn verify(&self, message: &[i8], signature: &Self::Signature) -> bool;
 
+    /// Serialises a public key to a slice of bytes
     ///
+    /// # Example
+    ///
+    /// ```
+    /// let bytes = public_key.to_bytes();
+    /// ```
     fn to_bytes(&self) -> &[i8];
 }
 ```
