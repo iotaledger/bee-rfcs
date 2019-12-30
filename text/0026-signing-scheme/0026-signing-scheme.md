@@ -18,12 +18,14 @@ are not enforced but some second layer protocol like MAM may rely on data digita
 
 In this RFC we will only focus on the authenticity aspect of asymmetric cryptography.
 
+We define `signing scheme` as being the set of data structures and algorithms allowing authenticity of a message.
+
 Useful links:
 
 + [Asymmetric cryptography](https://en.wikipedia.org/wiki/Public-key_cryptography)
 + [Digital signature](https://en.wikipedia.org/wiki/Digital_signature)
-+ [Addresses](https://docs.iota.org/docs/getting-started/0.1/clients/addresses)
-+ [Signatures](https://docs.iota.org/docs/getting-started/0.1/clients/signatures)
++ [IOTA addresses](https://docs.iota.org/docs/getting-started/0.1/clients/addresses)
++ [IOTA signatures](https://docs.iota.org/docs/getting-started/0.1/clients/signatures)
 
 # Motivation
 
