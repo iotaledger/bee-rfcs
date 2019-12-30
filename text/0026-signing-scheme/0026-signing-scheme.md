@@ -90,20 +90,41 @@ pub trait PrivateKeyGenerator {
 
 ### `PrivateKey` trait
 
-<!-- TODO -->
+A private key is responsible for generating its public counterpart and signing messages; hence, having `PublicKey` and
+`Signature` as associated types.
+
+**A private key should remain secret.**
 
 ```rust
 pub trait PrivateKey {
     type PublicKey;
     type Signature;
 
+    /// Generates and returns the public counterpart of a private key
     ///
+    /// # Example
+    ///
+    /// ```
+    /// let public_key = private_key.generate_public_key();
+    /// ```
     fn generate_public_key(&self) -> Self::PublicKey;
 
+    /// Generates and returns a signature for a given message
     ///
+    /// # Arguments
+    ///
+    /// * `message` - A slice that holds the message to be signed
+    ///
+    /// # Example
+    ///
+    /// ```
+    /// let signature = private_key.sign(message);
+    /// ```
     fn sign(&mut self, message: &[i8]) -> Self::Signature;
 }
 ```
+
+<!-- TODO Note on mut self -->
 
 ### `PublicKey` trait
 
