@@ -71,22 +71,38 @@ signing scheme.
 
 ### `PrivateKeyGenerator` trait
 
-<!-- TODO seed + index -->
-<!-- TODO creation delegation -->
+The creation of a private key differs a lot from a signing scheme to another in terms of parameters so we do not enforce
+a specific way to build one with a method in the `PrivateKey` trait. Instead we delegate the private key generation to a
+specific `PrivateKeyGenerator` trait which has `PrivateKey` as an associated type.
 
-The creation of a private key differs a lot from a signing scheme to another so we do not enforce a specific way to
-to build one with a trait method. We expect each private key implementation to provide a `new` method with appropriate
-parameters. Once a private key is created, it is responsible for the creation of public keys and signatures which are
-enforced by trait methods.
+A `PrivateKeyGenerator` implementation is expected to have all the specific parameters needed for the private key
+generation as attributes. It would usually itself be built with a builder pattern. Once it is built, the `generate`
+method can be used, only requiring mandatory parameters seed and index.
+
+The seed is required to ensure determinism and the index is required to allow deriving many keys from the same seed.
 
 ```rust
 pub trait PrivateKeyGenerator {
     type PrivateKey;
 
+    /// Generates and returns a private key
     ///
+    /// # Arguments
+    ///
+    /// * `seed` - A seed to deterministically derive a private key from
+    /// * `index` - An index to deterministically derive a private key from
+    ///
+    /// # Example
+    ///
+    /// ```
+    /// let private_key_generator = WotsPrivateKeyGeneratorBuilder::<Kerl>::default().security_level(2).build();
+    /// let private_key = private_key_generator.generate(seed, 0);
+    /// ```
     fn generate(&self, seed: &[i8], index: usize) -> Self::PrivateKey;
 }
 ```
+
+<!-- TODO remove index as param and put it as auto-incremented attribute ? -->
 
 ### `PrivateKey` trait
 
