@@ -456,3 +456,4 @@ verifier trait.
 + Should the generator generate a pair of keys ? Can we always generate the public key from the private key ?
 + In the proposed design, we rely on the sponges implementing `Default` which for example doesn't allow different
 number of rounds for Curl unless Curl27 and Curl81 are types.
++ How should serialisation/deserialisation be handled ? `to_bytes` ? `From`/`Into` ? `Serde` ?
