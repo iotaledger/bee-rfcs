@@ -95,6 +95,12 @@ pub trait Connection<Conn> {
     fn destroy_connection(connection: Conn) -> Result<(), ConnectionError>;
 }
 
+//In Cargo.toml
+//[dependencies]
+//async-trait = "0.1.22"
+use async_trait::async_trait;
+
+#[async_trait]
 pub trait StorageBackend {
     //**Operations over transaction's schema**//
 
@@ -137,11 +143,11 @@ pub trait StorageBackend {
         index: u32,
     ) -> Result<(), StorageError>;
 
-    async fn load_state_delta(&self, index: u32) -> Result<StateDeltaMap, StorageError>;
+    async fn load_state_delta(&self, index: u32) -> Result<StateDeltaMap, StorageError>;*/
 }
 
 pub struct Storage<Conn: Connection<Conn>> {
-    connection:   Conn,
+    pub connection:   Conn,
 }
 
 impl Storage<DummyConnection> {
@@ -150,7 +156,7 @@ impl Storage<DummyConnection> {
         Ok(())
     }
     fn destroy_connection(connection: DummyConnection) -> Result<(), ConnectionError> {
-        DummyConnection::destroy_connection();
+        DummyConnection::destroy_connection(connection);
         Ok(())
     }
 }
@@ -174,17 +180,10 @@ impl Connection<DummyConnection> for DummyConnection {
 
 type DummyStorage = Storage<DummyConnection>;
 
-impl StorageBackend for DummyStorage {
+//impl StorageBackend for DummyStorage {
     //Implement all methods here
-}
+//}
 
-#[cfg(test)]
-mod tests {
-    #[test]
-    fn it_works() {
-        assert_eq!(2 + 2, 4);
-    }
-}
 
 ```
 
