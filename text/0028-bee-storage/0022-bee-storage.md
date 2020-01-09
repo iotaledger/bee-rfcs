@@ -7,6 +7,7 @@
 
 An abstraction for the persistent module which will be exclusively used by the Tangle module
 for CRUD operations.
+[https://www.sqlshack.com/crud-operations-in-sql-server/]
 
 # Motivation
 
