@@ -1,6 +1,3 @@
-<!-- TODO unwrap on builders -->
-<!-- TODO Expecting new  -->
-
 + Feature name: `signing-scheme`
 + Start date: 2019-10-28
 + RFC PR: [iotaledger/bee-rfcs#26](https://github.com/iotaledger/bee-rfcs/pull/26)
@@ -168,6 +165,8 @@ pub trait PublicKey {
     /// ```
     fn verify(&self, message: &[i8], signature: &Self::Signature) -> bool;
 
+    fn from_bytes(bytes: &[i8]) -> Self;
+
     /// Serialises a public key to a slice of bytes
     ///
     /// # Example
@@ -189,6 +188,9 @@ pub trait Signature {
     fn size(&self) -> usize;
 
     ///
+    fn from_bytes(bytes: &[i8]) -> Self;
+
+    ///
     fn to_bytes(&self) -> &[i8];
 }
 ```
@@ -204,7 +206,6 @@ pub trait RecoverableSignature {
     ///
     fn recover_public_key(&self, message: &[i8]) -> Self::PublicKey;
 }
-
 ```
 
 ## Implementation & workflow
@@ -216,38 +217,40 @@ This section gives example skeleton implementations of these traits and workflow
 #### Structures and implementations
 
 ```rust
+#[derive(Default)]
 pub struct WotsPrivateKeyGeneratorBuilder<S> {
-    security_level: Option<usize>,
-    _sponge: PhantomData<S>
+    security_level: Option<u8>,
+    _sponge: PhantomData<S>,
 }
 
+#[derive(Default, Debug)]
 pub struct WotsPrivateKeyGenerator<S> {
-    security_level: usize,
-    _sponge: PhantomData<S>
+    security_level: u8,
+    _sponge: PhantomData<S>,
 }
 
 pub struct WotsPrivateKey<S> {
     state: Vec<i8>,
-    _sponge: PhantomData<S>
+    _sponge: PhantomData<S>,
 }
 
 pub struct WotsPublicKey<S> {
     state: Vec<i8>,
-    _sponge: PhantomData<S>
+    _sponge: PhantomData<S>,
 }
 
 pub struct WotsSignature<S> {
     state: Vec<i8>,
-    _sponge: PhantomData<S>
+    _sponge: PhantomData<S>,
 }
 
 impl<S: Sponge> WotsPrivateKeyGeneratorBuilder<S> {
-    pub fn security_level(&mut self, security_level: usize) -> &mut Self {
-      unimplemented!();
+    pub fn security_level(&mut self, security_level: u8) -> &mut Self {
+        unimplemented!();
     }
 
-    pub fn build(&mut self) -> WotsPrivateKeyGenerator<S> {
-      unimplemented!();
+    pub fn build(&mut self) -> Result<WotsPrivateKeyGenerator<S>, String> {
+        unimplemented!();
     }
 }
 
@@ -255,7 +258,7 @@ impl<S: Sponge> crate::PrivateKeyGenerator for WotsPrivateKeyGenerator<S> {
     type PrivateKey = WotsPrivateKey<S>;
 
     fn generate(&self, seed: &[i8], index: usize) -> Self::PrivateKey {
-      unimplemented!();
+        unimplemented!();
     }
 }
 
@@ -264,11 +267,11 @@ impl<S: Sponge> crate::PrivateKey for WotsPrivateKey<S> {
     type Signature = WotsSignature<S>;
 
     fn generate_public_key(&self) -> Self::PublicKey {
-      unimplemented!();
+        unimplemented!();
     }
 
     fn sign(&mut self, message: &[i8]) -> Self::Signature {
-      unimplemented!();
+        unimplemented!();
     }
 }
 
@@ -276,21 +279,29 @@ impl<S: Sponge> crate::PublicKey for WotsPublicKey<S> {
     type Signature = WotsSignature<S>;
 
     fn verify(&self, message: &[i8], signature: &Self::Signature) -> bool {
-      unimplemented!();
+        unimplemented!();
+    }
+
+    fn from_bytes(bytes: &[i8]) -> Self {
+        unimplemented!();
     }
 
     fn to_bytes(&self) -> &[i8] {
-      unimplemented!();
+        unimplemented!();
     }
 }
 
 impl<S: Sponge> crate::Signature for WotsSignature<S> {
     fn size(&self) -> usize {
-      unimplemented!();
+        unimplemented!();
+    }
+
+    fn from_bytes(bytes: &[i8]) -> Self {
+        unimplemented!();
     }
 
     fn to_bytes(&self) -> &[i8] {
-      unimplemented!();
+        unimplemented!();
     }
 }
 
@@ -298,15 +309,18 @@ impl<S: Sponge> crate::RecoverableSignature for WotsSignature<S> {
     type PublicKey = WotsPublicKey<S>;
 
     fn recover_public_key(&self, message: &[i8]) -> Self::PublicKey {
-      unimplemented!();
+        unimplemented!();
     }
 }
 ```
 
 #### Workflow
 
+<!-- TODO Different kind of workflows -->
+<!-- TODO Workflow all  the funcs -->
+
 ```rust
-let private_key_generator = WotsPrivateKeyGeneratorBuilder::<Kerl>::default().security_level(2).build();
+let private_key_generator = WotsPrivateKeyGeneratorBuilder::<Kerl>::default().security_level(2).build().unwrap();
 let mut private_key = private_key_generator.generate(seed, 0);
 let public_key = private_key.generate_public_key();
 let signature = private_key.sign(message);
@@ -319,6 +333,7 @@ let valid = public_key.verify(message, &signature);
 #### Structures and implementations
 
 ```rust
+#[derive(Default)]
 pub struct MssPrivateKeyGeneratorBuilder<S, G> {
     depth: Option<usize>,
     generator: Option<G>,
@@ -343,94 +358,130 @@ pub struct MssPublicKey<S, K> {
     state: Vec<i8>,
     depth: usize,
     _sponge: PhantomData<S>,
-    _key: PhantomData<K>
+    _key: PhantomData<K>,
 }
 
 pub struct MssSignature<S> {
     state: Vec<i8>,
     index: usize,
-    _sponge: PhantomData<S>
+    _sponge: PhantomData<S>,
 }
 
 impl<S, G> MssPrivateKeyGeneratorBuilder<S, G>
-    where S: Sponge,
-          G: PrivateKeyGenerator {
-
+where
+    S: Sponge,
+    G: PrivateKeyGenerator,
+{
     pub fn depth(&mut self, depth: usize) -> &mut Self {
-      unimplemented!();
+        unimplemented!();
     }
 
     pub fn generator(&mut self, generator: G) -> &mut Self {
-      unimplemented!();
+        unimplemented!();
     }
 
     pub fn build(&mut self) -> MssPrivateKeyGenerator<S, G> {
-      unimplemented!();
+        unimplemented!();
     }
 }
 
 impl<S, G> crate::PrivateKeyGenerator for MssPrivateKeyGenerator<S, G>
-    where S: Sponge,
-          G: PrivateKeyGenerator,
-          <G as PrivateKeyGenerator>::PrivateKey: PrivateKey,
-          <<G as PrivateKeyGenerator>::PrivateKey as PrivateKey>::PublicKey: PublicKey {
-
+where
+    S: Sponge,
+    G: PrivateKeyGenerator,
+    <G as PrivateKeyGenerator>::PrivateKey: PrivateKey,
+    <<G as PrivateKeyGenerator>::PrivateKey as PrivateKey>::PublicKey: PublicKey,
+{
     type PrivateKey = MssPrivateKey<S, G::PrivateKey>;
 
-    fn generate(&self, seed: &[i8], index: usize) -> Self::PrivateKey {
-      unimplemented!();
+    fn generate(&self, seed: &[i8], _: usize) -> Self::PrivateKey {
+        unimplemented!();
     }
 }
 
 impl<S, K> crate::PrivateKey for MssPrivateKey<S, K>
-    where S: Sponge,
-          K: PrivateKey,
-          <K as PrivateKey>::PublicKey: PublicKey,
-          <K as PrivateKey>::Signature: Signature {
-
+where
+    S: Sponge,
+    K: PrivateKey,
+    <K as PrivateKey>::PublicKey: PublicKey,
+    <K as PrivateKey>::Signature: Signature,
+    <<K as PrivateKey>::PublicKey as PublicKey>::Signature: Signature + RecoverableSignature,
+    <<<K as PrivateKey>::PublicKey as PublicKey>::Signature as RecoverableSignature>::PublicKey:
+        PublicKey,
+{
     type PublicKey = MssPublicKey<S, K::PublicKey>;
     type Signature = MssSignature<S>;
 
     fn generate_public_key(&self) -> Self::PublicKey {
-      unimplemented!();
+        unimplemented!();
     }
 
     fn sign(&mut self, message: &[i8]) -> Self::Signature {
-      unimplemented!();
+        unimplemented!();
+    }
+}
+
+impl<S, K> MssPublicKey<S, K>
+where
+    S: Sponge,
+    K: PublicKey,
+{
+    pub fn depth(mut self, depth: usize) -> Self {
+        unimplemented!();
     }
 }
 
 impl<S, K> crate::PublicKey for MssPublicKey<S, K>
-    where S: Sponge,
-          K: PublicKey {
-
+where
+    S: Sponge,
+    K: PublicKey,
+    <K as PublicKey>::Signature: Signature + RecoverableSignature,
+    <<K as PublicKey>::Signature as RecoverableSignature>::PublicKey: PublicKey,
+{
     type Signature = MssSignature<S>;
 
     fn verify(&self, message: &[i8], signature: &Self::Signature) -> bool {
-      unimplemented!();
+        unimplemented!();
+    }
+
+    fn from_bytes(bytes: &[i8]) -> Self {
+        unimplemented!();
     }
 
     fn to_bytes(&self) -> &[i8] {
-      unimplemented!();
+        unimplemented!();
+    }
+}
+
+impl<S: Sponge> MssSignature<S> {
+    pub fn index(mut self, index: usize) -> Self {
+        unimplemented!();
     }
 }
 
 impl<S: Sponge> crate::Signature for MssSignature<S> {
     fn size(&self) -> usize {
-      unimplemented!();
+        unimplemented!();
+    }
+
+    fn from_bytes(bytes: &[i8]) -> Self {
+        unimplemented!();
     }
 
     fn to_bytes(&self) -> &[i8] {
-      unimplemented!();
+        unimplemented!();
     }
 }
 ```
 
 #### Workflow
 
+<!-- TODO Different kind of workflows -->
+<!-- TODO Workflow all  the funcs -->
+
 ```rust
 let wots_private_key_generator = WotsPrivateKeyGeneratorBuilder::<Kerl>::default().security_level(2).build();
-let mss_private_key_generator = MssPrivateKeyGeneratorBuilder::<Kerl, WotsPrivateKeyGenerator<Kerl>>::default().depth(7).generator(wots_private_key_generator).build();
+let mss_private_key_generator = MssPrivateKeyGeneratorBuilder::<Kerl, WotsPrivateKeyGenerator<Kerl>>::default().depth(7).generator(wots_private_key_generator).build().unwrap();
 let mut private_key = mss_private_key_generator.generate(seed, 0);
 let public_key = private_key.generate_public_key();
 let signature = private_key.sign(message);
