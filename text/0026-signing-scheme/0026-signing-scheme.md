@@ -1,3 +1,6 @@
+<!-- TODO unwrap on builders -->
+<!-- TODO Expecting new  -->
+
 + Feature name: `signing-scheme`
 + Start date: 2019-10-28
 + RFC PR: [iotaledger/bee-rfcs#26](https://github.com/iotaledger/bee-rfcs/pull/26)
@@ -16,9 +19,9 @@ settlement to be accepted by the network, a proof that the initiator of the tran
 be provided, this proof is the digital signature of the transfer. In the IOTA core protocol, data transfer signatures
 are not enforced but some second layer protocol like MAM may rely on data digital signatures.
 
-In this RFC we will only focus on the authenticity aspect of asymmetric cryptography.
+This RFC only focuses on the authenticity aspect of asymmetric cryptography.
 
-We define `signing scheme` as being the set of data structures and algorithms allowing authenticity of a message.
+It defines `signing scheme` as being the set of data structures and algorithms allowing authenticity of a message.
 
 Useful links:
 
@@ -55,15 +58,15 @@ The proposed design is at the very core of asymmetric cryptography in which a pa
 to create and verify digital signatures. Public keys and signatures are public while private keys remain secret.
 
 The [IOTA Signing Scheme](https://github.com/iotaledger/iri/blob/dev/src/main/java/com/iota/iri/crypto/ISS.java) as
-implemented in IRI and most libraries can be cumbersome and different from what we could expect from an asymmetric
-cryptography API. We then propose to replace the existing methods with a more traditional set of traits enforcing a
-shared and expected behaviour.
+implemented in IRI and most libraries can be cumbersome and different from what one could expect from an asymmetric
+cryptography API. This RFC then propose to replace the existing methods with a more traditional set of traits enforcing
+a shared and expected behaviour.
 
 ## Traits
 
-We propose the traits `PrivateKeyGenerator`, `PrivateKey`, `PublicKey`, `Signature` and `RecoverableSignature` together
-enforcing the following features: private key generation, public key generation, signing, signature verification and
-public key recovery.
+This RFC proposes the traits `PrivateKeyGenerator`, `PrivateKey`, `PublicKey`, `Signature` and `RecoverableSignature`
+together enforcing the following features: private key generation, public key generation, signing, signature
+verification and public key recovery.
 
 Associated types are being used to bind implementations of these traits together within a signing scheme. For example,
 a `PrivateKey` implementation of a signing scheme shouldn't be used with a `PublicKey` implementation of another
@@ -71,9 +74,9 @@ signing scheme.
 
 ### `PrivateKeyGenerator` trait
 
-The creation of a private key differs a lot from a signing scheme to another in terms of parameters so we do not enforce
-a specific way to build one with a method in the `PrivateKey` trait. Instead we delegate the private key generation to a
-specific `PrivateKeyGenerator` trait which has `PrivateKey` as an associated type.
+The creation of a private key differs a lot from a signing scheme to another in terms of parameters so there is no
+specific way to build one with a method enforced by the `PrivateKey` trait. Instead, the private key generation is
+delegated to a specific `PrivateKeyGenerator` trait which has `PrivateKey` as an associated type.
 
 A `PrivateKeyGenerator` implementation is expected to have all the specific parameters needed for the private key
 generation as attributes. It would usually itself be built with a builder pattern. Once it is built, the `generate`
@@ -206,7 +209,7 @@ pub trait RecoverableSignature {
 
 ## Implementation & workflow
 
-In this section we give example skeleton implementations of these traits and workflows for WOTS and MSS.
+This section gives example skeleton implementations of these traits and workflows for WOTS and MSS.
 
 ### WOTS example
 
@@ -449,11 +452,14 @@ let valid = public_key.verify(message, &signature);
 
 <!-- TODO -->
 
-+ Should we prefix `Signing` to the `PrivateKey` and `PublicKey` traits since we expect encryption keys to be developed
-at some point (e.g. NTRU for MAM) ?
++ Should `PrivateKey` and `PublicKey` traits be prefixed with `Signing` since encryption keys are expected to be
+developed at some point (e.g. NTRU for MAM) ?
 + Some schemes like `Ed25519` benefit from faster batch verification, justifying a later introduction of a batch
 verifier trait.
-+ Should the generator generate a pair of keys ? Can we always generate the public key from the private key ?
-+ In the proposed design, we rely on the sponges implementing `Default` which for example doesn't allow different
-number of rounds for Curl unless Curl27 and Curl81 are types.
++ Should the generator generate a pair of keys ? Is this always possible to generate the public key from the private
+key ?
++ The proposed design relies on the sponges implementing `Default` which for example doesn't allow different number of
+rounds for Curl unless Curl27 and Curl81 are types.
 + How should serialisation/deserialisation be handled ? `to_bytes` ? `From`/`Into` ? `Serde` ?
++ Should return values always be wrapped in Result ?
++ Should signature be padded ?
