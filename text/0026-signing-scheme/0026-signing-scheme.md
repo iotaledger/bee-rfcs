@@ -61,6 +61,11 @@ implemented in IRI and most libraries can be cumbersome and different from what 
 cryptography API. This RFC then propose to replace the existing methods with a more traditional set of traits enforcing
 a shared and expected behaviour.
 
+<!-- ## Dependencies
+
+- Seed
+- Sponge -->
+
 ## Traits
 
 This RFC proposes the traits `PrivateKeyGenerator`, `PrivateKey`, `PublicKey`, `Signature` and `RecoverableSignature`
@@ -100,7 +105,7 @@ pub trait PrivateKeyGenerator {
     /// let private_key_generator = WotsPrivateKeyGeneratorBuilder::<Kerl>::default().security_level(2).build();
     /// let private_key = private_key_generator.generate(seed, 0);
     /// ```
-    fn generate(&self, seed: &[i8], index: u64) -> Self::PrivateKey;
+    fn generate(&self, seed: &Seed, index: u64) -> Self::PrivateKey;
 }
 ```
 
@@ -259,7 +264,7 @@ impl<S: Sponge + Default> WotsPrivateKeyGeneratorBuilder<S> {
 impl<S: Sponge + Default> crate::PrivateKeyGenerator for WotsPrivateKeyGenerator<S> {
     type PrivateKey = WotsPrivateKey<S>;
 
-    fn generate(&self, seed: &[i8], index: u64) -> Self::PrivateKey {
+    fn generate(&self, seed: &Seed, index: u64) -> Self::PrivateKey {
         unimplemented!();
     }
 }
@@ -396,7 +401,7 @@ where
 {
     type PrivateKey = MssPrivateKey<S, G::PrivateKey>;
 
-    fn generate(&self, seed: &[i8], _: u64) -> Self::PrivateKey {
+    fn generate(&self, seed: &Seed, index: u64) -> Self::PrivateKey {
         unimplemented!();
     }
 }
