@@ -1,3 +1,5 @@
+<!-- TODO Relation with Sponge -->
+
 + Feature name: `signing-scheme`
 + Start date: 2019-10-28
 + RFC PR: [iotaledger/bee-rfcs#26](https://github.com/iotaledger/bee-rfcs/pull/26)
@@ -98,7 +100,7 @@ pub trait PrivateKeyGenerator {
     /// let private_key_generator = WotsPrivateKeyGeneratorBuilder::<Kerl>::default().security_level(2).build();
     /// let private_key = private_key_generator.generate(seed, 0);
     /// ```
-    fn generate(&self, seed: &[i8], index: usize) -> Self::PrivateKey;
+    fn generate(&self, seed: &[i8], index: u64) -> Self::PrivateKey;
 }
 ```
 
@@ -257,7 +259,7 @@ impl<S: Sponge + Default> WotsPrivateKeyGeneratorBuilder<S> {
 impl<S: Sponge + Default> crate::PrivateKeyGenerator for WotsPrivateKeyGenerator<S> {
     type PrivateKey = WotsPrivateKey<S>;
 
-    fn generate(&self, seed: &[i8], index: usize) -> Self::PrivateKey {
+    fn generate(&self, seed: &[i8], index: u64) -> Self::PrivateKey {
         unimplemented!();
     }
 }
@@ -335,20 +337,20 @@ let valid = public_key.verify(message, &signature);
 ```rust
 #[derive(Default)]
 pub struct MssPrivateKeyGeneratorBuilder<S, G> {
-    depth: Option<usize>,
+    depth: Option<u8>,
     generator: Option<G>,
     _sponge: PhantomData<S>,
 }
 
 pub struct MssPrivateKeyGenerator<S, G> {
-    depth: usize,
+    depth: u8,
     generator: G,
     _sponge: PhantomData<S>,
 }
 
 pub struct MssPrivateKey<S, K> {
-    depth: usize,
-    index: usize,
+    depth: u8,
+    index: u64,
     keys: Vec<K>,
     tree: Vec<i8>,
     _sponge: PhantomData<S>,
@@ -356,14 +358,14 @@ pub struct MssPrivateKey<S, K> {
 
 pub struct MssPublicKey<S, K> {
     state: Vec<i8>,
-    depth: usize,
+    depth: u8,
     _sponge: PhantomData<S>,
     _key: PhantomData<K>,
 }
 
 pub struct MssSignature<S> {
     state: Vec<i8>,
-    index: usize,
+    index: u64,
     _sponge: PhantomData<S>,
 }
 
@@ -372,7 +374,7 @@ where
     S: Sponge + Default,
     G: PrivateKeyGenerator,
 {
-    pub fn depth(&mut self, depth: usize) -> &mut Self {
+    pub fn depth(&mut self, depth: u8) -> &mut Self {
         unimplemented!();
     }
 
@@ -394,7 +396,7 @@ where
 {
     type PrivateKey = MssPrivateKey<S, G::PrivateKey>;
 
-    fn generate(&self, seed: &[i8], _: usize) -> Self::PrivateKey {
+    fn generate(&self, seed: &[i8], _: u64) -> Self::PrivateKey {
         unimplemented!();
     }
 }
@@ -426,7 +428,7 @@ where
     S: Sponge + Default,
     K: PublicKey,
 {
-    pub fn depth(mut self, depth: usize) -> Self {
+    pub fn depth(mut self, depth: u8) -> Self {
         unimplemented!();
     }
 }
@@ -454,7 +456,7 @@ where
 }
 
 impl<S: Sponge + Default> MssSignature<S> {
-    pub fn index(mut self, index: usize) -> Self {
+    pub fn index(mut self, index: u64) -> Self {
         unimplemented!();
     }
 }
