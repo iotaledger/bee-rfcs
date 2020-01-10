@@ -244,7 +244,7 @@ pub struct WotsSignature<S> {
     _sponge: PhantomData<S>,
 }
 
-impl<S: Sponge> WotsPrivateKeyGeneratorBuilder<S> {
+impl<S: Sponge + Default> WotsPrivateKeyGeneratorBuilder<S> {
     pub fn security_level(&mut self, security_level: u8) -> &mut Self {
         unimplemented!();
     }
@@ -254,7 +254,7 @@ impl<S: Sponge> WotsPrivateKeyGeneratorBuilder<S> {
     }
 }
 
-impl<S: Sponge> crate::PrivateKeyGenerator for WotsPrivateKeyGenerator<S> {
+impl<S: Sponge + Default> crate::PrivateKeyGenerator for WotsPrivateKeyGenerator<S> {
     type PrivateKey = WotsPrivateKey<S>;
 
     fn generate(&self, seed: &[i8], index: usize) -> Self::PrivateKey {
@@ -262,7 +262,7 @@ impl<S: Sponge> crate::PrivateKeyGenerator for WotsPrivateKeyGenerator<S> {
     }
 }
 
-impl<S: Sponge> crate::PrivateKey for WotsPrivateKey<S> {
+impl<S: Sponge + Default> crate::PrivateKey for WotsPrivateKey<S> {
     type PublicKey = WotsPublicKey<S>;
     type Signature = WotsSignature<S>;
 
@@ -275,7 +275,7 @@ impl<S: Sponge> crate::PrivateKey for WotsPrivateKey<S> {
     }
 }
 
-impl<S: Sponge> crate::PublicKey for WotsPublicKey<S> {
+impl<S: Sponge + Default> crate::PublicKey for WotsPublicKey<S> {
     type Signature = WotsSignature<S>;
 
     fn verify(&self, message: &[i8], signature: &Self::Signature) -> bool {
@@ -291,7 +291,7 @@ impl<S: Sponge> crate::PublicKey for WotsPublicKey<S> {
     }
 }
 
-impl<S: Sponge> crate::Signature for WotsSignature<S> {
+impl<S: Sponge + Default> crate::Signature for WotsSignature<S> {
     fn size(&self) -> usize {
         unimplemented!();
     }
@@ -305,7 +305,7 @@ impl<S: Sponge> crate::Signature for WotsSignature<S> {
     }
 }
 
-impl<S: Sponge> crate::RecoverableSignature for WotsSignature<S> {
+impl<S: Sponge + Default> crate::RecoverableSignature for WotsSignature<S> {
     type PublicKey = WotsPublicKey<S>;
 
     fn recover_public_key(&self, message: &[i8]) -> Self::PublicKey {
@@ -369,7 +369,7 @@ pub struct MssSignature<S> {
 
 impl<S, G> MssPrivateKeyGeneratorBuilder<S, G>
 where
-    S: Sponge,
+    S: Sponge + Default,
     G: PrivateKeyGenerator,
 {
     pub fn depth(&mut self, depth: usize) -> &mut Self {
@@ -387,7 +387,7 @@ where
 
 impl<S, G> crate::PrivateKeyGenerator for MssPrivateKeyGenerator<S, G>
 where
-    S: Sponge,
+    S: Sponge + Default,
     G: PrivateKeyGenerator,
     <G as PrivateKeyGenerator>::PrivateKey: PrivateKey,
     <<G as PrivateKeyGenerator>::PrivateKey as PrivateKey>::PublicKey: PublicKey,
@@ -401,7 +401,7 @@ where
 
 impl<S, K> crate::PrivateKey for MssPrivateKey<S, K>
 where
-    S: Sponge,
+    S: Sponge + Default,
     K: PrivateKey,
     <K as PrivateKey>::PublicKey: PublicKey,
     <K as PrivateKey>::Signature: Signature,
@@ -423,7 +423,7 @@ where
 
 impl<S, K> MssPublicKey<S, K>
 where
-    S: Sponge,
+    S: Sponge + Default,
     K: PublicKey,
 {
     pub fn depth(mut self, depth: usize) -> Self {
@@ -433,7 +433,7 @@ where
 
 impl<S, K> crate::PublicKey for MssPublicKey<S, K>
 where
-    S: Sponge,
+    S: Sponge + Default,
     K: PublicKey,
     <K as PublicKey>::Signature: Signature + RecoverableSignature,
     <<K as PublicKey>::Signature as RecoverableSignature>::PublicKey: PublicKey,
@@ -453,13 +453,13 @@ where
     }
 }
 
-impl<S: Sponge> MssSignature<S> {
+impl<S: Sponge + Default> MssSignature<S> {
     pub fn index(mut self, index: usize) -> Self {
         unimplemented!();
     }
 }
 
-impl<S: Sponge> crate::Signature for MssSignature<S> {
+impl<S: Sponge + Default> crate::Signature for MssSignature<S> {
     fn size(&self) -> usize {
         unimplemented!();
     }
