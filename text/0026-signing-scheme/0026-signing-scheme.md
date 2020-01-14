@@ -1,5 +1,3 @@
-<!-- TODO Relation with Sponge -->
-
 + Feature name: `signing-scheme`
 + Start date: 2019-10-28
 + RFC PR: [iotaledger/bee-rfcs#26](https://github.com/iotaledger/bee-rfcs/pull/26)
@@ -7,27 +5,41 @@
 
 # Summary
 
+Following the principles of asymmetric cryptography and Hierarchical Deterministic Wallets, this RFC establishes a
+signing scheme for the IOTA protocol.
+
+## Asymmetric cryptography
+
 Asymmetric cryptography is a system that makes use of a pair of keys to allow:
 
-+ **Confidentiality**: messages are encrypted with a public key and only the owner of the matching private key is able
-  to decrypt it;
-+ **Authenticity**: messages are signed with a private key and can be verified by anyone with the matching public key;
++ **Confidentiality**: a message is encrypted by anyone with a public key and only the owner of the matching private key
+  is able to decrypt it;
++ **Authenticity**: a message is signed with a private key by its owner and the signature can be verified by anyone with
+  the matching public key;
 
-In the IOTA network, asymmetric cryptography is used to authenticate the transfer of tokens or data. For a payment
+This RFC only focuses on the authenticity aspect of asymmetric cryptography and defines `signing scheme` as being the
+set of data structures and algorithms allowing authenticity of a message.
+
+<!-- Reviewed -->
+
+In the IOTA protocol, asymmetric cryptography is used to authenticate the transfer of tokens or data. For a payment
 settlement to be accepted by the network, a proof that the initiator of the transfer is the actual tokens owner has to
 be provided, this proof is the digital signature of the transfer. In the IOTA core protocol, data transfer signatures
 are not enforced but some second layer protocol like MAM may rely on data digital signatures.
-
-This RFC only focuses on the authenticity aspect of asymmetric cryptography.
-
-It defines `signing scheme` as being the set of data structures and algorithms allowing authenticity of a message.
 
 Useful links:
 
 + [Asymmetric cryptography](https://en.wikipedia.org/wiki/Public-key_cryptography)
 + [Digital signature](https://en.wikipedia.org/wiki/Digital_signature)
-+ [IOTA addresses](https://docs.iota.org/docs/getting-started/0.1/clients/addresses)
 + [IOTA signatures](https://docs.iota.org/docs/getting-started/0.1/clients/signatures)
+
+## Hierarchical Deterministic Wallets
+
+Useful links:
+
++ [BIP32](https://github.com/bitcoin/bips/blob/master/bip-0032.mediawiki)
++ [IOTA seeds](https://docs.iota.org/docs/getting-started/0.1/clients/seeds)
++ [IOTA addresses](https://docs.iota.org/docs/getting-started/0.1/clients/addresses)
 
 # Motivation
 
