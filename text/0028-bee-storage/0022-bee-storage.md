@@ -91,15 +91,14 @@ type MissingHashesToRCApprovers = HashMap<TxHash, Vec<Rc<TxHash>>>;
 //another way to decide on a check point where to store an address's delta if we want to snapshot
 type StateDeltaMap = HashMap<TxAddress, i64>;
 
+use async_trait::async_trait;
+
+#[async_trait]
 pub trait Connection<Conn> {
-    fn establish_connection(url: &str) -> Result<Conn, ConnectionError>;
-    fn destroy_connection(connection: Conn) -> Result<(), ConnectionError>;
+    async fn establish_connection(url: &str) -> Result<Conn, ConnectionError>;
+    async fn destroy_connection(connection: Conn) -> Result<(), ConnectionError>;
 }
 
-//In Cargo.toml
-//[dependencies]
-//async-trait = "0.1.22"
-use async_trait::async_trait;
 
 #[async_trait]
 pub trait StorageBackend {
@@ -144,19 +143,20 @@ pub trait StorageBackend {
         index: u32,
     ) -> Result<(), StorageError>;
 
-    async fn load_state_delta(&self, index: u32) -> Result<StateDeltaMap, StorageError>;*/
+    async fn load_state_delta(&self, index: u32) -> Result<StateDeltaMap, StorageError>;
 }
 
 pub struct Storage<Conn: Connection<Conn>> {
     pub connection:   Conn,
 }
 
+/*
 impl Storage<DummyConnection> {
-    fn establish_connection(&mut self, url: &str) -> Result<(), ConnectionError> {
+    async fn establish_connection(&mut self, url: &str) -> Result<(), ConnectionError> {
         self.connection = DummyConnection::establish_connection(url)?;
         Ok(())
     }
-    fn destroy_connection(connection: DummyConnection) -> Result<(), ConnectionError> {
+    async fn destroy_connection(connection: DummyConnection) -> Result<(), ConnectionError> {
         DummyConnection::destroy_connection(connection);
         Ok(())
     }
@@ -171,15 +171,16 @@ impl DummyConnection {
 }
 
 impl Connection<DummyConnection> for DummyConnection {
-    fn establish_connection(url: &str) -> Result<DummyConnection, ConnectionError> {
+    async fn establish_connection(url: &str) -> Result<DummyConnection, ConnectionError> {
         Ok(DummyConnection::new())
     }
-    fn destroy_connection(connection: DummyConnection) -> Result<(), ConnectionError> {
+    async fn destroy_connection(connection: DummyConnection) -> Result<(), ConnectionError> {
         Ok(())
     }
 }
 
 type DummyStorage = Storage<DummyConnection>;
+*/
 
 //impl StorageBackend for DummyStorage {
     //Implement all methods here
