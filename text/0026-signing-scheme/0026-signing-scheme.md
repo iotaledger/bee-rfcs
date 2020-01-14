@@ -56,15 +56,48 @@ Useful links:
 The proposed design is at the very core of asymmetric cryptography in which a pair of private and public keys are used
 to create and verify digital signatures. Public keys and signatures are public while private keys remain secret.
 
+<!-- TODO Seed and HD wallets -->
+
 The [IOTA Signing Scheme](https://github.com/iotaledger/iri/blob/dev/src/main/java/com/iota/iri/crypto/ISS.java) as
 implemented in IRI and most libraries can be cumbersome and different from what one could expect from an asymmetric
 cryptography API. This RFC then propose to replace the existing methods with a more traditional set of traits enforcing
 a shared and expected behaviour.
 
-<!-- ## Dependencies
+## Seed
 
-- Seed
-- Sponge -->
+<!-- TODO -->
+
+```rust
+pub struct Seed([i8; 243]);
+
+#[derive(Debug, PartialEq)]
+pub enum SeedError {
+    InvalidLength,
+    InvalidTrit,
+}
+
+impl Seed {
+    pub fn subseed<S: Sponge + Default>(&self, index: u64) -> Self {
+      unimplemented!();
+    }
+
+    pub fn from_bytes(bytes: &[i8]) -> Result<Self, SeedError> {
+      unimplemented!();
+    }
+
+    fn from_bytes_unchecked(bytes: &[i8]) -> Self {
+      unimplemented!();
+    }
+
+    pub fn to_bytes(&self) -> &[i8] {
+      unimplemented!();
+    }
+}
+```
+
+## Sponge
+
+<!-- TODO -->
 
 ## Traits
 
