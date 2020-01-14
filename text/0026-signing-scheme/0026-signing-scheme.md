@@ -121,6 +121,9 @@ Associated types are being used to bind implementations of these traits together
 a `PrivateKey` implementation of a signing scheme shouldn't be used with a `PublicKey` implementation of another
 signing scheme.
 
+Some schemes like `Ed25519` benefit from faster batch verification, justifying a later introduction of a batch
+verifier trait.
+
 ### `PrivateKeyGenerator` trait
 
 The creation of a private key differs a lot from a signing scheme to another in terms of parameters so there is no
@@ -557,8 +560,6 @@ let valid = public_key.verify(message, &signature);
 
 + Should `PrivateKey` and `PublicKey` traits be prefixed with `Signing` since encryption keys are expected to be
 developed at some point (e.g. NTRU for MAM) ?
-+ Some schemes like `Ed25519` benefit from faster batch verification, justifying a later introduction of a batch
-verifier trait.
 + Should the generator generate a pair of keys ? Is this always possible to generate the public key from the private
 key ?
 + The proposed design relies on the sponges implementing `Default` which for example doesn't allow different number of
