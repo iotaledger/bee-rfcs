@@ -20,12 +20,10 @@ Asymmetric cryptography is a system that makes use of a pair of keys to allow:
 This RFC only focuses on the authenticity aspect of asymmetric cryptography and defines `signing scheme` as being the
 set of data structures and algorithms allowing authenticity of a message.
 
-<!-- Reviewed -->
-
-In the IOTA protocol, asymmetric cryptography is used to authenticate the transfer of tokens or data. For a payment
-settlement to be accepted by the network, a proof that the initiator of the transfer is the actual tokens owner has to
-be provided, this proof is the digital signature of the transfer. In the IOTA core protocol, data transfer signatures
-are not enforced but some second layer protocol like MAM may rely on data digital signatures.
+In the IOTA protocol, asymmetric cryptography is used to authenticate the transfer of tokens. To move tokens out of an
+address - which is a public key - one has to show a proof that he actually is the owner of the tokens. This proof is
+the digital signature of the transfer, has been created with the private key associated to that address and the
+signature is verifiable by anyone with the address.
 
 Useful links:
 
@@ -35,11 +33,15 @@ Useful links:
 
 ## Hierarchical Deterministic Wallets
 
+<!-- TODO -->
+
 Useful links:
 
 + [BIP32](https://github.com/bitcoin/bips/blob/master/bip-0032.mediawiki)
 + [IOTA seeds](https://docs.iota.org/docs/getting-started/0.1/clients/seeds)
 + [IOTA addresses](https://docs.iota.org/docs/getting-started/0.1/clients/addresses)
+
+<!-- Reviewed -->
 
 # Motivation
 
