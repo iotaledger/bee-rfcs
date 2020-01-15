@@ -41,22 +41,19 @@ Useful links:
 + [IOTA seeds](https://docs.iota.org/docs/getting-started/0.1/clients/seeds)
 + [IOTA addresses](https://docs.iota.org/docs/getting-started/0.1/clients/addresses)
 
-<!-- Reviewed -->
-
 # Motivation
 
 At the time of writing, the following signing schemes are being used in the IOTA network:
 
 + the ledger uses a Winternitz One-Time Signature (WOTS) scheme;
 + the coordinator uses a Merkle Signature Scheme (MSS) scheme on top of WOTS to enable reusable addresses;
-+ the first iteration of MAM uses another WOTS scheme;
-+ the first iteration of MAM uses another MSS scheme on top of WOTS to enable reusable addresses;
-+ the second iteration of MAM uses another WOTS scheme;
-+ the second iteration of MAM uses another MSS scheme on top of WOTS to enable reusable addresses;
-+ other schemes are being investigated for the ledger;
++ both iterations of MAM use another WOTS scheme;
++ both iterations of MAM use another MSS scheme on top of WOTS to enable reusable addresses;
+
+Other schemes, like Ed25519, are being investigated for the ledger.
 
 Even though these schemes are very different on an implementation point of view, they all share the same basic
-behaviour justifying the existence of the following proposed design composed of traits.
+behaviour justifying the existence of the following proposed design.
 
 Useful links:
 
@@ -64,6 +61,8 @@ Useful links:
 + [On the Security of the Winternitz One-Time Signature Scheme](https://eprint.iacr.org/2011/191.pdf)
 + [Merkle signature scheme](https://en.wikipedia.org/wiki/Merkle_signature_scheme)
 + [EdDSA](https://en.wikipedia.org/wiki/EdDSA)
+
+<!-- Reviewed -->
 
 # Detailed design
 
