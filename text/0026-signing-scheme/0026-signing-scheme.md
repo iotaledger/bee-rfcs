@@ -110,11 +110,18 @@ impl Seed {
 }
 ```
 
-<!-- Reviewed -->
-
 ## Sponge
 
+Even though the following design doesn't depend on a sponge construction, the main signing scheme implementations
+currently being used by the IOTA protocol - WOTS and MSS - heavily relies on it. For this reason, this RFC doesn't
+directly rely on a `Sponge` trait but the example implementations shown below does.
+
+<!-- TODO: provide a link when merged -->
+The `Sponge` trait is detailed in the Hash RFC.
+
 <!-- TODO -->
+
+<!-- Reviewed -->
 
 ## Traits
 
