@@ -62,14 +62,12 @@ Useful links:
 + [Merkle signature scheme](https://en.wikipedia.org/wiki/Merkle_signature_scheme)
 + [EdDSA](https://en.wikipedia.org/wiki/EdDSA)
 
-<!-- Reviewed -->
-
 # Detailed design
+
+<!-- TODO -->
 
 The proposed design is at the very core of asymmetric cryptography in which a pair of private and public keys are used
 to create and verify digital signatures. Public keys and signatures are public while private keys remain secret.
-
-<!-- TODO Seed and HD wallets -->
 
 The [IOTA Signing Scheme](https://github.com/iotaledger/iri/blob/dev/src/main/java/com/iota/iri/crypto/ISS.java) as
 implemented in IRI and most libraries can be cumbersome and different from what one could expect from an asymmetric
@@ -78,7 +76,11 @@ a shared and expected behaviour.
 
 ## Seed
 
-<!-- TODO -->
+As explained earlier, the seed is the root of the hierarchical deterministic wallet and all public/private keys can be
+derived from it. **It must then be kept secret**. In the IOTA protocol, a seed is sequence of 81 trytes like `"PUEOTSEITFEVEWCWBTSIZM9NKRGJEIMXTULBACGFRQK9IMGICLBKW9TTEVSDQMGWKBXPVCBMMCXWMNPDX"` (**DO NOT USE THIS SEED**).
+
+The seed is a critical component of the signing scheme. Everywhere a seed is needed as input, the following `Seed`
+type must be used only and no other representation like string, bytes or trits. This is why the following design only allows valid and verified instantiation of the `Seed` type.
 
 ```rust
 pub struct Seed([i8; 243]);
@@ -90,6 +92,10 @@ pub enum SeedError {
 }
 
 impl Seed {
+    pub fn new() -> Self {
+      unimplemented!();
+    }
+
     pub fn subseed<S: Sponge + Default>(&self, index: u64) -> Self {
       unimplemented!();
     }
@@ -98,15 +104,13 @@ impl Seed {
       unimplemented!();
     }
 
-    fn from_bytes_unchecked(bytes: &[i8]) -> Self {
-      unimplemented!();
-    }
-
     pub fn to_bytes(&self) -> &[i8] {
       unimplemented!();
     }
 }
 ```
+
+<!-- Reviewed -->
 
 ## Sponge
 
@@ -374,6 +378,7 @@ impl<S: Sponge + Default> crate::RecoverableSignature for WotsSignature<S> {
 
 <!-- TODO Different kind of workflows -->
 <!-- TODO Workflow all  the funcs -->
+<!-- TODO new seed -->
 
 ```rust
 let private_key_generator = WotsPrivateKeyGeneratorBuilder::<Kerl>::default().security_level(2).build().unwrap();
