@@ -119,42 +119,37 @@ directly rely on a `Sponge` trait but the example implementations shown below do
 <!-- TODO: provide a link when merged -->
 The `Sponge` trait is detailed in the Hash RFC.
 
-<!-- TODO -->
-
-<!-- Reviewed -->
-
 ## Traits
 
 This RFC proposes the traits `PrivateKeyGenerator`, `PrivateKey`, `PublicKey`, `Signature` and `RecoverableSignature`
 together enforcing the following features: private key generation, public key generation, signing, signature
 verification and public key recovery.
 
-Associated types are being used to bind implementations of these traits together within a signing scheme. For example,
-a `PrivateKey` implementation of a signing scheme shouldn't be used with a `PublicKey` implementation of another
-signing scheme.
+Associated types are being used to bind implementations of these traits together within a signing scheme as, for
+example, a `PrivateKey` implementation of a signing scheme shouldn't be used with a `PublicKey` implementation of
+another signing scheme.
 
-Some schemes like `Ed25519` benefit from faster batch verification, justifying a later introduction of a batch
-verifier trait.
+Some signing schemes like `Ed25519` benefit from faster batch verification, justifying a later introduction of a batch
+verifier trait, probably as a separate RFC.
 
 ### `PrivateKeyGenerator` trait
 
 The creation of a private key differs a lot from a signing scheme to another in terms of parameters so there is no
-specific way to build one with a method enforced by the `PrivateKey` trait. Instead, the private key generation is
+consistent way of building one with a method enforced by the `PrivateKey` trait. Instead, the private key generation is
 delegated to a specific `PrivateKeyGenerator` trait which has `PrivateKey` as an associated type.
 
 A `PrivateKeyGenerator` implementation is expected to have all the specific parameters needed for the private key
-generation as attributes. It would usually itself be built with a builder pattern. Once it is built, the `generate`
-method can be used, only requiring mandatory parameters seed and index.
-
-The seed is required to ensure determinism and the index is required to allow deriving many keys from the same seed.
+generation (e.g. security level, depth, ...) embedded as attributes. It would usually itself be built with a builder
+pattern. Once it is built, the `generate` method can be used, only requiring consistent parameters seed and index.
 
 ```rust
 pub trait PrivateKeyGenerator {
     type PrivateKey;
 
+    // TODO documentation
     /// Generates and returns a private key
     ///
-    /// # Arguments
+    /// # Parameters
     ///
     /// * `seed` - A seed to deterministically derive a private key from
     /// * `index` - An index to deterministically derive a private key from
@@ -169,7 +164,7 @@ pub trait PrivateKeyGenerator {
 }
 ```
 
-<!-- TODO remove index as param and put it as auto-incremented attribute ? -->
+<!-- Reviewed -->
 
 ### `PrivateKey` trait
 
@@ -194,7 +189,7 @@ pub trait PrivateKey {
 
     /// Generates and returns a signature for a given message
     ///
-    /// # Arguments
+    /// # Parameters
     ///
     /// * `message` - A slice that holds the message to be signed
     ///
@@ -220,7 +215,7 @@ pub trait PublicKey {
 
     /// Verifies the authenticity of a message signature
     ///
-    /// # Arguments
+    /// # Parameters
     ///
     /// * `message` - A slice that holds the message to verify the signature of
     /// * `signature` - A signature to verify
