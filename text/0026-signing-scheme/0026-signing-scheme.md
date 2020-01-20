@@ -83,27 +83,34 @@ The seed is a critical component of the signing scheme. Everywhere a seed is nee
 type must be used only and no other representation like string, bytes or trits. This is why the following design only allows valid and verified instantiation of the `Seed` type.
 
 ```rust
+// TODO documentation
 pub struct Seed([i8; 243]);
 
+// TODO documentation
 #[derive(Debug, PartialEq)]
 pub enum SeedError {
-    InvalidLength,
-    InvalidTrit,
+    InvalidLength(usize),
+    InvalidTrit(i8),
 }
 
+// TODO documentation
 impl Seed {
+    // TODO documentation
     pub fn new() -> Self {
       unimplemented!();
     }
 
+    // TODO documentation
     pub fn subseed<S: Sponge + Default>(&self, index: u64) -> Self {
       unimplemented!();
     }
 
+    // TODO documentation
     pub fn from_bytes(bytes: &[i8]) -> Result<Self, SeedError> {
       unimplemented!();
     }
 
+    // TODO documentation
     pub fn to_bytes(&self) -> &[i8] {
       unimplemented!();
     }
@@ -143,23 +150,12 @@ generation (e.g. security level, depth, ...) embedded as attributes. It would us
 pattern. Once it is built, the `generate` method can be used, only requiring consistent parameters seed and index.
 
 ```rust
+// TODO documentation
 pub trait PrivateKeyGenerator {
+    // TODO documentation
     type PrivateKey;
 
     // TODO documentation
-    /// Generates and returns a private key
-    ///
-    /// # Parameters
-    ///
-    /// * `seed` - A seed to deterministically derive a private key from
-    /// * `index` - An index to deterministically derive a private key from
-    ///
-    /// # Example
-    ///
-    /// ```
-    /// let private_key_generator = WotsPrivateKeyGeneratorBuilder::<Kerl>::default().security_level(2).build();
-    /// let private_key = private_key_generator.generate(seed, 0);
-    /// ```
     fn generate(&self, seed: &Seed, index: u64) -> Self::PrivateKey;
 }
 ```
@@ -174,30 +170,17 @@ A private key is responsible for generating its public counterpart and signing m
 **A private key should remain secret.**
 
 ```rust
+// TODO documentation
 pub trait PrivateKey {
+    // TODO documentation
     type PublicKey;
+    // TODO documentation
     type Signature;
 
-    /// Generates and returns the public counterpart of a private key
-    ///
-    /// # Example
-    ///
-    /// ```
-    /// let public_key = private_key.generate_public_key();
-    /// ```
+    // TODO documentation
     fn generate_public_key(&self) -> Self::PublicKey;
 
-    /// Generates and returns a signature for a given message
-    ///
-    /// # Parameters
-    ///
-    /// * `message` - A slice that holds the message to be signed
-    ///
-    /// # Example
-    ///
-    /// ```
-    /// let signature = private_key.sign(message);
-    /// ```
+    // TODO documentation
     fn sign(&mut self, message: &[i8]) -> Self::Signature;
 }
 ```
@@ -210,7 +193,9 @@ A public key is responsible for verifying the authenticity of a message signatur
 associated type. It should also be able to serialise it to bytes.
 
 ```rust
+// TODO documentation
 pub trait PublicKey {
+    // TODO documentation
     type Signature;
 
     /// Verifies the authenticity of a message signature
@@ -227,6 +212,7 @@ pub trait PublicKey {
     /// ```
     fn verify(&self, message: &[i8], signature: &Self::Signature) -> bool;
 
+    // TODO documentation
     fn from_bytes(bytes: &[i8]) -> Self;
 
     /// Serialises a public key to a slice of bytes
@@ -245,14 +231,15 @@ pub trait PublicKey {
 <!-- TODO -->
 
 ```rust
+// TODO documentation
 pub trait Signature {
-    ///
+    // TODO documentation
     fn size(&self) -> usize;
 
-    ///
+    // TODO documentation
     fn from_bytes(bytes: &[i8]) -> Self;
 
-    ///
+    // TODO documentation
     fn to_bytes(&self) -> &[i8];
 }
 ```
@@ -262,10 +249,12 @@ pub trait Signature {
 <!-- TODO -->
 
 ```rust
+// TODO documentation
 pub trait RecoverableSignature {
+    // TODO documentation
     type PublicKey;
 
-    ///
+    // TODO documentation
     fn recover_public_key(&self, message: &[i8]) -> Self::PublicKey;
 }
 ```
@@ -277,6 +266,8 @@ This section gives example skeleton implementations of these traits and workflow
 ### WOTS example
 
 #### Structures and implementations
+
+<!-- TODO WotsError -->
 
 ```rust
 #[derive(Default)]
@@ -543,7 +534,7 @@ impl<S: Sponge + Default> crate::Signature for MssSignature<S> {
 <!-- TODO Workflow all  the funcs -->
 
 ```rust
-let wots_private_key_generator = WotsPrivateKeyGeneratorBuilder::<Kerl>::default().security_level(2).build();
+let wots_private_key_generator = WotsPrivateKeyGeneratorBuilder::<Kerl>::default().security_level(2).build().unwrap();
 let mss_private_key_generator = MssPrivateKeyGeneratorBuilder::<Kerl, WotsPrivateKeyGenerator<Kerl>>::default().depth(7).generator(wots_private_key_generator).build().unwrap();
 let mut private_key = mss_private_key_generator.generate(seed, 0);
 let public_key = private_key.generate_public_key();
