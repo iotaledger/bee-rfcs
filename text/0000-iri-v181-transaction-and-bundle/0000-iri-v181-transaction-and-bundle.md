@@ -49,7 +49,7 @@ the Tangle, bundle hash, timestamps, and other information required to verify an
 to construct them and represent in memory.
 
 The current design proposal intends to be as simple as possible, provide an idiomatic Rust interface, and use existing
-IOTA terminology where appplicable. The present types are not intended to be used by end users, but rather as building
+IOTA terminology where applicable. The present types are not intended to be used by end users, but rather as building
 blocks for higher level APIs. As such, the different kinds of transactions are not encoded as Rust types, and the bundle
 builders do not contain any logic to implicitly push more transactions into their stack. For a bundle to be buildable,
 all required transactions have to be present when validating and building. Otherwise the build will fail.
@@ -226,7 +226,7 @@ impl Transaction {
 ```
 
 The fields in the `Transaction` struct are opaque newtypes so that they can be fleshed out during the implementation
-phase or in future RFCs without requireing breaking changes. Because this RFC implements the transaction format as of
+phase or in future RFCs without requiring breaking changes. Because this RFC implements the transaction format as of
 `iri v1.8.1`, the newtypes shall be constructed from byte slices of a certain length matching that of the reference
 implementation. Conversion methods shall only verify that the passed byte slices (or fixed-size arrays or vectors of
 bytes) are of appropriate length and that each contained byte correctly encodes a balanced trit (this is also referred
@@ -333,7 +333,7 @@ pub struct TransactionBuilder {
 ```
 
 `TransactionBuilder`'s setter methods are implemented using generic type parameters `T: TryInto<{FieldType}>` to provide
-some convenience when setting fieds from byte slices. The `TryFrom` implementations for each field type ensure that the
+some convenience when setting fields from byte slices. The `TryFrom` implementations for each field type ensure that the
 byte slices only encode correct trits. If the data comes from a trusted source, the checks can be circumvented by
 explicitly constructing the target object and that one in the setter. For example, when setting the `tag` field on
 a `builder: TransactionBuilder` object with `trusted_bytes: &[u8]`, calling
@@ -405,10 +405,10 @@ There is a natural order to transactions in a bundle that can be represented in 
 + each transaction has a `index` and a `last_index`. `index` goes from `0` to `last_index`. A bundle can then simply be
   represented by a data structure that contiguously keeps the order like `Vec`;
 + each transaction is chained to the next one through its `trunk` hash, which means one can consider using
-  a datastructure like `HashMap`.
+  a data-structure like `HashMap`.
 
 This RFC opts for using the simplest implementation in terms of `Vec`, but hides the implementation details behind
-a newtype. This way, the underlying datastructures can be changed in the future without breaking dependent code.
+a newtype. This way, the underlying data-structures can be changed in the future without breaking dependent code.
 
 ```rust
 pub struct Transactions(Vec<Transaction>)
@@ -645,7 +645,7 @@ fields, and verifying that all transactions are valid and the bundle is complete
 Chains the contained transactions, filling the `nonce` fields via proof of work and then hashing transactions to
 reference successive transactions.
 
-Using `PearlDiver` as proof of work algorithm, this function peforms proof of work and updates the `nonce` field in each
+Using `PearlDiver` as proof of work algorithm, this function performs proof of work and updates the `nonce` field in each
 of the contained `TransactionBuilder`s. The transaction hash can then be calculated, and a chain is established between
 transactions by putting the hash of a transaction into its downstream neighbor.
 
@@ -858,7 +858,7 @@ constituent transactions), or creating a new one to send it. `IncomingBundleBuil
 
 ### Workflow of `IncomingBundleBuilder`
 
-The workflow for an incoming bundle would looke like this:
+The workflow for an incoming bundle would look like this:
 
 ```rust
 // Push transactions into the the incoming bundle builder
@@ -944,7 +944,7 @@ let bundle = bundle_builder
 + The design of the builders currently take ownership and return `Self`. This is nice for chaining calls, but might
   suboptimal for performance. Is it more useful to take borrows, either `&Self` or `&mut Self`, instead?
 + `getTransactionsToApprove` function: the function executing proof of work on `SealedBundleBuilder` is talking about
-  getting tip and branch from the mentionede function. Should it be part of this RFC or assumed external?
+  getting tip and branch from the mentioned function. Should it be part of this RFC or assumed external?
 + Work out how to sign groups of transactions taken together (signature levels 1, 2, and 3 require the same number of
   transactions).
 + Explain constants used throughout the code.
@@ -964,7 +964,7 @@ let bundle = bundle_builder
 
 This RFC is intended to be self contained and thus does not rely on the existence of any traits or types defined outside
 of this proposal. There are however a few aspects of this proposal that would benefit from additional interface
-definitions to make its types easier and more idiomatic to use, or in order to make it more typesafe. We list these here:
+definitions to make its types easier and more idiomatic to use, or in order to make it more type-safe. We list these here:
 + `Transaction` and its fields are heavily tied to the message format of `iri v1.8.1`, the fixed nature of its fields
   and the representation of each of its fields as `one byte per trit` is the obvious choice. However, equipping the
   field types with more semantics, for example implementing it in terms of a `BinaryCodedTernary` trait might be useful
