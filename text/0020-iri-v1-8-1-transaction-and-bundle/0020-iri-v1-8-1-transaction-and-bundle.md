@@ -1,4 +1,4 @@
-+ Feature name: `iri_v181_transaction_and_bundle`
++ Feature name: `iri_v1_8_1_transaction_and_bundle`
 + Start date: 2019-09-06
 + RFC PR: [iotaledger/bee-rfcs#3](https://github.com/iotaledger/bee-rfcs/pull/3),
   [iotaledger/bee-rfcs#18](https://github.com/iotaledger/bee-rfcs/pull/18),
