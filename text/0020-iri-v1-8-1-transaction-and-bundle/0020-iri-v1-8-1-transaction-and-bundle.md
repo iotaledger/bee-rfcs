@@ -153,7 +153,7 @@ name, description, and size are summarized in the table below, in their order of
 
 | Name                              | Description                                            | Size (in trits) |
 | ---                               | ---                                                    | ---             |
-| `signature_or_message_fragment`   | contains a signature fragment of the transfer          |                 |
+| `payload`                         | contains a signature fragment of the transfer          |                 |
 |                                   | or user-defined message fragment                       | 6561            |
 | `address`                         | receiver (output) if value > 0,                        |                 |
 |                                   | or sender (input) if value < 0                         | 243             |
@@ -182,7 +182,7 @@ A transaction is represented by the `Transaction` struct and follows the structu
 
 ```rust
 pub struct Transaction {
-    signature_or_message_fragment: SignatureOrMessageFragment,
+    payload: Payload,
     address: Address,
     value: Value,
     obsolete_tag: Tag,
@@ -211,8 +211,8 @@ impl Transaction {
         unimplemented!()
     }
 
-    pub fn signature_or_message_fragment(&self) -> &SignatureOrMessageFragment {
-        &self.signature_fragments
+    pub fn payload(&self) -> &Payload {
+        &self.payload
     }
 
     pub fn address(&self) -> &Address {
@@ -233,7 +233,7 @@ bytes) are of appropriate length and that each contained byte correctly encodes 
 to as `T1B1` binary-coded ternary encoding).
 
 ```rust
-pub struct SignatureOrMessageFragment([u8; 6561]);
+pub struct Payload([u8; 6561]);
 pub struct Address([u8; 243]);
 pub struct Value([u8; 81]);
 pub struct Tag([u8; 81]);
@@ -314,7 +314,7 @@ the same as `Transaction`.
 
 ```rust
 pub struct TransactionBuilder {
-    signature_or_message_fragment: Option<SignatureOrMessageFragment>,
+    payload: Option<Payload>,
     address: Option<Address>,
     value: Option<Value>,
     obsolete_tag: Option<Tag>,
