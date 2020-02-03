@@ -10,7 +10,7 @@
 The fundamental communication unit in the IOTA protocol is the transaction. Messages can either represent payment
 settlements or serve as plain data carriers. In IOTA terminology, messages are referred to as *bundles*, which ---
 depending on the message size --- consist of one or more *transactions*. A transaction is the smallest unit of
-communication, and has a fixed size. 
+communication, and has a fixed size.
 
 This RFC proposes a `Transaction` type and a `Bundle` type to represent the transaction and bundle formats used by the
 IOTA Reference Implementation as of release [`iri v1.8.1`]. To construct these types, this proposal also includes the
@@ -160,7 +160,7 @@ name, description, and size are summarized in the table below, in their order of
 | `value`                           | the transferred amount in IOTA                         | 81              |
 | `obsolete_tag`                    | currently only used for the M-Bug (see later)          | 81              |
 | `timestamp`                       | the time when the transaction was issued               | 27              |
-| `current_index`                   | the index of the transaction in its bundle             | 27              |
+| `index`                           | the index of the transaction in its bundle             | 27              |
 | `last_index`                      | the index of the last transaction in the bundle        | 27              |
 | `bundle`                          | the hash of the bundle essence                         | 243             |
 | `trunk`                           | the hash of the first transaction referenced/approved  | 243             |
@@ -187,7 +187,7 @@ pub struct Transaction {
     value: Value,
     obsolete_tag: Tag,
     timestamp: Timestamp,
-    current_index: Index,
+    index: Index,
     last_index: Index,
     bundle: BundleHash,
     trunk: TransactionHash,
@@ -319,7 +319,7 @@ pub struct TransactionBuilder {
     value: Option<Value>,
     obsolete_tag: Option<Tag>,
     timestamp: Option<Timestamp>,
-    current_index: Option<Index>,
+    index: Option<Index>,
     last_index: Option<Index>,
     bundle: Option<BundleHash>,
     trunk: Option<TransactionHash>,
@@ -402,8 +402,8 @@ As bundles are immutable, they shouldn't be modifiable outside of the scope of t
 
 There is a natural order to transactions in a bundle that can be represented in two ways:
 
-+ each transaction has a `current_index` and a `last_index`. `current_index` goes from `0` to `last_index`. A bundle can
-  then simply be represented by a data structure that contiguously keeps the order like `Vec`;
++ each transaction has a `index` and a `last_index`. `index` goes from `0` to `last_index`. A bundle can then simply be
+  represented by a data structure that contiguously keeps the order like `Vec`;
 + each transaction is chained to the next one through its `trunk` hash, which means one can consider using
   a datastructure like `HashMap`.
 
@@ -473,7 +473,7 @@ transaction is a subset of its fields, with a total size of `486` trits, see the
 | `value`         | 81              |
 | `obsolete_tag`  | 81              |
 | `timestamp`     | 27              |
-| `current_index` | 27              |
+| `index`         | 27              |
 | `last_index`    | 27              |
 
 The bundle hash is generated with a sponge by iterating through the bundle, from `0` to `last_index`, absorbing the
@@ -551,7 +551,7 @@ subset of the transaction fields.
 | value         | 81 trits        |
 | obsolete_tag  | 81 trits        |
 | timestamp     | 27 trits        |
-| current_index | 27 trits        |
+| index         | 27 trits        |
 | last_index    | 27 trits        |
 
 The bundle hash is generated with a sponge by iterating through the bundle, from `0` to `last_index`, absorbing the
@@ -603,10 +603,10 @@ containing the char
 pub fn seal(self, sponge: Kerl) -> Result<SealedBundleBuilder, OutgoingBundleBuilderError> {
     unimplemented!()
 
-    let mut current_index = 0;
+    let mut index = 0;
 
     for transaction_builder in bundle_builder {
-        transaction_builder.current_index = current_index++;
+        transaction_builder.index = index++;
         transaction_builder.last_index = bundle_builder.size() - 1;
     }
 
@@ -634,7 +634,7 @@ pub fn seal(self, sponge: Kerl) -> Result<SealedBundleBuilder, OutgoingBundleBui
 ### `SealedBundleBuilder`
 
 `SealedBundleBuilder` encodes on the type level that no more transaction drafts will be pushed into the bundle, and
-signals that all the fields required to identify a valid bundle are set. 
+signals that all the fields required to identify a valid bundle are set.
 
 After `OutgoingBundleBuilder` has collected all required transactions, it is sealed to create a `SealedBundleBuilder`.
 `SealedBundleBuilder` is concerned with signing transactions that remove IOTA tokens from an address, settings nonce
@@ -742,12 +742,12 @@ pub fn sign<I, S, W>(self, signature_scheme: WinternitzScheme, seed: SignatureSe
 
     // Pseudocode how `sign` should be used.
 
-    let mut current_index = 0
+    let mut index = 0
 
     // TODO: Explain what this loop is trying to achieve.
     for transaction_builder in self {
         if transaction_builder.value < 0 {
-            if transaction_builder.current_index >= current_index {
+            if transaction_builder.index >= index {
                 let input = inputs[transaction_builder.address];
 
                 // NOTE: The specific arguments to the signature scheme depend on the implementation of `SignatureScheme`.
@@ -757,12 +757,12 @@ pub fn sign<I, S, W>(self, signature_scheme: WinternitzScheme, seed: SignatureSe
                 let fragments = transaction_builder.sign(signature_scheme, seed, wallet.get(transaction_builder.address));
 
                 for fragment in fragments {
-                    bundle_builder[current_index].signature = fragment;
-                    current_index = current_index + 1
+                    bundle_builder[index].signature = fragment;
+                    index = index + 1
                 }
             }
         } else {
-            current_index = current_index + 1;
+            index = index + 1;
         }
     }
 
@@ -789,7 +789,7 @@ For a bundle to be considered valid, the following assertions must be true:
 + transactions share the same bundle hash;
 + transactions' absolute value doesn't exceed total IOTA supply;
 + bundle absolute sum never exceeds total IOTA supply;
-+ order of transactions in the bundle is the same as announced by `current_index` and `last_index`;
++ order of transactions in the bundle is the same as announced by `index` and `last_index`;
 + input/output transactions have an address ending in `0` i.e. has been generated with Kerl;
 + bundle inputs and outputs are balanced i.e. the bundle sum equals `0`;
 + announced bundle hash matches the computed bundle hash.
@@ -802,7 +802,7 @@ pub fn validate(&mut self) -> Result<ValidatedBundleBuilder, OutgoingBundleError
     unimplemented!()
 
     let mut value = 0;
-    let mut current_index = 0;
+    let mut index = 0;
 
     // NOTE: We are not defining `first_transaction` here but leave it to the implementation phase.
     if bundle_builder.len() != bundle_builder.first_transaction().last_index + 1 {
@@ -826,7 +826,7 @@ pub fn validate(&mut self) -> Result<ValidatedBundleBuilder, OutgoingBundleError
             Err(InvalidValue)?
         }
 
-        if transaction_builder.current_index != current_index++ {
+        if transaction_builder.index != index++ {
             Err(InvalidIndex)?
         }
 
