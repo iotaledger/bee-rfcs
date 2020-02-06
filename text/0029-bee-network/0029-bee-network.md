@@ -188,7 +188,7 @@ pub async fn add_peer(mut shutdown_receiver: Receiver<()>, mut client_config_rec
 
 ### process_stream.rs
 
-The following function receives tcp streams sent by `bind` as well as `add_peer_task`. Once a stream is available, a reference will be sent to the `read_task_broker.rs` as well as the `write_task_broker` which process it further.
+The following function receives tcp streams sent by `bind` as well as `add_peer_task`. Once a stream is available, a reference will be sent to the `read_task_broker.rs` as well as to the `write_task_broker` which process it further.
 
 ```rust
 pub async fn process_stream(mut tcp_stream_receiver: Receiver<TcpStream>, mut read_task_sender: Sender<Arc<TcpStream>>, mut write_task_sender: Sender<Arc<TcpStream>>) {
@@ -205,6 +205,9 @@ pub async fn process_stream(mut tcp_stream_receiver: Receiver<TcpStream>, mut re
 ### read_task_broker.rs
 
 The `read_task_broker` receives and processes the reading-halfs of the client streams. For each received reading-half, a respective `read_task` is started.
+Each task is equipped with a clone of the `received_messages_sender handle`, where they can publish received messages.
+Furthermore, `read_task_broker` registers all started read-tasks with `shutdown_handles_of_read_tasks: Arc<Mutex<HashMap<SocketAddr, Sender<()>>>>`.
+This makes it possible to shutdown individual read-tasks at a later stage.
 
 ```rust
 pub async fn read_task_broker(mut read_task_receiver: Receiver<Arc<TcpStream>>, received_messages_sender: Sender<ReceivedMessage>, shutdown_handles_of_read_tasks: Arc<Mutex<HashMap<SocketAddr, Sender<()>>>>) {
@@ -296,6 +299,10 @@ fn spawn_and_log_error<F>(fut: F) -> task::JoinHandle<()> where F: Future<Output
 
 ### assign_message.rs
 
+The job of `assign_message` to receive messages that are to be sent, and distribute it to relevant write-tasks.
+This is needed, since `messages_to_send_receiver: Receiver<MessageToSend>` represents a multiple-producer-single-consumer channel.
+As other tasks, also this task gets terminated once the `shutdown_receiver` got triggered.
+
 ```rust
 pub async fn assign_message(mut shutdown_receiver: Receiver<()>, mut messages_to_send_receiver: Receiver<MessageToSend>, senders_of_write_tasks: Arc<Mutex<HashMap<SocketAddr, Sender<MessageToSend>>>>) {
 
@@ -346,6 +353,12 @@ pub async fn assign_message(mut shutdown_receiver: Receiver<()>, mut messages_to
 ```
 
 ### write_task_broker.rs
+The `write_task_broker` receives and processes the writing-halfs of the client streams. For each received reading-half, a respective `write_task` is started.
+Each task is equipped with a `write_task_message_sender`, where they can publish received messages.
+This `write_task_message_sender` is registered with the `assign_messages` which there publishes messages that are to be sent.
+
+Similar to the `read_task_broker`, all started write-tasks get registered with `shutdown_handles_of_write_tasks: Arc<Mutex<HashMap<SocketAddr, Sender<()>>>>`.
+This makes it possible to shutdown individual write-tasks at a later stage.
 
 ```rust
 pub async fn write_task_broker(mut write_task_receiver: Receiver<Arc<TcpStream>>, senders_of_write_tasks: Arc<Mutex<HashMap<SocketAddr, Sender<MessageToSend>>>>, shutdown_handles_of_write_tasks: Arc<Mutex<HashMap<SocketAddr, Sender<()>>>>, mut connected_peers_sender: Sender<SocketAddr>) {
@@ -444,6 +457,11 @@ fn spawn_and_log_error<F>(fut: F) -> task::JoinHandle<()> where F: Future<Output
 ```
 
 ### remove_peer.rs
+
+This task provides functionality to remove peers on desire. It is able to kick-out compromised/malfunctioning peers while preserving general architecture .
+It receives the peers that are to be removed, furthermore it has access to the shutdown handles of all registered read/write tasks.
+Once it receives a peer that is to be removed, it triggers the relevant shutdown handles. Similar to other tasks, also this task listens to a `shutdown_receiver: Receiver<()>` that makes sure to reach termination.
+
 ```rust
 pub async fn remove_peer(mut shutdown_receiver: Receiver<()>, mut peers_to_remove_receiver: Receiver<SocketAddr>, shutdown_handles_of_read_tasks: Arc<Mutex<HashMap<SocketAddr, Sender<()>>>>, shutdown_handles_of_write_tasks: Arc<Mutex<HashMap<SocketAddr, Sender<()>>>>, senders_of_write_tasks: Arc<Mutex<HashMap<SocketAddr, Sender<MessageToSend>>>>) {
 
@@ -497,6 +515,9 @@ pub async fn remove_peer(mut shutdown_receiver: Receiver<()>, mut peers_to_remov
 ```
 
 ### graceful_shutdown.rs
+
+This task provides the functionality to gracefully shutdown the whole networking layer. It receives the shutdown-event, and triggers in turn all shutdown channels of the described tasks above.
+
 ```rust
 pub async fn graceful_shutdown(
 
@@ -581,12 +602,9 @@ pub struct ReceivedMessage {
 }
 ```
 
-[...]
-
 ### Error handling
 
 The standard library of Rust will be used for error handling. It is straightforward and provides lots of tools to handle and propagate errors.
-In the above code snippets `io::Error` are used and propagated through the code.
 
 # Rationale and alternatives
 
