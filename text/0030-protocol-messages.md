@@ -9,10 +9,9 @@ This RFC introduces the IOTA protocol messages.
 
 # Motivation
 
-Both [IRI](https://github.com/iotaledger/iri) nodes and [HORNET](https://github.com/gohornet/hornet) nodes operate on
-the IOTA networks with the TLV protocol presented in this RFC. To be able to take part in the networks, Bee nodes need
-to implement the exact same protocol; however, IRI does not implement all the messages and as such Bee nodes and IRI
-nodes will not be able to communicate.
+To be able to take part in the IOTA networks, Bee nodes need to implement the exact same protocol presented in this RFC
+and currently being used by [IRI](https://github.com/iotaledger/iri) nodes and
+[HORNET](https://github.com/gohornet/hornet) nodes.
 
 # Detailed design
 
@@ -250,7 +249,8 @@ pub(crate) fn uncompress_transaction_bytes(bytes: &[u8]) -> [u8; 1604] {
 
 # Drawbacks
 
-There is no specific drawback occurring because of the introduction of this protocol.
+Since IRI nodes only implement version `0` and `1` and Bee nodes only implement versions `0` and `2`, they will not be
+able to communicate with each other.
 
 # Rationale and alternatives
 
