@@ -1,7 +1,7 @@
 + Feature name: `protocol-messages`
 + Start date: 2020-04-27
-+ RFC PR: [iotaledger/bee-rfcs#00](https://github.com/iotaledger/bee-rfcs/pull/00)
-+ Bee issue: [iotaledger/bee#00](https://github.com/iotaledger/bee/issues/00)
++ RFC PR: [iotaledger/bee-rfcs#30](https://github.com/iotaledger/bee-rfcs/pull/30)
++ Bee issue: [iotaledger/bee#70](https://github.com/iotaledger/bee/issues/70)
 
 # Summary
 
