@@ -36,7 +36,7 @@ it comes to constructing complex objects like configurations.
 A configuration builder type should:
 - be named `*ConfigBuilder`;
 - derive the following traits;
-    - `Default` to implement the `new` method;
+    - `Default` to easily implement the `new` method as convention;
     - `Deserialize`, from `serde`, to deserialize from a configuration file;
 - provide a `new` method;
 - have `Option` fields;
@@ -252,7 +252,9 @@ making it very easy to support other formats.
 
 # Unresolved questions
 
-In case of binary crates, e.g.`bee-node`, configuration with CLI arguments is not described in this RFC but everything
-is already set up to support it seamlessly. The builder setters allow setting fields or overriding fields that may have
-already prefilled by the parsing of a configuration file. A CLI parser library like
-[clap](https://github.com/clap-rs/clap) may be used on top of the builders.
+- In case of binary crates, e.g.`bee-node`, configuration with CLI arguments is not described in this RFC but everything
+  is already set up to support it seamlessly. The builder setters allow setting fields or overriding fields that may
+  have already pre-filled by the parsing of a configuration file. A CLI parser library like
+  [clap](https://github.com/clap-rs/clap) may be used on top of the builders;
+- It is not planned at the moment to save configuration objects to files. This RFC will be updated if/when there is a
+  need for it. It is only a matter of deriving `Serialize`.
