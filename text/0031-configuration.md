@@ -1,7 +1,7 @@
 + Feature name: `configuration`
 + Start date: 2020-05-06
-+ RFC PR: [iotaledger/bee-rfcs#00](https://github.com/iotaledger/bee-rfcs/pull/00)
-+ Bee issue: [iotaledger/bee#00](https://github.com/iotaledger/bee/issues/00)
++ RFC PR: [iotaledger/bee-rfcs#31](https://github.com/iotaledger/bee-rfcs/pull/31)
++ Bee issue: [iotaledger/bee#71](https://github.com/iotaledger/bee/issues/71)
 
 # Summary
 
@@ -253,6 +253,6 @@ making it very easy to support other formats.
 # Unresolved questions
 
 In case of binary crates, e.g.`bee-node`, configuration with CLI arguments is not described in this RFC but everything
-is already set up to support it seamlessy. The builder setters allow setting fields or overriding fields that may have
+is already set up to support it seamlessly. The builder setters allow setting fields or overriding fields that may have
 already prefilled by the parsing of a configuration file. A CLI parser library like
 [clap](https://github.com/clap-rs/clap) may be used on top of the builders.
