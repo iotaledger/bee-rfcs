@@ -15,17 +15,14 @@ and currently being used by [IRI](https://github.com/iotaledger/iri) nodes and
 
 # Detailed design
 
-## Trait
+## `Message` trait
 
-The `Message` trait provides serialization/deserialization primitives but does not deal with protocol metadata at all
-and is not expected to be used standalone.
+The `Message` trait is protocol agnostic and only provides serialization and deserialization to and from bytes buffers.
+It should not be used as is but rather be paired with a higher layer - like a type-length-value encoding - and as such
+does not provide any safety check on inputs/outputs.
 
 ```rust
 /// A trait describing the behavior of a message.
-///
-/// This trait is protocol agnostic and only provides serialization and deserialization to and from bytes buffers.
-/// It should not be used as is but rather be paired with a higher layer - like a type-length-value encoding - and as
-/// such does not provide any safety check on inputs/outputs.
 pub(crate) trait Message {
     /// The unique identifier of the message within the protocol.
     const ID: u8;
@@ -34,13 +31,6 @@ pub(crate) trait Message {
     fn size_range() -> Range<usize>;
 
     /// Deserializes a bytes buffer into a message.
-    ///
-    /// # Arguments
-    ///
-    /// * `bytes`   -   The bytes buffer to deserialize from.
-    ///
-    /// # Panics
-    ///
     /// Panics if the provided buffer has an invalid size.
     /// The size of the buffer should be within the range returned by the `size_range` method.
     fn from_bytes(bytes: &[u8]) -> Self;
@@ -49,13 +39,6 @@ pub(crate) trait Message {
     fn size(&self) -> usize;
 
     /// Serializes a message into a bytes buffer.
-    ///
-    /// # Arguments
-    ///
-    /// * `bytes`   -   The bytes buffer to serialize into.
-    ///
-    /// # Panics
-    ///
     /// Panics if the provided buffer has an invalid size.
     /// The size of the buffer should be equal to the one returned by the `size` method.
     fn into_bytes(self, bytes: &mut [u8]);
@@ -65,7 +48,8 @@ pub(crate) trait Message {
 ## Type-length-value protocol
 
 The [type-length-value](https://en.wikipedia.org/wiki/Type-length-value) module is a safe layer on top of the messages.
-It allows serialization/deserialization to/from bytes ready to be sent/received to/from a transport layer.
+It allows serialization/deserialization to/from bytes ready to be sent/received to/from a transport layer by prepending
+or reading a header containing the type and length of the payload.
 
 ### Header
 
@@ -88,26 +72,14 @@ pub(crate) struct Tlv {}
 
 impl Tlv {
     /// Deserializes a TLV header and a bytes buffer into a message.
-    ///
-    /// # Arguments
-    ///
-    /// * `header`  -   The TLV header to deserialize from.
-    /// * `bytes`   -   The bytes buffer to deserialize from.
-    ///
-    /// # Errors
-    ///
-    /// * The advertised message type does not match the required message type.
-    /// * The advertised message length does not match the buffer length.
-    /// * The buffer length is not within the allowed size range of the required message type.
+    /// * The advertised message type should match the required message type.
+    /// * The advertised message length should match the buffer length.
+    /// * The buffer length should be within the allowed size range of the required message type.
     pub(crate) fn from_bytes<M: Message>(header: &Header, bytes: &[u8]) -> Result<M, TlvError> {
         ...
     }
 
     /// Serializes a TLV header and a message into a bytes buffer.
-    ///
-    /// # Arguments
-    ///
-    /// * `message` -   The message to serialize.
     pub(crate) fn into_bytes<M: Message>(message: M) -> Vec<u8> {
         ...
     }
@@ -237,6 +209,7 @@ partially or completely filled with `0`s. For this reason, trailing `0`s of the 
 a compression rate up to nearly 82%. Only the `payload` field is altered during this compression and the order of the
 fields stays the same.
 
+Proposed functions:
 ```rust
 pub(crate) fn compress_transaction_bytes(bytes: &[u8]) -> Vec<u8> {
     ...
