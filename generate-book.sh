@@ -1,5 +1,8 @@
 #!/usr/bin/env bash
 
+# SPDX-License-Identifier: Apache-2.0
+# Source: https://github.com/rust-lang/rfcs/blob/85c95c7179acc8986eae709f773ff3a91f1e2e43/generate-book.sh
+
 set -e
 
 if [ ! -d src ]; then
