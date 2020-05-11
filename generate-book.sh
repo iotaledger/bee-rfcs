@@ -20,7 +20,6 @@ do
     printf -- '- [%s](%s)\n' "$(basename "$file" ".md")" "$(basename "$file")" 
 done >> src/SUMMARY.md
 
-# ln -frs README.md src/introduction.md
 ln -frs README.md src/introduction.md
 
 mdbook build
