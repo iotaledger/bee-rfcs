@@ -45,6 +45,12 @@ pub(crate) trait Message {
 }
 ```
 
+**Notes**:
+- `into_bytes` does not allocate a buffer because the following TLV protocol implies concatenating a header meaning
+  another allocation. Since this is a hot path, a slice of an already allocated buffer for both the header and payload
+  is expected; hence, limiting the amount of allocation to the bare minimum;
+- `from_bytes`/`into_bytes` panic if incorrectly used, only the following safe TLV module should directly use them;
+
 ## Type-length-value protocol
 
 The [type-length-value](https://en.wikipedia.org/wiki/Type-length-value) module is a safe layer on top of the messages.
