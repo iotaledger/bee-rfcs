@@ -17,7 +17,7 @@ and currently being used by [IRI](https://github.com/iotaledger/iri) nodes and
 
 ## `Message` trait
 
-The `Message` trait is protocol agnostic and only provides serialization and deserialization to and from bytes buffers.
+The `Message` trait is protocol agnostic and only provides serialization and deserialization to and from byte buffers.
 It should not be used as is but rather be paired with a higher layer - like a type-length-value encoding - and as such
 does not provide any safety check on inputs/outputs.
 
@@ -30,7 +30,7 @@ pub(crate) trait Message {
     /// Returns the size range of the message as it can be compressed.
     fn size_range() -> Range<usize>;
 
-    /// Deserializes a bytes buffer into a message.
+    /// Deserializes a byte buffer into a message.
     /// Panics if the provided buffer has an invalid size.
     /// The size of the buffer should be within the range returned by the `size_range` method.
     fn from_bytes(bytes: &[u8]) -> Self;
@@ -38,7 +38,7 @@ pub(crate) trait Message {
     /// Returns the size of the message.
     fn size(&self) -> usize;
 
-    /// Serializes a message into a bytes buffer.
+    /// Serializes a message into a byte buffer.
     /// Panics if the provided buffer has an invalid size.
     /// The size of the buffer should be equal to the one returned by the `size` method.
     fn into_bytes(self, bytes: &mut [u8]);
@@ -46,7 +46,7 @@ pub(crate) trait Message {
 ```
 
 **Notes**:
-- `into_bytes` does not allocate a buffer because the following TLV protocol implies concatenating a header meaning
+- `into_bytes` does not allocate a buffer because the following TLV protocol implies concatenating a header inducing
   another allocation. Since this is a hot path, a slice of an already allocated buffer for both the header and payload
   is expected; hence, limiting the amount of allocation to the bare minimum;
 - `from_bytes`/`into_bytes` panic if incorrectly used, only the following safe TLV module should directly use them;
@@ -54,8 +54,8 @@ pub(crate) trait Message {
 ## Type-length-value protocol
 
 The [type-length-value](https://en.wikipedia.org/wiki/Type-length-value) module is a safe layer on top of the messages.
-It allows serialization/deserialization to/from bytes ready to be sent/received to/from a transport layer by prepending
-or reading a header containing the type and length of the payload.
+It allows serialization/deserialization to/from a byte buffer ready to be sent/received to/from a transport layer by
+prepending or reading a header containing the type and length of the payload.
 
 ### Header
 
@@ -77,7 +77,7 @@ pub(crate) struct Header {
 pub(crate) struct Tlv {}
 
 impl Tlv {
-    /// Deserializes a TLV header and a bytes buffer into a message.
+    /// Deserializes a TLV header and a byte buffer into a message.
     /// * The advertised message type should match the required message type.
     /// * The advertised message length should match the buffer length.
     /// * The buffer length should be within the allowed size range of the required message type.
@@ -85,7 +85,7 @@ impl Tlv {
         ...
     }
 
-    /// Serializes a TLV header and a message into a bytes buffer.
+    /// Serializes a TLV header and a message into a byte buffer.
     pub(crate) fn into_bytes<M: Message>(message: M) -> Vec<u8> {
         ...
     }
