@@ -23,7 +23,7 @@ does not provide any safety check on inputs/outputs.
 
 ```rust
 /// A trait describing the behavior of a message.
-pub(crate) trait Message {
+trait Message {
     /// The unique identifier of the message within the protocol.
     const ID: u8;
 
@@ -61,11 +61,11 @@ prepending or reading a header containing the type and length of the payload.
 
 ```rust
 /// A header for the type-length-value encoding.
-pub(crate) struct Header {
+struct Header {
     /// Type of the message.
-    pub(crate) message_type: u8,
+    message_type: u8,
     /// Length of the message.
-    pub(crate) message_length: u16,
+    message_length: u16,
 }
 ```
 
@@ -74,19 +74,19 @@ pub(crate) struct Header {
 ```rust
 /// Since the following methods have very common names, `from_bytes` and `into_bytes`, the sole purpose of this struct
 /// is to give them a proper namespace to avoid confusion.
-pub(crate) struct Tlv {}
+struct Tlv {}
 
 impl Tlv {
     /// Deserializes a TLV header and a byte buffer into a message.
     /// * The advertised message type should match the required message type.
     /// * The advertised message length should match the buffer length.
     /// * The buffer length should be within the allowed size range of the required message type.
-    pub(crate) fn from_bytes<M: Message>(header: &Header, bytes: &[u8]) -> Result<M, TlvError> {
+    fn from_bytes<M: Message>(header: &Header, bytes: &[u8]) -> Result<M, TlvError> {
         ...
     }
 
     /// Serializes a TLV header and a message into a byte buffer.
-    pub(crate) fn into_bytes<M: Message>(message: M) -> Vec<u8> {
+    fn into_bytes<M: Message>(message: M) -> Vec<u8> {
         ...
     }
 }
@@ -217,11 +217,11 @@ fields stays the same.
 
 Proposed functions:
 ```rust
-pub(crate) fn compress_transaction_bytes(bytes: &[u8]) -> Vec<u8> {
+fn compress_transaction_bytes(bytes: &[u8]) -> Vec<u8> {
     ...
 }
 
-pub(crate) fn uncompress_transaction_bytes(bytes: &[u8]) -> [u8; 1604] {
+fn uncompress_transaction_bytes(bytes: &[u8]) -> [u8; 1604] {
     ...
 }
 ```
