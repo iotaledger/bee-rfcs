@@ -97,8 +97,8 @@ fn tlv_into_bytes<M: Message>(message: M) -> Vec<u8> {
 
 ## Messages
 
-Since the messages are all different one from another, there is no construction method in the `Message` trait. All the
-`Message` implementations are expected to have a convenient `new` method to build them from primitive types.
+Since the various types of messages are constructed with different kind of data, there can't be a single constructor
+signature in the `Message` trait. Implementations are then expected to provide a convenient `new` method to build them.
 
 ### Endianness
 
@@ -198,10 +198,10 @@ A message to request a transaction.
 
 Type ID: `6`
 
-A message that informs about the part of the tangle currently being fully stored by a node.
+A message that informs about the part of the Tangle currently being fully stored by a node.
 This message is sent when a node:
 * just got paired to another node;
-* did a local snapshot and pruned away a part of the tangle;
+* did a local snapshot and pruned away a part of the Tangle;
 * solidified a new milestone;
 
 It also helps other nodes to know if they can ask it a specific transaction.
@@ -213,10 +213,10 @@ It also helps other nodes to know if they can ask it a specific transaction.
 
 ### Compression
 
-A transaction encoded in bytes has a length of `1604`. The `payload` field itself occupies `1312` bytes and is often
-partially or completely filled with `0`s. For this reason, trailing `0`s of the `payload` field are removed, providing
-a compression rate up to nearly 82%. Only the `payload` field is altered during this compression and the order of the
-fields stays the same.
+A transaction encoded in bytes - using the T5B1 codec - has a length of `1604`. The `payload` field itself occupies
+`1312` bytes and is often partially or completely filled with `0`s. For this reason, trailing `0`s of the `payload`
+field are removed, providing a compression rate up to nearly 82%. Only the `payload` field is altered during this
+compression and the order of the fields stays the same.
 
 Proposed functions:
 ```rust
