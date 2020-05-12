@@ -72,23 +72,17 @@ struct Header {
 ### Methods
 
 ```rust
-/// Since the following methods have very common names, `from_bytes` and `into_bytes`, the sole purpose of this struct
-/// is to give them a proper namespace to avoid confusion.
-struct Tlv {}
+/// Deserializes a TLV header and a byte buffer into a message.
+/// * The advertised message type should match the required message type.
+/// * The advertised message length should match the buffer length.
+/// * The buffer length should be within the allowed size range of the required message type.
+fn tlv_from_bytes<M: Message>(header: &Header, bytes: &[u8]) -> Result<M, TlvError> {
+    ...
+}
 
-impl Tlv {
-    /// Deserializes a TLV header and a byte buffer into a message.
-    /// * The advertised message type should match the required message type.
-    /// * The advertised message length should match the buffer length.
-    /// * The buffer length should be within the allowed size range of the required message type.
-    fn from_bytes<M: Message>(header: &Header, bytes: &[u8]) -> Result<M, TlvError> {
-        ...
-    }
-
-    /// Serializes a TLV header and a message into a byte buffer.
-    fn into_bytes<M: Message>(message: M) -> Vec<u8> {
-        ...
-    }
+/// Serializes a TLV header and a message into a byte buffer.
+fn tlv_into_bytes<M: Message>(message: M) -> Vec<u8> {
+    ...
 }
 ```
 
