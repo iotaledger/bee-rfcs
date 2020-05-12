@@ -16,6 +16,12 @@ and currently being used by [IRI](https://github.com/iotaledger/iri) nodes and
 
 # Detailed design
 
+This section details:
+- The `Message` trait that provides serialization and deserialization of messages to and from byte buffers;
+- A type-length-value protocol - on top of the trait - that adds metadata in order to send and receive the messages over
+  a transport layer;
+- The current `Message` implementations representing handshake, requests, responses, events, ...;
+
 ## `Message` trait
 
 The `Message` trait is protocol agnostic and only provides serialization and deserialization to and from byte buffers.
