@@ -5,7 +5,8 @@
 
 # Summary
 
-This RFC introduces the IOTA protocol messages.
+This RFC introduces the IOTA protocol messages that were initially added in
+[IRI#1393](https://github.com/iotaledger/iri/pull/1393).
 
 # Motivation
 
