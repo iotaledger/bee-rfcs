@@ -53,10 +53,12 @@ trait Message {
 ```
 
 **Notes**:
+- `size_range` returns an allowed range for the message size because some parts of some messages can be trimmed. It is
+  used to check if a message coming from a transport layer has a valid size. More details on compression below;
+- `from_bytes`/`into_bytes` panic if incorrectly used, only the following safe TLV module should directly use them;
 - `into_bytes` does not allocate a buffer because the following TLV protocol implies concatenating a header inducing
   another allocation. Since this is a hot path, a slice of an already allocated buffer for both the header and payload
   is expected; hence, limiting the amount of allocation to the bare minimum;
-- `from_bytes`/`into_bytes` panic if incorrectly used, only the following safe TLV module should directly use them;
 
 ## Type-length-value protocol
 
