@@ -12,7 +12,9 @@ This RFC introduces the IOTA protocol messages that were initially added in
 
 To be able to take part in the IOTA networks, Bee nodes need to implement the exact same protocol presented in this RFC
 and currently being used by [IRI](https://github.com/iotaledger/iri) nodes and
-[HORNET](https://github.com/gohornet/hornet) nodes.
+[HORNET](https://github.com/gohornet/hornet) nodes. However, it does not necessarily mean implementing the same versions
+of the protocol and a design decision - later explained - concludes that Bee nodes and IRI nodes will not be able to
+communicate with each other.
 
 # Detailed design
 
@@ -97,7 +99,7 @@ fn tlv_into_bytes<M: Message>(message: M) -> Vec<u8> {
 
 ## Messages
 
-Since the various types of messages are constructed with different kind of data, there can't be a single constructor
+Since the various types of messages are constructed with different kind of data, there can not be a single constructor
 signature in the `Message` trait. Implementations are then expected to provide a convenient `new` method to build them.
 
 ### Endianness
