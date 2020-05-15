@@ -25,6 +25,7 @@ different Bee crates.
 
 With the following recommendations, one can:
 - read a configuration builder from a file;
+- write a configuration to a file;
 - manually override a configuration builder;
 - construct the configuration;
 
