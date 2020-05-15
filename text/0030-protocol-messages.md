@@ -104,14 +104,8 @@ signature in the `Message` trait. Implementations are then expected to provide a
 
 ### Endianness
 
-All multi-byte number fields of the messages of the protocol are represented as [big-endian](https://en.wikipedia.org/wiki/Endianness).
-
-### Derived traits
-
-The following traits are expected to be derived by every `Message` implementation:
-
-- `Default` which is very convenient for the implementation of `Message::from_bytes`;
-- `Clone` which is necessary to provide ownership in the context of a message broadcast;
+All multi-byte number fields of the messages of the protocol are represented as
+[big-endian](https://en.wikipedia.org/wiki/Endianness).
 
 ### Version 0
 
