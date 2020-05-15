@@ -43,8 +43,8 @@ A configuration builder type should:
 - have `Option` fields;
     - if there is a configuration file, the fields should have the same names as the keys;
 - provide setters to set/override the fields;
-- provide a `build` method constructing the actual configuration object;
-- have default values defined as `const` and set with `Option::unwrap_or`;
+- provide a `finish` method constructing the actual configuration object;
+- have default values defined as `const` and set with `Option::unwrap_or`/`Option::unwrap_or_else`;
 
 Here is a small example fitting all these requirements.
 
@@ -81,7 +81,7 @@ impl SnapshotConfigBuilder {
         self
     }
 
-    pub fn build(self) -> SnapshotConfig {
+    pub fn finish(self) -> SnapshotConfig {
         SnapshotConfig {
             meta_file_path: self.meta_file_path.unwrap_or(DEFAULT_META_FILE_PATH.to_string()),
             state_file_path: self.state_file_path.unwrap_or(DEFAULT_STATE_FILE_PATH.to_string()),
@@ -97,6 +97,7 @@ A configuration type should:
 - derive the following traits;
   - `Clone` to be able to provide ownership to different components;
   - `Serialize` if the configuration is expected to be updated and saved;
+- provide a `build` method that returns a new instance of the associated builder;
 - have the same fields with the same names, without `Option`, as the builder;
 - have no public fields;
 - provide setters/updaters only on fields that are expected to be updatable;
@@ -120,6 +121,10 @@ pub struct SnapshotConfig {
 }
 
 impl SnapshotConfig {
+    pub fn build() -> SnapshotConfigBuilder {
+      SnapshotConfig::new()
+    }
+
     pub fn meta_file_path(&self) -> &String {
         &self.meta_file_path
     }
@@ -148,7 +153,7 @@ let config_builder = match fs::read_to_string("config.toml") {
 
 // Override fields if necessary e.g. with CLI arguments.
 
-let config = config_builder.build();
+let config = config_builder.finish();
 ```
 
 ### Write a configuration to a file
@@ -211,7 +216,7 @@ impl SnapshotConfigBuilder {
 
     // Setters
 
-    pub fn build(self) -> SnapshotConfig {
+    pub fn finish(self) -> SnapshotConfig {
         SnapshotConfig {
             local: LocalSnapshotConfig {
                 meta_file_path: self
