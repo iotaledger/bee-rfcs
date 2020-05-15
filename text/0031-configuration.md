@@ -270,10 +270,12 @@ Many configuration formats are usually considered:
 - [HOCON](https://github.com/lightbend/config/blob/master/HOCON.md)
 - [YAML](https://yaml.org/)
 - [XML](https://www.w3.org/XML/)
+- [RON](https://github.com/ron-rs/ron)
 
-This RFC and its expected implementation are choosing `TOML` as configuration format because it is the preferred option
-in the Rust ecosystem. However, it is not excluded by RFC that other formats may be provided in the future, `serde`
-making it very easy to support other formats.
+This RFC and its expected implementations are choosing `TOML` as a first default configuration format because it is the
+preferred option in the Rust ecosystem. However, it is not excluded by this RFC that other formats may be provided in
+the future, `serde` making it very easy to support other formats. It is also important to note that TOML only provides
+a limited amount of layers of nesting due to its non-recursive syntax, which may eventually become an issue.
 
 `Serde` itself has been chosen because it is the standard for serialization/deserialization in Rust.
 
