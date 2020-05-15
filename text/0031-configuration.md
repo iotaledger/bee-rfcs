@@ -93,9 +93,12 @@ impl SnapshotConfigBuilder {
 
 A configuration type should:
 - be named `*Config`;
-- Derive `Clone` to be able to provide ownership to different components;
+- derive the following traits;
+  - `Clone` to be able to provide ownership to different components;
+  - `Serialize` if the configuration is expected to be updated and saved;
 - have the same fields with the same names, without `Option`, as the builder;
-- be immutable: no setters and no public fields;
+- have no public fields;
+- provide setters/updaters only on fields that are expected to be updatable;
 - have getters or `pub(crate)` fields;
 
 Here is a small example fitting all these requirements:
@@ -127,9 +130,7 @@ impl SnapshotConfig {
 
 ```
 
-### Read a configuration builder
-
-`toml.rs` makes it very easy to read a configuration builder from a file.
+### Read a configuration builder from a file
 
 ```rust
 let config_builder = match fs::read_to_string("config.toml") {
@@ -147,6 +148,26 @@ let config_builder = match fs::read_to_string("config.toml") {
 // Override fields if necessary e.g. with CLI arguments.
 
 let config = config_builder.build();
+```
+
+### Write a configuration to a file
+
+```rust
+match toml::to_string(&config) {
+    Ok(toml) => match fs::File::create("config.toml") {
+        Ok(mut file) => {
+            if let Err(e) = file.write_all(toml.as_bytes()) {
+                panic!("Error writing .toml config file: {:?}", e);
+            }
+        }
+        Err(e) => {
+            panic!("Error creating .toml config file: {:?}", e);
+        }
+    },
+    Err(e) => {
+        panic!("Error serializing .toml config file: {:?}", e);
+    }
+}
 ```
 
 ### Sub-configuration
@@ -252,9 +273,7 @@ making it very easy to support other formats.
 
 # Unresolved questions
 
-- In case of binary crates, e.g.`bee-node`, configuration with CLI arguments is not described in this RFC but everything
-  is already set up to support it seamlessly. The builder setters allow setting fields or overriding fields that may
-  have already pre-filled by the parsing of a configuration file. A CLI parser library like
-  [clap](https://github.com/clap-rs/clap) may be used on top of the builders;
-- It is not planned at the moment to save configuration objects to files. This RFC will be updated if/when there is a
-  need for it. It is only a matter of deriving `Serialize`.
+In case of binary crates, e.g.`bee-node`, configuration with CLI arguments is not described in this RFC but everything
+is already set up to support it seamlessly. The builder setters allow setting fields or overriding fields that may
+have already pre-filled by the parsing of a configuration file. A CLI parser library like
+[clap](https://github.com/clap-rs/clap) may be used on top of the builders;
