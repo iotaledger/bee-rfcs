@@ -95,7 +95,8 @@ impl SnapshotConfigBuilder {
 A configuration type should:
 - have a name suffixed by `Config`;
 - derive the following traits;
-  - `Clone` to be able to provide ownership to different components;
+  - `Clone`, since all configuration are most probably aggregated in a common configuration after reading from a file,
+    this trait is needed to give components a unique ownership of their own configuration;
   - `Serialize` if the configuration is expected to be updated and saved;
 - provide a `build` method that returns a new instance of the associated builder;
 - have the same fields with the same names, without `Option`, as the builder;
