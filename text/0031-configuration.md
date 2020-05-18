@@ -143,11 +143,11 @@ let config_builder = match fs::read_to_string("config.toml") {
     Ok(toml) => match toml::from_str::<SnapshotConfigBuilder>(&toml) {
         Ok(config_builder) => config_builder,
         Err(e) => {
-            panic!("Error parsing config file: {:?}", e);
+            // Handle error
         }
     },
     Err(e) => {
-        panic!("Error reading config file: {:?}", e);
+        // Handle error
     }
 };
 
@@ -163,15 +163,15 @@ match toml::to_string(&config) {
     Ok(toml) => match fs::File::create("config.toml") {
         Ok(mut file) => {
             if let Err(e) = file.write_all(toml.as_bytes()) {
-                panic!("Error writing .toml config file: {:?}", e);
+                // Handle error
             }
         }
         Err(e) => {
-            panic!("Error creating .toml config file: {:?}", e);
+            // Handle error
         }
     },
     Err(e) => {
-        panic!("Error serializing .toml config file: {:?}", e);
+        // Handle error
     }
 }
 ```
