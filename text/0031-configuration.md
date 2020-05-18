@@ -26,8 +26,8 @@ different Bee crates.
 With the following recommendations, one can:
 - read a configuration builder from a file;
 - write a configuration to a file;
-- manually override a configuration builder;
-- construct the configuration;
+- manually override fields of a configuration builder;
+- construct a configuration from a configuration builder;
 
 ### Configuration Builder
 
@@ -35,7 +35,7 @@ The [Builder](https://rust-lang.github.io/api-guidelines/type-safety.html#c-buil
 it comes to constructing complex objects like configurations.
 
 A configuration builder type should:
-- be named `*ConfigBuilder`;
+- have a name suffixed by `ConfigBuilder`;
 - derive the following traits;
     - `Default` to easily implement the `new` method as convention;
     - `Deserialize`, from `serde`, to deserialize from a configuration file;
@@ -93,7 +93,7 @@ impl SnapshotConfigBuilder {
 ### Configuration
 
 A configuration type should:
-- be named `*Config`;
+- have a name suffixed by `Config`;
 - derive the following traits;
   - `Clone` to be able to provide ownership to different components;
   - `Serialize` if the configuration is expected to be updated and saved;
