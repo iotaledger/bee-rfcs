@@ -1,0 +1,420 @@
+<!DOCTYPE HTML>
+<html lang="en" class="sidebar-visible no-js light">
+    <head>
+        <!-- Book generated using mdBook -->
+        <meta charset="UTF-8">
+        <title>0030-protocol-messages - The Bee RFC Book</title>
+        
+
+        <meta content="text/html; charset=utf-8" http-equiv="Content-Type">
+        <meta name="description" content="">
+        <meta name="viewport" content="width=device-width, initial-scale=1">
+        <meta name="theme-color" content="#ffffff" />
+
+        <link rel="shortcut icon" href="favicon.png">
+        <link rel="stylesheet" href="css/variables.css">
+        <link rel="stylesheet" href="css/general.css">
+        <link rel="stylesheet" href="css/chrome.css">
+        <link rel="stylesheet" href="css/print.css" media="print">
+
+        <!-- Fonts -->
+        <link rel="stylesheet" href="FontAwesome/css/font-awesome.css">
+        <link href="https://fonts.googleapis.com/css?family=Open+Sans:300italic,400italic,600italic,700italic,800italic,400,300,600,700,800" rel="stylesheet" type="text/css">
+        <link href="https://fonts.googleapis.com/css?family=Source+Code+Pro:500" rel="stylesheet" type="text/css">
+
+        <!-- Highlight.js Stylesheets -->
+        <link rel="stylesheet" href="highlight.css">
+        <link rel="stylesheet" href="tomorrow-night.css">
+        <link rel="stylesheet" href="ayu-highlight.css">
+
+        <!-- Custom theme stylesheets -->
+        
+
+        
+    </head>
+    <body>
+        <!-- Provide site root to javascript -->
+        <script type="text/javascript">
+            var path_to_root = "";
+            var default_theme = window.matchMedia("(prefers-color-scheme: dark)").matches ? "light" : "light";
+        </script>
+
+        <!-- Work around some values being stored in localStorage wrapped in quotes -->
+        <script type="text/javascript">
+            try {
+                var theme = localStorage.getItem('mdbook-theme');
+                var sidebar = localStorage.getItem('mdbook-sidebar');
+
+                if (theme.startsWith('"') && theme.endsWith('"')) {
+                    localStorage.setItem('mdbook-theme', theme.slice(1, theme.length - 1));
+                }
+
+                if (sidebar.startsWith('"') && sidebar.endsWith('"')) {
+                    localStorage.setItem('mdbook-sidebar', sidebar.slice(1, sidebar.length - 1));
+                }
+            } catch (e) { }
+        </script>
+
+        <!-- Set the theme before any content is loaded, prevents flash -->
+        <script type="text/javascript">
+            var theme;
+            try { theme = localStorage.getItem('mdbook-theme'); } catch(e) { }
+            if (theme === null || theme === undefined) { theme = default_theme; }
+            var html = document.querySelector('html');
+            html.classList.remove('no-js')
+            html.classList.remove('light')
+            html.classList.add(theme);
+            html.classList.add('js');
+        </script>
+
+        <!-- Hide / unhide sidebar before it is displayed -->
+        <script type="text/javascript">
+            var html = document.querySelector('html');
+            var sidebar = 'hidden';
+            if (document.body.clientWidth >= 1080) {
+                try { sidebar = localStorage.getItem('mdbook-sidebar'); } catch(e) { }
+                sidebar = sidebar || 'visible';
+            }
+            html.classList.remove('sidebar-visible');
+            html.classList.add("sidebar-" + sidebar);
+        </script>
+
+        <nav id="sidebar" class="sidebar" aria-label="Table of contents">
+            <div class="sidebar-scrollbox">
+                <ol class="chapter"><li class="chapter-item expanded affix "><a href="introduction.html">Introduction</a></li><li class="chapter-item expanded "><a href="0030-protocol-messages.html" class="active">0030-protocol-messages</a></li><li class="chapter-item expanded "><a href="0031-configuration.html">0031-configuration</a></li></ol>
+            </div>
+            <div id="sidebar-resize-handle" class="sidebar-resize-handle"></div>
+        </nav>
+
+        <div id="page-wrapper" class="page-wrapper">
+
+            <div class="page">
+                
+                <div id="menu-bar-hover-placeholder"></div>
+                <div id="menu-bar" class="menu-bar sticky bordered">
+                    <div class="left-buttons">
+                        <button id="sidebar-toggle" class="icon-button" type="button" title="Toggle Table of Contents" aria-label="Toggle Table of Contents" aria-controls="sidebar">
+                            <i class="fa fa-bars"></i>
+                        </button>
+                        <button id="theme-toggle" class="icon-button" type="button" title="Change theme" aria-label="Change theme" aria-haspopup="true" aria-expanded="false" aria-controls="theme-list">
+                            <i class="fa fa-paint-brush"></i>
+                        </button>
+                        <ul id="theme-list" class="theme-popup" aria-label="Themes" role="menu">
+                            <li role="none"><button role="menuitem" class="theme" id="light">Light (default)</button></li>
+                            <li role="none"><button role="menuitem" class="theme" id="rust">Rust</button></li>
+                            <li role="none"><button role="menuitem" class="theme" id="coal">Coal</button></li>
+                            <li role="none"><button role="menuitem" class="theme" id="navy">Navy</button></li>
+                            <li role="none"><button role="menuitem" class="theme" id="ayu">Ayu</button></li>
+                        </ul>
+                        
+                        <button id="search-toggle" class="icon-button" type="button" title="Search. (Shortkey: s)" aria-label="Toggle Searchbar" aria-expanded="false" aria-keyshortcuts="S" aria-controls="searchbar">
+                            <i class="fa fa-search"></i>
+                        </button>
+                        
+                    </div>
+
+                    <h1 class="menu-title">The Bee RFC Book</h1>
+
+                    <div class="right-buttons">
+                        <a href="print.html" title="Print this book" aria-label="Print this book">
+                            <i id="print-button" class="fa fa-print"></i>
+                        </a>
+                        
+                    </div>
+                </div>
+
+                
+                <div id="search-wrapper" class="hidden">
+                    <form id="searchbar-outer" class="searchbar-outer">
+                        <input type="search" name="search" id="searchbar" name="searchbar" placeholder="Search this book ..." aria-controls="searchresults-outer" aria-describedby="searchresults-header">
+                    </form>
+                    <div id="searchresults-outer" class="searchresults-outer hidden">
+                        <div id="searchresults-header" class="searchresults-header"></div>
+                        <ul id="searchresults">
+                        </ul>
+                    </div>
+                </div>
+                
+
+                <!-- Apply ARIA attributes after the sidebar and the sidebar toggle button are added to the DOM -->
+                <script type="text/javascript">
+                    document.getElementById('sidebar-toggle').setAttribute('aria-expanded', sidebar === 'visible');
+                    document.getElementById('sidebar').setAttribute('aria-hidden', sidebar !== 'visible');
+                    Array.from(document.querySelectorAll('#sidebar a')).forEach(function(link) {
+                        link.setAttribute('tabIndex', sidebar === 'visible' ? 0 : -1);
+                    });
+                </script>
+
+                <div id="content" class="content">
+                    <main>
+                        <ul>
+<li>Feature name: <code>protocol-messages</code></li>
+<li>Start date: 2020-04-27</li>
+<li>RFC PR: <a href="https://github.com/iotaledger/bee-rfcs/pull/30">iotaledger/bee-rfcs#30</a></li>
+<li>Bee issue: <a href="https://github.com/iotaledger/bee/issues/70">iotaledger/bee#70</a></li>
+</ul>
+<h1><a class="header" href="#summary" id="summary">Summary</a></h1>
+<p>This RFC introduces the IOTA protocol messages that were initially added in
+<a href="https://github.com/iotaledger/iri/pull/1393">IRI#1393</a>.</p>
+<h1><a class="header" href="#motivation" id="motivation">Motivation</a></h1>
+<p>To be able to take part in the IOTA networks, Bee nodes need to implement the exact same protocol presented in this RFC
+and currently being used by <a href="https://github.com/iotaledger/iri">IRI</a> nodes and
+<a href="https://github.com/gohornet/hornet">HORNET</a> nodes. However, it does not necessarily mean implementing the same versions
+of the protocol. A design decision - later explained - concludes that Bee nodes and IRI nodes will not be able to
+communicate with each other.</p>
+<h1><a class="header" href="#detailed-design" id="detailed-design">Detailed design</a></h1>
+<p>This section details:</p>
+<ul>
+<li>The <code>Message</code> trait that provides serialization and deserialization of messages to and from byte buffers;</li>
+<li>A type-length-value protocol - on top of the trait - that adds metadata in order to send and receive the messages over
+a transport layer;</li>
+<li>The current <code>Message</code> implementations representing handshake, requests, responses, events, ...;</li>
+</ul>
+<h2><a class="header" href="#message-trait" id="message-trait"><code>Message</code> trait</a></h2>
+<p>The <code>Message</code> trait is protocol agnostic and only provides serialization and deserialization to and from byte buffers.
+It should not be used as is but rather be paired with a higher layer - like a type-length-value encoding - and as such
+does not provide any bounds check on inputs/outputs buffers.</p>
+<pre><pre class="playpen"><code class="language-rust">
+<span class="boring">#![allow(unused_variables)]
+</span><span class="boring">fn main() {
+</span>/// A trait describing the behavior of a message.
+trait Message {
+    /// The unique identifier of the message within the protocol.
+    const ID: u8;
+
+    /// Returns the size range of the message as it can be compressed.
+    fn size_range() -&gt; Range&lt;usize&gt;;
+
+    /// Deserializes a byte buffer into a message.
+    /// Panics if the provided buffer has an invalid size.
+    /// The size of the buffer should be within the range returned by the `size_range` method.
+    fn from_bytes(bytes: &amp;[u8]) -&gt; Self;
+
+    /// Returns the size of the message.
+    fn size(&amp;self) -&gt; usize;
+
+    /// Serializes a message into a byte buffer.
+    /// Panics if the provided buffer has an invalid size.
+    /// The size of the buffer should be equal to the one returned by the `size` method.
+    fn into_bytes(self, bytes: &amp;mut [u8]);
+}
+<span class="boring">}
+</span></code></pre></pre>
+<p><strong>Notes</strong>:</p>
+<ul>
+<li><code>size_range</code> returns an allowed range for the message size because some parts of some messages can be trimmed. It is
+used to check if a message coming from a transport layer has a valid size. More details on compression below;</li>
+<li><code>from_bytes</code>/<code>into_bytes</code> panic if incorrectly used, only the following safe TLV module should directly use them;</li>
+<li><code>into_bytes</code> does not allocate a buffer because the following TLV protocol implies concatenating a header inducing
+another allocation. Since this is a hot path, a slice of an already allocated buffer for both the header and payload
+is expected; hence, limiting the amount of allocation to the bare minimum;</li>
+</ul>
+<h2><a class="header" href="#type-length-value-protocol" id="type-length-value-protocol">Type-length-value protocol</a></h2>
+<p>The <a href="https://en.wikipedia.org/wiki/Type-length-value">type-length-value</a> module is a safe layer on top of the messages.
+It allows serialization/deserialization to/from a byte buffer ready to be sent/received to/from a transport layer by
+prepending or reading a header containing the type and length of the payload.</p>
+<h3><a class="header" href="#header" id="header">Header</a></h3>
+<pre><pre class="playpen"><code class="language-rust">
+<span class="boring">#![allow(unused_variables)]
+</span><span class="boring">fn main() {
+</span>/// A header for the type-length-value encoding.
+struct Header {
+    /// Type of the message.
+    message_type: u8,
+    /// Length of the message.
+    message_length: u16,
+}
+<span class="boring">}
+</span></code></pre></pre>
+<h3><a class="header" href="#methods" id="methods">Methods</a></h3>
+<pre><pre class="playpen"><code class="language-rust">
+<span class="boring">#![allow(unused_variables)]
+</span><span class="boring">fn main() {
+</span>/// Deserializes a TLV header and a byte buffer into a message.
+/// * The advertised message type should match the required message type.
+/// * The advertised message length should match the buffer length.
+/// * The buffer length should be within the allowed size range of the required message type.
+fn tlv_from_bytes&lt;M: Message&gt;(header: &amp;Header, bytes: &amp;[u8]) -&gt; Result&lt;M, TlvError&gt; {
+    ...
+}
+
+/// Serializes a TLV header and a message into a byte buffer.
+fn tlv_into_bytes&lt;M: Message&gt;(message: M) -&gt; Vec&lt;u8&gt; {
+    ...
+}
+<span class="boring">}
+</span></code></pre></pre>
+<h2><a class="header" href="#messages" id="messages">Messages</a></h2>
+<p>Since the various types of messages are constructed with different kind of data, there can not be a single constructor
+signature in the <code>Message</code> trait. Implementations are then expected to provide a convenient <code>new</code> method to build them.</p>
+<h3><a class="header" href="#endianness" id="endianness">Endianness</a></h3>
+<p>All multi-byte number fields of the messages of the protocol are represented as
+<a href="https://en.wikipedia.org/wiki/Endianness">big-endian</a>.</p>
+<h3><a class="header" href="#version-0" id="version-0">Version 0</a></h3>
+<h4><a class="header" href="#handshake" id="handshake"><code>Handshake</code></a></h4>
+<p>Type ID: <code>1</code></p>
+<p>A message that allows two nodes to pair.
+Contains useful information to verify that the pairing node is operating on the same configuration.
+Any difference in configuration will end up in the connection being closed and the nodes not pairing.</p>
+<table><thead><tr><th>Name</th><th>Description</th><th>Type</th><th>Length</th></tr></thead><tbody>
+<tr><td><code>port</code></td><td>Protocol port of the node<sup>1</sup>.</td><td><code>u16</code></td><td>2</td></tr>
+<tr><td><code>timestamp</code></td><td>Timestamp - in ms - when the message was created by the node.</td><td><code>u64</code></td><td>8</td></tr>
+<tr><td><code>coordinator</code></td><td>Public key of the coordinator being tracked by the node.</td><td><code>[u8; 49]</code></td><td>49</td></tr>
+<tr><td><code>minimum_weight_magnitude</code></td><td>Minimum Weight Magnitude of the node.</td><td><code>u8</code></td><td>1</td></tr>
+<tr><td><code>supported_versions</code></td><td>Protocol versions supported by the node<sup>2</sup>.</td><td><code>Vec&lt;u8&gt;</code></td><td>1-32</td></tr>
+</tbody></table>
+<p><sup>1</sup> When an incoming connection is created, a random port is attributed. This field contains the actual port
+being used by the node and is used to match the connection with a potential white-listed peer.</p>
+<p><sup>2</sup> Bit-masks are used to denote what protocol versions the node supports. The LSB acts as a starting point.
+Up to 32 bytes are supported, limiting the number of protocol versions to 256. Examples:</p>
+<ul>
+<li><code>[0b00000001]</code> denotes that the node supports protocol version 1.</li>
+<li><code>[0b00000111]</code> denotes that the node supports protocol versions 1, 2 and 3.</li>
+<li><code>[0b01101110]</code> denotes that the node supports protocol versions 2, 3, 4, 6 and 7.</li>
+<li><code>[0b01101110, 0b01010001]</code> denotes that the node supports protocol versions 2, 3, 4, 6, 7, 9, 13 and 15.</li>
+<li><code>[0b01101110, 0b01010001, 0b00010001]</code> denotes that the node supports protocol versions 2, 3, 4, 6, 7, 9, 13, 15, 17
+and 21.</li>
+</ul>
+<h3><a class="header" href="#version-1" id="version-1">Version 1</a></h3>
+<h4><a class="header" href="#legacygossip" id="legacygossip"><code>LegacyGossip</code></a></h4>
+<p>Type ID: <code>2</code></p>
+<p>A legacy message to broadcast a transaction and request another one at the same time.</p>
+<table><thead><tr><th>Name</th><th>Description</th><th>Type</th><th>Length</th></tr></thead><tbody>
+<tr><td><code>transaction</code></td><td>Transaction to broadcast. Can be compressed<sup>1</sup>.</td><td><code>Vec&lt;u8&gt;</code></td><td>292-1604</td></tr>
+<tr><td><code>hash</code></td><td>Hash of the requested transaction.</td><td><code>[u8; 49]</code></td><td>49</td></tr>
+</tbody></table>
+<p><sup>1</sup> Compression is detailed at the end.</p>
+<p><strong>Note</strong>: This message is the original IRI protocol message before the TLV protocol was introduced. It was kept by
+HORNET for compatibility with IRI but is not used between HORNET nodes. Its &quot;ping-pong&quot; concept has complex consequences
+on the node design and as such will not be implemented by Bee.</p>
+<h3><a class="header" href="#version-2" id="version-2">Version 2</a></h3>
+<h4><a class="header" href="#milestonerequest" id="milestonerequest"><code>MilestoneRequest</code></a></h4>
+<p>Type ID: <code>3</code></p>
+<p>A message to request a milestone.</p>
+<table><thead><tr><th>Name</th><th>Description</th><th>Type</th><th>Length</th></tr></thead><tbody>
+<tr><td><code>index</code></td><td>Index of the requested milestone.</td><td><code>u32</code></td><td>4</td></tr>
+</tbody></table>
+<h4><a class="header" href="#transactionbroadcast" id="transactionbroadcast"><code>TransactionBroadcast</code></a></h4>
+<p>Type ID: <code>4</code></p>
+<p>A message to broadcast a transaction.</p>
+<table><thead><tr><th>Name</th><th>Description</th><th>Type</th><th>Length</th></tr></thead><tbody>
+<tr><td><code>transaction</code></td><td>Transaction to broadcast. Can be compressed<sup>1</sup>.</td><td><code>Vec&lt;u8&gt;</code></td><td>292-1604</td></tr>
+</tbody></table>
+<p><sup>1</sup> Compression is detailed at the end.</p>
+<h4><a class="header" href="#transactionrequest" id="transactionrequest"><code>TransactionRequest</code></a></h4>
+<p>Type ID: <code>5</code></p>
+<p>A message to request a transaction.</p>
+<table><thead><tr><th>Name</th><th>Description</th><th>Type</th><th>Length</th></tr></thead><tbody>
+<tr><td><code>hash</code></td><td>Hash of the requested transaction.</td><td><code>[u8; 49]</code></td><td>49</td></tr>
+</tbody></table>
+<h4><a class="header" href="#heartbeat" id="heartbeat"><code>Heartbeat</code></a></h4>
+<p>Type ID: <code>6</code></p>
+<p>A message that informs about the part of the Tangle currently being fully stored by a node.
+This message is sent when a node:</p>
+<ul>
+<li>just got paired to another node;</li>
+<li>did a local snapshot and pruned away a part of the Tangle;</li>
+<li>solidified a new milestone;</li>
+</ul>
+<p>It also helps other nodes to know if they can ask it a specific transaction.</p>
+<table><thead><tr><th>Name</th><th>Description</th><th>Type</th><th>Length</th></tr></thead><tbody>
+<tr><td><code>solid_milestone_index</code></td><td>Index of the last solid milestone.</td><td><code>u32</code></td><td>4</td></tr>
+<tr><td><code>snapshot_milestone_index</code></td><td>Index of the snapshotted milestone.</td><td><code>u32</code></td><td>4</td></tr>
+</tbody></table>
+<h3><a class="header" href="#compression" id="compression">Compression</a></h3>
+<p>A transaction encoded in bytes - using the T5B1 codec - has a length of <code>1604</code>. The <code>payload</code> field itself occupies
+<code>1312</code> bytes and is often partially or completely filled with <code>0</code>s. For this reason, trailing <code>0</code>s of the <code>payload</code>
+field are removed, providing a compression rate up to nearly 82%. Only the <code>payload</code> field is altered during this
+compression and the order of the fields stays the same.</p>
+<p>Proposed functions:</p>
+<pre><pre class="playpen"><code class="language-rust">
+<span class="boring">#![allow(unused_variables)]
+</span><span class="boring">fn main() {
+</span>fn compress_transaction_bytes(bytes: &amp;[u8]) -&gt; Vec&lt;u8&gt; {
+    ...
+}
+
+fn uncompress_transaction_bytes(bytes: &amp;[u8]) -&gt; [u8; 1604] {
+    ...
+}
+<span class="boring">}
+</span></code></pre></pre>
+<h1><a class="header" href="#drawbacks" id="drawbacks">Drawbacks</a></h1>
+<p>Since IRI nodes only implement version <code>0</code> and <code>1</code> and Bee nodes only implement versions <code>0</code> and <code>2</code>, they will not be
+able to communicate with each other.</p>
+<h1><a class="header" href="#rationale-and-alternatives" id="rationale-and-alternatives">Rationale and alternatives</a></h1>
+<p>There are alternatives to a type-length-value protocol but it is very efficient and easily updatable without breaking
+change. Also, since this is the protocol that has been chosen for the IOTA network, there is no other alternative for
+Bee.</p>
+<h1><a class="header" href="#unresolved-questions" id="unresolved-questions">Unresolved questions</a></h1>
+<p>There are no open questions at this point.
+This protocol has been used for a long time and this RFC will be updated with new message types when/if needed.</p>
+
+                    </main>
+
+                    <nav class="nav-wrapper" aria-label="Page navigation">
+                        <!-- Mobile navigation buttons -->
+                        
+                            <a rel="prev" href="introduction.html" class="mobile-nav-chapters previous" title="Previous chapter" aria-label="Previous chapter" aria-keyshortcuts="Left">
+                                <i class="fa fa-angle-left"></i>
+                            </a>
+                        
+
+                        
+                            <a rel="next" href="0031-configuration.html" class="mobile-nav-chapters next" title="Next chapter" aria-label="Next chapter" aria-keyshortcuts="Right">
+                                <i class="fa fa-angle-right"></i>
+                            </a>
+                        
+
+                        <div style="clear: both"></div>
+                    </nav>
+                </div>
+            </div>
+
+            <nav class="nav-wide-wrapper" aria-label="Page navigation">
+                
+                    <a rel="prev" href="introduction.html" class="nav-chapters previous" title="Previous chapter" aria-label="Previous chapter" aria-keyshortcuts="Left">
+                        <i class="fa fa-angle-left"></i>
+                    </a>
+                
+
+                
+                    <a rel="next" href="0031-configuration.html" class="nav-chapters next" title="Next chapter" aria-label="Next chapter" aria-keyshortcuts="Right">
+                        <i class="fa fa-angle-right"></i>
+                    </a>
+                
+            </nav>
+
+        </div>
+
+        
+
+        
+
+        
+        
+        
+        <script type="text/javascript">
+            window.playpen_copyable = true;
+        </script>
+        
+
+        
+
+        
+        <script src="elasticlunr.min.js" type="text/javascript" charset="utf-8"></script>
+        <script src="mark.min.js" type="text/javascript" charset="utf-8"></script>
+        <script src="searcher.js" type="text/javascript" charset="utf-8"></script>
+        
+
+        <script src="clipboard.min.js" type="text/javascript" charset="utf-8"></script>
+        <script src="highlight.js" type="text/javascript" charset="utf-8"></script>
+        <script src="book.js" type="text/javascript" charset="utf-8"></script>
+
+        <!-- Custom JS scripts -->
+        
+
+        
+
+    </body>
+</html>
