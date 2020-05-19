@@ -20,7 +20,7 @@ The aim of this crate is to make it simple and straightforward for developers to
 * `Peer`s: other nodes in the network (other Bees and Hornets),
 * `Message`es: the information exchanged between peers, and its serialization/deserialization.
 
-Given some endpoint identifier `epid`, sending a message to it becomes one line of asynchronous code:
+Given some identifier `epid`, sending a message to its corresponding endpoint becomes a single line of asynchronous code:
 
 ```rust
 network.send(SendMessage { epid, bytes: "hello".as_bytes() }).await?;
@@ -29,25 +29,25 @@ network.send(SendMessage { epid, bytes: "hello".as_bytes() }).await?;
 The purpose of this crate is to provide the following functionalities:
 * maintain a list of endpoints (not peers!),
 * establish and maintain connections with endpoints,
-* allow to send, multicast or broadcast byte messages of variable size to any of the endpoints,
-* allow to receive byte messages of variable size from any of the endpoints,
-* reject connections from unknown endpoints (endpoints, that are not whitelisted),
-* manage all connections asynchronously,
-* provide an extensible, yet convenient to use API.
+* allow to send, multicast or broadcast byte encoded messages of variable size to any of the endpoints,
+* allow to receive byte encoded messages of variable size from any of the endpoints,
+* reject connections from unknown, i.e. not whitelisted, endpoints,
+* manage all connections and message transfers asynchronously,
+* provide an extensible, yet convenient-to-use, and documented API.
 
 The key design decisions are now being discussed in the following sub-sections.
 
 ## async/await
 
-This crate is by nature very much dependent on events happening outside of the control of the program, e.g. listening for incoming connections from peers, waiting for packets on a specific socket, etc. Hence, this crate under the hood makes heavy use of Rust's concurrency abstractions. Luckily, with the stabilization of the `async/await` syntax, writing asynchronous code has become almost as easy to read, write, and maintain as synchronous code. In a experimental implementation of this crate the [`async_std`](https://github.com/async-rs/async-std) library was used, which comes with asynchronous drop-in replacements for their synchronous equivalents. Additionally, asynchronous mpsc channels were taken from the [`futures`](https://github.com/rust-lang/futures-rs) crate.
+This crate is by nature very much dependent on events happening outside of the control of the program, e.g. listening for incoming connections from peers, waiting for packets on a specific socket, etc. Hence, this crate under the hood makes heavy use of Rust's concurrency abstractions. Luckily, with the stabilization of the `async/await` syntax, writing asynchronous code has become almost as easy to read, write, and maintain as synchronous code. In an experimental implementation of this crate the [`async_std`](https://github.com/async-rs/async-std) library was used, which comes with asynchronous drop-in replacements for their synchronous equivalents found in Rust's standard library `std`. Additionally, asynchronous mpsc channels were taken from the [`futures`](https://github.com/rust-lang/futures-rs) crate.
 
 ## Message passing
 
-This crate favors message passing via channels over globally shared state and locks. Instead of keeping the list of endpoints in a globally accessible hashmap this crate separates and moves such state into workers that run asynchronously, and are listening for commands and events to act upon, and also notify listeners by raising their own events.
+This crate favors message passing via channels over globally shared state and locks. Instead of keeping the list of endpoints in a globally accessible hashmap this crate separates and moves such state into workers that run asynchronously, and are listening for commands and events to act upon, and also notify listeners by sending events.
 
 ## Initialization
 
-In order for this crate to be used, it has to be initialized first by passing a `NetworkConfig` to it:
+In order for this crate to be used, it has to be initialized first by providing a `NetworkConfig`:
 
 ```rust
 struct NetworkConfig {
@@ -64,40 +64,81 @@ struct NetworkConfig {
 }
 ```
 
-This has the advantage of being easily extensible and keeping the signature of the static `init` function relatively small:
+This has the advantage of being easily extensible and keeping the signature of the static `init` function small:
 
 ```rust
 fn init(config: NetworkConfig) -> (Network, Events, Shutdown) { ... }
 ```
 
-This function returns a tuple that allows the consumer of this crate to send commands (`Network`), listen to events (`Events`), and gracefully shutdown all running asynchronous tasks within the system (`Shutdown`).
+This function returns a tuple struct that allows the consumer of this crate to send commands (`Network`), listen to events (`Events`), and gracefully shutdown all running asynchronous tasks that were spawned within this system (`Shutdown`).
 
-## `Url`, `Address`, and `Port`
+## `Port`, `Address`, `Protocol`, and `Url`
 
-In order to send a message to a peer, a node needs to know the peer's address and the communication protocol it uses. This crate provides the following types to deal with that:
+In order to send a message to an endpoint, a node needs to know the endpoint's address and the communication protocol it uses. This crate provides the following abstractions to deal with that:
 
-* `Address`: a 0-cost wrapper around a `SocketAddr`:
+* `Port`: a 0-cost wrapper around a `u16`, which is introduced for type safety and better readability:
+
     ```rust
+    struct Port(pub u16);
+    ```
+
+    For convenience, `Port` dereferences to `u16`.
+
+* `Address`: a 0-cost wrapper around a `SocketAddr` which provides an adjusted, but overall simpler API than its inner type:
+
+    ```rust
+    #[derive(Clone, Copy, Debug, Eq, Hash, PartialEq)
     struct Address(SocketAddr);
     ```
 
-    Note, that this allows to change the internal representation of an address later on.
+    An `Address` can be constructed from Ipv4 and Ipv6 addresses and a port:
 
-* `Url`: can be constructed from a `&str`. If successfull it resolves to an Ipv4 or Ipv6 address. Note, that this crate expects the Url string to always provide a scheme (e.g. `tcp://`) and a port (e.g. `15600`) when specifying a peer's address, or the implementation may either panic or return an error result.
+    ```rust
+    // Infallible construction of an `Address` from Ipv4.
+    fn from_v4_addr_and_port(address: Ipv4Addr, port: Port) -> Self { ... }
+
+    // Infallible construction of an `Address` from Ipv6.
+    fn from_v6_addr_and_port(address: Ipv6Addr, port: Port) -> Self { ... }
+
+    // Fallible construction of an `Address` from `&str`.
+    async fn from_addr_str(address: &str) -> Result<Self> { ... }
+    ```
+
+    Note, that the last function is `async`. That is because of possible delays when performing domain name resolution.
+
+* `Protocol`: an `enum`eration of supported communication protocols:
+
+    ```rust
+    #[non_exhaustive]
+    pub enum Protocol {
+        Tcp,
+    }
+    ```
+
+    Note, that future updates may support different protocols, which is why this enum is declared as `non_exhaustive`, see `Unresolved Questions` section.
+
+* `Url`: an `enum`eration that can always be constructed from an `Address` and a `Protocol` (infallible), or from a `&str`, which can fail if parsing or domain name resolution fails. If successfull however, it resolves to an Ipv4 or Ipv6 address stored in variant of the `enum` depending on the url scheme part. Note, that this crate therefore expects the Url string to always provide a scheme (e.g. `tcp://`) and a port (e.g. `15600`) when specifying an endpoint's address.
+
     ```rust
     #[non_exhaustive]
     enum Url {
-        // Represents the address of an endpoint using TCP to communicate.
+        // Represents the address of an endpoint communicating over TCP.
         Tcp(Address),
     }
     ```
 
-    Note, that future updates may support different protocols, which is why this enum is attributed as `non_exhaustive`, see `Unresolved Questions` section.
+    Note, that future updates may support different protocols, which is why this enum is declared as `non_exhaustive`, see `Unresolved Questions` section.
 
-* `Port`: a 0-cost wrapper around a `u16`, which is introduced for type safety and code readability:
     ```rust
-    struct Port(u16);
+    // Infallible construction of a `Url` from an `Address` and a `Protocol`.
+    fn new(addr: Address, proto: Protocol) -> Self { ... }
+
+    // Fallible construction of a `Url` from `&str`.
+    async fn from_url_str(url: &str) -> Result<Self> { ... }
     ```
+
+    Note, that the second function is `async`. That is because of possible delays when performing domain name resolution.
+
 
 
 ## `Endpoint` and `EndpointId`
@@ -117,7 +158,9 @@ struct Endpoint {
 }
 ```
 
-The `EndpointId` can be anything that uniquely identifies an `Endpoint`. In experiments it was implemented as a wrapper around the address.
+Note: In a peer-to-peer (p2p) network peers usually have two endpoints initially as they are actively trying to connect, but also need to accept connections from their peers. This crate is agnostic about how to handle duplicate connections as this is usually resolved by a handshaking protocol defined at a higher layer.
+
+To uniquely identify an `Endpoint`, this crate proposes the `EndpointId` type, which can be implemented as a wrapper around an `Address`.
 
 ```rust
 #[derive(Clone, Copy, Eq, PartialEq, Hash)]
@@ -155,11 +198,11 @@ enum Command {
 }
 ```
 
-The benefit of doing it this way is that the things you can do with this system is encoded on the type level, which makes it possible for the compiler to check, and therefore increases type safety. It is also very easy to add new commands which makes this crate easily extensible.
+This `enum` makes the things the consumer can do with the crate very explicit and descriptive, and also easily extensible.
 
 ### `Event`
 
-Similarly to `Command`s, the different kinds of `Event`s in the system are implemented as an `enum` allowing various types of concrete events being sent over an event channel:
+Similarly to `Command`s, the different kinds of `Event`s in the system are implemented as an `enum` allowing various types of concrete events being sent over event channels:
 
 ```rust
 enum Event {
@@ -193,7 +236,7 @@ enum Event {
 
 ```
 
-In contrast to commands though, events are messages created by the system, and those that are considered relevant are published for the user to react upon.
+In contrast to commands though, events are messages created by the system, and those that are considered relevant are published for the consumer to execute custom logic.
 
 ## Workers
 
@@ -206,9 +249,9 @@ This worker manages the list of `Endpoint`s and processes the `Command`s issued 
 
 ### TcpWorker
 
-This worker is responsible for accepting incoming TCP connection requests from other peers. Once a connection is established two additional asynchronous tasks are spawned that respectively handle incoming and outgoing messages.
+This worker is responsible for accepting incoming TCP connection requests from other endpoints. Once a connection is established two additional asynchronous tasks are spawned that respectively handle incoming and outgoing messages.
 
-Note: connection attempts from unknown IP addresses (i.e. not part of the static peer list) will be rejected.
+Note: connection attempts from unknown IP addresses (i.e. not part of the static whitelist) will be rejected.
 
 ## Shutdown
 
@@ -225,11 +268,11 @@ Apart from providing the necessary API to register channels and tasks, executing
 
 ```rust
 
-async fn execute(self) { ... }
+async fn execute(self) -> Result<()> { ... }
 
 ```
 
-This method will then send a shutdown signal to all registered workers and wait for those tasks to complete.
+This method will then try to send a shutdown signal to all registered workers and wait for those tasks to complete.
 
 # Drawbacks
 
@@ -249,3 +292,4 @@ This method will then send a shutdown signal to all registered workers and wait 
 
 * The design has been tested in a prototype, and it seems to work reliably, so there are no unresolved questions in terms of the validity of this proposal;
 * It is still unclear - due to the lack of benchmark results - how efficient this design is; however, due to its asynchronous design it should be able to make use from multicore systems;
+* Handling of endpoints with dynamic IPs;
