@@ -112,7 +112,7 @@ In order to send a message to an endpoint, a node needs to know the endpoint's a
 
     ```rust
     #[non_exhaustive]
-    pub enum Protocol {
+    enum Protocol {
         Tcp,
     }
     ```
