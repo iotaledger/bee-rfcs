@@ -9,7 +9,7 @@ This RFC proposes a networking crate (`bee-network`) to be added to the **Bee** 
 
 # Motivation
 
-Bee nodes need a way to share messages with each other and other compatible node implementations as part of the IOTA gossip protocol, or they won't be able to form a network and synchronize with each other.
+Bee nodes need a way to share messages with each other and other compatible node implementations as part of the IOTA gossip protocol or they won't be able to form a network and synchronize with each other.
 
 # Detailed design
 
