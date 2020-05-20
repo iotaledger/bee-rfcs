@@ -17,7 +17,7 @@ The functionalities of this crate are relatively low-level from a node perspecti
 
 The aim of this crate is to make it simple and straightforward for developers to build layers on top of it (e.g. a protocol layer) by abstracting away all the underlying networking logic. It is therefore a lot easier for them to focus on the modelling of other important aspects of a node software, like:
 
-* `Peer`s: other nodes in the network (other Bees and Hornets),
+* `Peer`s: other nodes in the network,
 * `Message`es: the information exchanged between peers, and its serialization/deserialization.
 
 Given some identifier `epid`, sending a message to its corresponding endpoint becomes a single line of asynchronous code:
