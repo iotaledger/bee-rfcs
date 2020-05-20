@@ -1,7 +1,7 @@
 + Feature name: `network`
 + Start date: 2020-04-29
-+ RFC PR: [iotaledger/bee-rfcs#0000](https://github.com/iotaledger/bee-rfcs/pull/0000)
-+ Bee issue: [iotaledger/bee#0000](https://github.com/iotaledger/bee/issues/0000)
++ RFC PR: [iotaledger/bee-rfcs#33](https://github.com/iotaledger/bee-rfcs/pull/33)
++ Bee issue: [iotaledger/bee#76](https://github.com/iotaledger/bee/issues/76)
 
 # Summary
 
