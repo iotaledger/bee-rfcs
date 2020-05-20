@@ -5,7 +5,7 @@
 
 # Summary
 
-This RFC proposes a networking crate (`bee-network`) to be added to the **Bee** framework that provides means to exchange byte messages with *known* endpoints.
+This RFC proposes a networking crate (`bee-network`) to be added to the **Bee** framework that provides means to exchange byte messages with connected endpoints.
 
 # Motivation
 
