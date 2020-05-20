@@ -243,7 +243,7 @@ In contrast to `Command`s though, `Event`s are messages created by the system, a
 
 ## Workers
 
-There are two essential asynchronous workers in the system that are running for the node's whole lifetime. That is the `EndpointWorker` and the `TcpWorker`.
+There are two essential asynchronous workers in the system that are running for the application's whole lifetime. That is the `EndpointWorker` and the `TcpWorker`.
 
 ### EndpointWorker
 
