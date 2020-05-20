@@ -119,7 +119,7 @@ In order to send a message to an endpoint, a node needs to know the endpoint's a
 
     Note, that future updates may support different protocols, which is why this enum is declared as `non_exhaustive`, see `Unresolved Questions` section.
 
-* `Url`: an `enum`eration that can always be constructed from an `Address` and a `Protocol` (infallible), or from a `&str`, which can fail if parsing or domain name resolution fails. If successfull however, it resolves to an Ipv4 or Ipv6 address stored in variant of the `enum` depending on the url scheme part. Note, that this crate therefore expects the Url string to always provide a scheme (e.g. `tcp://`) and a port (e.g. `15600`) when specifying an endpoint's address.
+* `Url`: an `enum`eration that can always be constructed from an `Address` and a `Protocol` (infallible), or from a `&str`, which can fail if parsing or domain name resolution fails. If successfull however, it resolves to an Ipv4 or Ipv6 address stored in a variant of the `enum` depending on the url scheme part. Note, that this crate therefore expects the `Url` string to always provide a scheme (e.g. `tcp://`) and a port (e.g. `15600`) when specifying an endpoint's address.
 
     ```rust
     #[non_exhaustive]
