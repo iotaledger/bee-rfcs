@@ -39,7 +39,7 @@ The key design decisions are now being discussed in the following sub-sections.
 
 ## async/await
 
-This crate is by nature very much dependent on events happening outside of the control of the program, e.g. listening for incoming connections from peers, waiting for packets on a specific socket, etc. Hence, this crate under the hood makes heavy use of Rust's concurrency abstractions. Luckily, with the stabilization of the `async/await` syntax, writing asynchronous code has become almost as easy to read, write, and maintain as synchronous code. In an experimental implementation of this crate the [`async_std`](https://github.com/async-rs/async-std) library was used, which comes with asynchronous drop-in replacements for their synchronous equivalents found in Rust's standard library `std`. Additionally, asynchronous mpsc channels were taken from the [`futures`](https://github.com/rust-lang/futures-rs) crate.
+This crate is by nature very much dependent on events happening outside of the control of the program, e.g. listening for incoming connections from peers, waiting for packets on a specific socket, etc. Hence, - under the hood - this crate makes heavy use of Rust's concurrency abstractions. Luckily, with the stabilization of the `async/await` syntax, writing asynchronous code has become almost as easy to read, write, and maintain as synchronous code. In an experimental implementation of this crate the [`async_std`](https://github.com/async-rs/async-std) library was used, which comes with asynchronous drop-in replacements for their synchronous equivalents found in Rust's standard library `std`. Additionally, asynchronous mpsc channels were taken from the [`futures`](https://github.com/rust-lang/futures-rs) crate.
 
 ## Message passing
 
@@ -55,7 +55,7 @@ struct NetworkConfig {
     binding_port: u16,
     // The binding address that remote endpoints can connect and send to.
     binding_addr: IpAddr,
-    // The interval between two connections attempts in case of connection losses.
+    // The interval between two connection attempts in case of connection failures.
     reconnect_interval: u64,
     // The maximum message length in terms of bytes.
     max_message_length: usize
@@ -71,6 +71,8 @@ fn init(config: NetworkConfig) -> (Network, Events, Shutdown) { ... }
 ```
 
 This function returns a tuple struct that allows the consumer of this crate to send commands (`Network`), listen to events (`Events`), and gracefully shutdown all running asynchronous tasks that were spawned within this system (`Shutdown`).
+
+See also  [RFC 31](https://github.com/iotaledger/bee-rfcs/blob/master/text/0031-configuration.md), which describes a configuration pattern for Bee binary and library crates.
 
 ## `Port`, `Address`, `Protocol`, and `Url`
 
