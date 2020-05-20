@@ -207,6 +207,7 @@ This `enum` makes the things the consumer can do with the crate very explicit an
 Similarly to `Command`s, the different kinds of `Event`s in the system are implemented as an `enum` allowing various types of concrete events being sent over event channels:
 
 ```rust
+#[non_exhaustive]
 enum Event {
     // An endpoint was added to the list.
     EndpointAdded { epid: EndpointId, ... },
@@ -238,7 +239,7 @@ enum Event {
 
 ```
 
-In contrast to commands though, events are messages created by the system, and those that are considered relevant are published for the consumer to execute custom logic.
+In contrast to `Command`s though, `Event`s are messages created by the system, and those that are considered relevant are published for the consumer to execute custom logic. It is attributed as `non_exhaustive` to accommodate for possible additions in the future.
 
 ## Workers
 
