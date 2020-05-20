@@ -173,7 +173,7 @@ Note, that this `EndpointId` should be `Clone` and `Copy`, and requires to imple
 
 ## `Command`
 
-`Command`s are messages that are supposed to be issued by higher level business logic like the protocol layer. They are implemented as an `enum`, which in Rust is one way of expressing a polymorphic type:
+`Command`s are messages that are supposed to be issued by higher level business logic like a protocol layer. They are implemented as an `enum`, which in Rust is one way of expressing a polymorphic type:
 
 ```rust
 enum Command {
