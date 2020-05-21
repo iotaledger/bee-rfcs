@@ -1,5 +1,7 @@
 # Bee RFCs
 
+[![Bee RFC Book](https://github.com/iotaledger/bee-rfcs/workflows/Bee%20RFC%20Book/badge.svg)](https://iotaledger.github.io/bee-rfcs/)
+
 > This process is modelled after the approach taken by the Rust programming language, see [Rust RFC repository] for more
 information. Also see [maidsafe's RFC process] for another project into the crypto space. Our approach is taken and
 adapted from these.
