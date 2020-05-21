@@ -1,4 +1,4 @@
-name: Generate RFCs mdbook
+name: Bee RFC Book
 
 on:
     push:
