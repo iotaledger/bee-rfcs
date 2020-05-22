@@ -1,0 +1,497 @@
+<!DOCTYPE HTML>
+<html lang="en" class="sidebar-visible no-js light">
+    <head>
+        <!-- Book generated using mdBook -->
+        <meta charset="UTF-8">
+        <title>0033-bee-network - The Bee RFC Book</title>
+        
+
+        <meta content="text/html; charset=utf-8" http-equiv="Content-Type">
+        <meta name="description" content="">
+        <meta name="viewport" content="width=device-width, initial-scale=1">
+        <meta name="theme-color" content="#ffffff" />
+
+        <link rel="shortcut icon" href="favicon.png">
+        <link rel="stylesheet" href="css/variables.css">
+        <link rel="stylesheet" href="css/general.css">
+        <link rel="stylesheet" href="css/chrome.css">
+        <link rel="stylesheet" href="css/print.css" media="print">
+
+        <!-- Fonts -->
+        <link rel="stylesheet" href="FontAwesome/css/font-awesome.css">
+        <link href="https://fonts.googleapis.com/css?family=Open+Sans:300italic,400italic,600italic,700italic,800italic,400,300,600,700,800" rel="stylesheet" type="text/css">
+        <link href="https://fonts.googleapis.com/css?family=Source+Code+Pro:500" rel="stylesheet" type="text/css">
+
+        <!-- Highlight.js Stylesheets -->
+        <link rel="stylesheet" href="highlight.css">
+        <link rel="stylesheet" href="tomorrow-night.css">
+        <link rel="stylesheet" href="ayu-highlight.css">
+
+        <!-- Custom theme stylesheets -->
+        
+
+        
+    </head>
+    <body>
+        <!-- Provide site root to javascript -->
+        <script type="text/javascript">
+            var path_to_root = "";
+            var default_theme = window.matchMedia("(prefers-color-scheme: dark)").matches ? "light" : "light";
+        </script>
+
+        <!-- Work around some values being stored in localStorage wrapped in quotes -->
+        <script type="text/javascript">
+            try {
+                var theme = localStorage.getItem('mdbook-theme');
+                var sidebar = localStorage.getItem('mdbook-sidebar');
+
+                if (theme.startsWith('"') && theme.endsWith('"')) {
+                    localStorage.setItem('mdbook-theme', theme.slice(1, theme.length - 1));
+                }
+
+                if (sidebar.startsWith('"') && sidebar.endsWith('"')) {
+                    localStorage.setItem('mdbook-sidebar', sidebar.slice(1, sidebar.length - 1));
+                }
+            } catch (e) { }
+        </script>
+
+        <!-- Set the theme before any content is loaded, prevents flash -->
+        <script type="text/javascript">
+            var theme;
+            try { theme = localStorage.getItem('mdbook-theme'); } catch(e) { }
+            if (theme === null || theme === undefined) { theme = default_theme; }
+            var html = document.querySelector('html');
+            html.classList.remove('no-js')
+            html.classList.remove('light')
+            html.classList.add(theme);
+            html.classList.add('js');
+        </script>
+
+        <!-- Hide / unhide sidebar before it is displayed -->
+        <script type="text/javascript">
+            var html = document.querySelector('html');
+            var sidebar = 'hidden';
+            if (document.body.clientWidth >= 1080) {
+                try { sidebar = localStorage.getItem('mdbook-sidebar'); } catch(e) { }
+                sidebar = sidebar || 'visible';
+            }
+            html.classList.remove('sidebar-visible');
+            html.classList.add("sidebar-" + sidebar);
+        </script>
+
+        <nav id="sidebar" class="sidebar" aria-label="Table of contents">
+            <div class="sidebar-scrollbox">
+                <ol class="chapter"><li class="chapter-item expanded affix "><a href="introduction.html">Introduction</a></li><li class="chapter-item expanded "><a href="0030-protocol-messages.html">0030-protocol-messages</a></li><li class="chapter-item expanded "><a href="0031-configuration.html">0031-configuration</a></li><li class="chapter-item expanded "><a href="0033-bee-network.html" class="active">0033-bee-network</a></li></ol>
+            </div>
+            <div id="sidebar-resize-handle" class="sidebar-resize-handle"></div>
+        </nav>
+
+        <div id="page-wrapper" class="page-wrapper">
+
+            <div class="page">
+                
+                <div id="menu-bar-hover-placeholder"></div>
+                <div id="menu-bar" class="menu-bar sticky bordered">
+                    <div class="left-buttons">
+                        <button id="sidebar-toggle" class="icon-button" type="button" title="Toggle Table of Contents" aria-label="Toggle Table of Contents" aria-controls="sidebar">
+                            <i class="fa fa-bars"></i>
+                        </button>
+                        <button id="theme-toggle" class="icon-button" type="button" title="Change theme" aria-label="Change theme" aria-haspopup="true" aria-expanded="false" aria-controls="theme-list">
+                            <i class="fa fa-paint-brush"></i>
+                        </button>
+                        <ul id="theme-list" class="theme-popup" aria-label="Themes" role="menu">
+                            <li role="none"><button role="menuitem" class="theme" id="light">Light (default)</button></li>
+                            <li role="none"><button role="menuitem" class="theme" id="rust">Rust</button></li>
+                            <li role="none"><button role="menuitem" class="theme" id="coal">Coal</button></li>
+                            <li role="none"><button role="menuitem" class="theme" id="navy">Navy</button></li>
+                            <li role="none"><button role="menuitem" class="theme" id="ayu">Ayu</button></li>
+                        </ul>
+                        
+                        <button id="search-toggle" class="icon-button" type="button" title="Search. (Shortkey: s)" aria-label="Toggle Searchbar" aria-expanded="false" aria-keyshortcuts="S" aria-controls="searchbar">
+                            <i class="fa fa-search"></i>
+                        </button>
+                        
+                    </div>
+
+                    <h1 class="menu-title">The Bee RFC Book</h1>
+
+                    <div class="right-buttons">
+                        <a href="print.html" title="Print this book" aria-label="Print this book">
+                            <i id="print-button" class="fa fa-print"></i>
+                        </a>
+                        
+                    </div>
+                </div>
+
+                
+                <div id="search-wrapper" class="hidden">
+                    <form id="searchbar-outer" class="searchbar-outer">
+                        <input type="search" name="search" id="searchbar" name="searchbar" placeholder="Search this book ..." aria-controls="searchresults-outer" aria-describedby="searchresults-header">
+                    </form>
+                    <div id="searchresults-outer" class="searchresults-outer hidden">
+                        <div id="searchresults-header" class="searchresults-header"></div>
+                        <ul id="searchresults">
+                        </ul>
+                    </div>
+                </div>
+                
+
+                <!-- Apply ARIA attributes after the sidebar and the sidebar toggle button are added to the DOM -->
+                <script type="text/javascript">
+                    document.getElementById('sidebar-toggle').setAttribute('aria-expanded', sidebar === 'visible');
+                    document.getElementById('sidebar').setAttribute('aria-hidden', sidebar !== 'visible');
+                    Array.from(document.querySelectorAll('#sidebar a')).forEach(function(link) {
+                        link.setAttribute('tabIndex', sidebar === 'visible' ? 0 : -1);
+                    });
+                </script>
+
+                <div id="content" class="content">
+                    <main>
+                        <ul>
+<li>Feature name: <code>network</code></li>
+<li>Start date: 2020-04-29</li>
+<li>RFC PR: <a href="https://github.com/iotaledger/bee-rfcs/pull/33">iotaledger/bee-rfcs#33</a></li>
+<li>Bee issue: <a href="https://github.com/iotaledger/bee/issues/76">iotaledger/bee#76</a></li>
+</ul>
+<h1><a class="header" href="#summary" id="summary">Summary</a></h1>
+<p>This RFC proposes a networking crate (<code>bee-network</code>) to be added to the <strong>Bee</strong> framework that provides means to exchange byte messages with connected endpoints.</p>
+<h1><a class="header" href="#motivation" id="motivation">Motivation</a></h1>
+<p>Bee nodes need a way to share messages with each other and other compatible node implementations as part of the IOTA gossip protocol or they won't be able to form a network and synchronize with each other.</p>
+<h1><a class="header" href="#detailed-design" id="detailed-design">Detailed design</a></h1>
+<p>The functionalities of this crate are relatively low-level from a node perspective in the sense, that they are independent from any specifics defined by the IOTA protocol. Consequently, it has no dependencies on other crates of the framework, and can easily be reused in different contexts.</p>
+<p>The aim of this crate is to make it simple and straightforward for developers to build layers on top of it (e.g. a protocol layer) by abstracting away all the underlying networking logic. It is therefore a lot easier for them to focus on the modelling of other important aspects of a node software, like:</p>
+<ul>
+<li><code>Peer</code>s: other nodes in the network,</li>
+<li><code>Message</code>es: the information exchanged between peers, and its serialization/deserialization.</li>
+</ul>
+<p>Given some identifier <code>epid</code>, sending a message to its corresponding endpoint becomes a single line of asynchronous code:</p>
+<pre><pre class="playpen"><code class="language-rust">
+<span class="boring">#![allow(unused_variables)]
+</span><span class="boring">fn main() {
+</span>network.send(SendMessage { epid, bytes: &quot;hello&quot;.as_bytes() }).await?;
+<span class="boring">}
+</span></code></pre></pre>
+<p>The purpose of this crate is to provide the following functionalities:</p>
+<ul>
+<li>maintain a list of endpoints,</li>
+<li>establish and maintain connections with endpoints,</li>
+<li>allow to send, multicast or broadcast byte encoded messages of variable size to any of the endpoints,</li>
+<li>allow to receive byte encoded messages of variable size from any of the endpoints,</li>
+<li>reject connections from unknown, i.e. not whitelisted, endpoints,</li>
+<li>manage all connections and message transfers asynchronously,</li>
+<li>provide an extensible, yet convenient-to-use, and documented API.</li>
+</ul>
+<p>The key design decisions are now being discussed in the following sub-sections.</p>
+<h2><a class="header" href="#asyncawait" id="asyncawait">async/await</a></h2>
+<p>This crate is by nature very much dependent on events happening outside of the control of the program, e.g. listening for incoming connections from peers, waiting for packets on a specific socket, etc. Hence, - under the hood - this crate makes heavy use of Rust's concurrency abstractions. Luckily, with the stabilization of the <code>async/await</code> syntax, writing asynchronous code has become almost as easy to read, write, and maintain as synchronous code. In an experimental implementation of this crate the <a href="https://github.com/async-rs/async-std"><code>async_std</code></a> library was used, which comes with asynchronous drop-in replacements for their synchronous equivalents found in Rust's standard library <code>std</code>. Additionally, asynchronous mpsc channels were taken from the <a href="https://github.com/rust-lang/futures-rs"><code>futures</code></a> crate.</p>
+<h2><a class="header" href="#message-passing" id="message-passing">Message passing</a></h2>
+<p>This crate favors message passing via channels over globally shared state and locks. Instead of keeping the list of endpoints in a globally accessible hashmap this crate separates and moves such state into workers that run asynchronously, and are listening for commands and events to act upon, and also notify listeners by sending events.</p>
+<h2><a class="header" href="#initialization" id="initialization">Initialization</a></h2>
+<p>In order for this crate to be used, it has to be initialized first by providing a <code>NetworkConfig</code>:</p>
+<pre><pre class="playpen"><code class="language-rust">
+<span class="boring">#![allow(unused_variables)]
+</span><span class="boring">fn main() {
+</span>struct NetworkConfig {
+    // The server or binding TCP port that remote endpoints can connect and send to.
+    binding_port: u16,
+    // The binding address that remote endpoints can connect and send to.
+    binding_addr: IpAddr,
+    // The interval between two connection attempts in case of connection failures.
+    reconnect_interval: u64,
+    // The maximum message length in terms of bytes.
+    max_message_length: usize
+
+    ...
+}
+<span class="boring">}
+</span></code></pre></pre>
+<p>This has the advantage of being easily extensible and keeping the signature of the static <code>init</code> function small:</p>
+<pre><pre class="playpen"><code class="language-rust">
+<span class="boring">#![allow(unused_variables)]
+</span><span class="boring">fn main() {
+</span>fn init(config: NetworkConfig) -&gt; (Network, Events, Shutdown) { ... }
+<span class="boring">}
+</span></code></pre></pre>
+<p>This function returns a tuple struct that allows the consumer of this crate to send commands (<code>Network</code>), listen to events (<code>Events</code>), and gracefully shutdown all running asynchronous tasks that were spawned within this system (<code>Shutdown</code>).</p>
+<p>See also  <a href="https://github.com/iotaledger/bee-rfcs/blob/master/text/0031-configuration.md">RFC 31</a>, which describes a configuration pattern for Bee binary and library crates.</p>
+<h2><a class="header" href="#port-address-protocol-and-url" id="port-address-protocol-and-url"><code>Port</code>, <code>Address</code>, <code>Protocol</code>, and <code>Url</code></a></h2>
+<p>In order to send a message to an endpoint, a node needs to know the endpoint's address and the communication protocol it uses. This crate provides the following abstractions to deal with that:</p>
+<ul>
+<li>
+<p><code>Port</code>: a 0-cost wrapper around a <code>u16</code>, which is introduced for type safety and better readability:</p>
+<pre><pre class="playpen"><code class="language-rust">
+<span class="boring">#![allow(unused_variables)]
+</span><span class="boring">fn main() {
+</span>struct Port(u16);
+<span class="boring">}
+</span></code></pre></pre>
+<p>For convenience, <code>Port</code> dereferences to <code>u16</code>.</p>
+</li>
+<li>
+<p><code>Address</code>: a 0-cost wrapper around a <code>SocketAddr</code> which provides an adjusted, but overall simpler API than its inner type:</p>
+<pre><pre class="playpen"><code class="language-rust">
+<span class="boring">#![allow(unused_variables)]
+</span><span class="boring">fn main() {
+</span>#[derive(Clone, Copy, Debug, Eq, Hash, PartialEq)]
+struct Address(SocketAddr);
+<span class="boring">}
+</span></code></pre></pre>
+<p>An <code>Address</code> can be constructed from Ipv4 and Ipv6 addresses and a port:</p>
+<pre><pre class="playpen"><code class="language-rust">
+<span class="boring">#![allow(unused_variables)]
+</span><span class="boring">fn main() {
+</span>// Infallible construction of an `Address` from Ipv4.
+fn from_v4_addr_and_port(address: Ipv4Addr, port: Port) -&gt; Self { ... }
+
+// Infallible construction of an `Address` from Ipv6.
+fn from_v6_addr_and_port(address: Ipv6Addr, port: Port) -&gt; Self { ... }
+
+// Fallible construction of an `Address` from `&amp;str`.
+async fn from_addr_str(address: &amp;str) -&gt; Result&lt;Self&gt; { ... }
+<span class="boring">}
+</span></code></pre></pre>
+<p>Note, that the last function is <code>async</code>. That is because of possible delays when performing domain name resolution.</p>
+</li>
+<li>
+<p><code>Protocol</code>: an <code>enum</code>eration of supported communication protocols:</p>
+<pre><pre class="playpen"><code class="language-rust">
+<span class="boring">#![allow(unused_variables)]
+</span><span class="boring">fn main() {
+</span>#[non_exhaustive]
+enum Protocol {
+    Tcp,
+}
+<span class="boring">}
+</span></code></pre></pre>
+<p>Note, that future updates may support different protocols, which is why this enum is declared as <code>non_exhaustive</code>, see <code>Unresolved Questions</code> section.</p>
+</li>
+<li>
+<p><code>Url</code>: an <code>enum</code>eration that can always be constructed from an <code>Address</code> and a <code>Protocol</code> (infallible), or from a <code>&amp;str</code>, which can fail if parsing or domain name resolution fails. If successfull however, it resolves to an Ipv4 or Ipv6 address stored in a variant of the <code>enum</code> depending on the url scheme part. Note, that this crate therefore expects the <code>Url</code> string to always provide a scheme (e.g. <code>tcp://</code>) and a port (e.g. <code>15600</code>) when specifying an endpoint's address.</p>
+<pre><pre class="playpen"><code class="language-rust">
+<span class="boring">#![allow(unused_variables)]
+</span><span class="boring">fn main() {
+</span>#[non_exhaustive]
+enum Url {
+    // Represents the address of an endpoint communicating over TCP.
+    Tcp(Address),
+}
+<span class="boring">}
+</span></code></pre></pre>
+<p>Note, that future updates may support different protocols, which is why this enum is declared as <code>non_exhaustive</code>, see <code>Unresolved Questions</code> section.</p>
+<pre><pre class="playpen"><code class="language-rust">
+<span class="boring">#![allow(unused_variables)]
+</span><span class="boring">fn main() {
+</span>// Infallible construction of a `Url` from an `Address` and a `Protocol`.
+fn new(addr: Address, proto: Protocol) -&gt; Self { ... }
+
+// Fallible construction of a `Url` from `&amp;str`.
+async fn from_url_str(url: &amp;str) -&gt; Result&lt;Self&gt; { ... }
+<span class="boring">}
+</span></code></pre></pre>
+<p>Note, that the second function is <code>async</code>. That is because of possible delays when performing domain name resolution.</p>
+</li>
+</ul>
+<h2><a class="header" href="#endpoint-and-endpointid" id="endpoint-and-endpointid"><code>Endpoint</code> and <code>EndpointId</code></a></h2>
+<p>To model the remote part of a connection, this crate introduces the <code>Endpoint</code> type:</p>
+<pre><pre class="playpen"><code class="language-rust">
+<span class="boring">#![allow(unused_variables)]
+</span><span class="boring">fn main() {
+</span>struct Endpoint {
+    // The id of the endpoint.
+    id: EndpointId,
+
+    // The address of the endpoint.
+    address: Address,
+
+    // The protocol used to communicate with that endpoint.
+    protocol: Protocol,
+}
+<span class="boring">}
+</span></code></pre></pre>
+<p>Note: In a peer-to-peer (p2p) network peers usually have two endpoints initially as they are actively trying to connect, but also need to accept connections from their peers. This crate is agnostic about how to handle duplicate connections as this is usually resolved by a handshaking protocol defined at a higher layer.</p>
+<p>To uniquely identify an <code>Endpoint</code>, this crate proposes the <code>EndpointId</code> type, which can be implemented as a wrapper around an <code>Address</code>.</p>
+<pre><pre class="playpen"><code class="language-rust">
+<span class="boring">#![allow(unused_variables)]
+</span><span class="boring">fn main() {
+</span>#[derive(Clone, Copy, Eq, PartialEq, Hash)]
+struct EndpointId(Address);
+<span class="boring">}
+</span></code></pre></pre>
+<p>Note, that this <code>EndpointId</code> should be <code>Clone</code> and <code>Copy</code>, and requires to implement <code>Eq</code>, <code>PartialEq</code>, and <code>Hash</code>, because it is used as a hashmap key in several instances.</p>
+<h2><a class="header" href="#command" id="command"><code>Command</code></a></h2>
+<p><code>Command</code>s are messages that are supposed to be issued by higher level business logic like a protocol layer. They are implemented as an <code>enum</code>, which in Rust is one way of expressing a polymorphic type:</p>
+<pre><pre class="playpen"><code class="language-rust">
+<span class="boring">#![allow(unused_variables)]
+</span><span class="boring">fn main() {
+</span>enum Command {
+    // Adds an endpoint to the list.
+    AddEndpoint { url: Url, ... },
+
+    // Removes an endpoint from the list.
+    RemoveEndpoint { epid: EndpointId, ... },
+
+    // Attempts to connect to an endpoint.
+    Connect { epid: EndpointId, ... },
+
+    // Disconnects from an endpoint.
+    Disconnect { epid: EndpointId, ... },
+
+    // Sends a message to a particular endpoint.
+    SendMessage { epid: EndpointId, bytes: Vec&lt;u8&gt;, ... },
+
+    // Sends a message to multiple endpoints.
+    MulticastMessage { epids: Vec&lt;EndpointId&gt;, bytes: Vec&lt;u8&gt;, ...},
+
+    // Sends a message to all endpoints in its list.
+    BroadcastMessage { bytes: Vec&lt;u8&gt;, ... },
+}
+<span class="boring">}
+</span></code></pre></pre>
+<p>This <code>enum</code> makes the things the consumer can do with the crate very explicit and descriptive, and also easily extensible.</p>
+<h3><a class="header" href="#event" id="event"><code>Event</code></a></h3>
+<p>Similarly to <code>Command</code>s, the different kinds of <code>Event</code>s in the system are implemented as an <code>enum</code> allowing various types of concrete events being sent over event channels:</p>
+<pre><pre class="playpen"><code class="language-rust">
+<span class="boring">#![allow(unused_variables)]
+</span><span class="boring">fn main() {
+</span>#[non_exhaustive]
+enum Event {
+    // An endpoint was added to the list.
+    EndpointAdded { epid: EndpointId, ... },
+
+    // An endpoint was removed from the list.
+    EndpointRemoved { epid: EndpointId, ... },
+
+    // A new connection is being set up.
+    NewConnection { ep: Endpoint, ... },
+
+    // A broken connection.
+    LostConnection { epid: EndpointId },
+
+    // An endpoint was successfully connected.
+    EndpointConnected { epid: EndpointId, address: Address, ... },
+
+    // An endpoint was disconnected.
+    EndpointDisconnected { epid: EndpointId, ... },
+
+    // A message was sent.
+    MessageSent { epid: EndpointId, num_bytes: usize },
+
+    // A message was received.
+    MessageReceived { epid: EndpointId, bytes: Vec&lt;u8&gt; },
+
+    // A connection attempt should occur.
+    TryConnect { epid: EndpointId, ... },
+}
+
+<span class="boring">}
+</span></code></pre></pre>
+<p>In contrast to <code>Command</code>s though, <code>Event</code>s are messages created by the system, and those that are considered relevant are published for the consumer to execute custom logic. It is attributed as <code>non_exhaustive</code> to accommodate for possible additions in the future.</p>
+<h2><a class="header" href="#workers" id="workers">Workers</a></h2>
+<p>There are two essential asynchronous workers in the system that are running for the application's whole lifetime. That is the <code>EndpointWorker</code> and the <code>TcpWorker</code>.</p>
+<h3><a class="header" href="#endpointworker" id="endpointworker">EndpointWorker</a></h3>
+<p>This worker manages the list of <code>Endpoint</code>s and processes the <code>Command</code>s issued by the consumer of this crate, and publishes <code>Event</code>s to be consumed by the user.</p>
+<h3><a class="header" href="#tcpworker" id="tcpworker">TcpWorker</a></h3>
+<p>This worker is responsible for accepting incoming TCP connection requests from other endpoints. Once a connection is established two additional asynchronous tasks are spawned that respectively handle incoming and outgoing messages.</p>
+<p>Note: connection attempts from unknown IP addresses (i.e. not part of the static whitelist) will be rejected.</p>
+<h2><a class="header" href="#shutdown" id="shutdown">Shutdown</a></h2>
+<p><code>Shutdown</code> is a <code>struct</code> that facilitates a graceful shutdown. It stores the sender halfs of <code>oneshot</code> channels (<code>ShutdownNotifier</code>) and the task handles (<code>WorkerTask</code>).</p>
+<pre><pre class="playpen"><code class="language-rust">
+<span class="boring">#![allow(unused_variables)]
+</span><span class="boring">fn main() {
+</span>struct Shutdown {
+    notifiers: Vec&lt;ShutdownNotifier&gt;,
+    tasks: Vec&lt;WorkerTask&gt;,
+}
+<span class="boring">}
+</span></code></pre></pre>
+<p>Apart from providing the necessary API to register channels and tasks, executing the shutdown happens by calling:</p>
+<pre><pre class="playpen"><code class="language-rust">
+<span class="boring">#![allow(unused_variables)]
+</span>
+<span class="boring">fn main() {
+</span>async fn execute(self) -&gt; Result&lt;()&gt; { ... }
+
+<span class="boring">}
+</span></code></pre></pre>
+<p>This method will then try to send a shutdown signal to all registered workers and wait for those tasks to complete.</p>
+<h1><a class="header" href="#drawbacks" id="drawbacks">Drawbacks</a></h1>
+<ul>
+<li>This design might not be the most performant solution as it requires each byte message to be wrapped into a <code>SendMessage</code> command, that is then sent through a channel to the <code>EndpointWorker</code>. Proper benchmarking is necessary to determine if this design can be a performance bottleneck;</li>
+<li>Currently UDP is not a requirement, so the proposal focuses on TCP only. Nonetheless, the crate is designed in way that allows for simple addition of UDP support;</li>
+</ul>
+<h1><a class="header" href="#rationale-and-alternatives" id="rationale-and-alternatives">Rationale and alternatives</a></h1>
+<ul>
+<li>The reason for not choosing an already available crate, is that there aren't many crates yet, that are implemented in the proposed way, and are also widely used in the Rust ecosystem. Additionally we reduce dependencies, and have the option to tailor the crate exactly to our needs even on short notice;</li>
+<li>There are many ways to implement such a crate, many of which are probably more performant than the proposed one. However, the main focus of this proposal is ease-of-use and extensibility. It leaves performance optimization to later versions and/or RFCs, when more data has been collected through stress tests and benchmarks;</li>
+<li>In particular, the <code>Command</code> abstraction could be removed entirely, and replaced by an additional static function for each command. This might be a more efficient thing to do, but it is still unclear how much there is to be gained by doing this, and if this would be necessary taking into account the various other CPU expensive things like hashing, signature verification, etc, that a node needs to do;</li>
+<li>Since mpsc channels are still unstable in <code>async_std</code> at the time of this writing, this RFC suggests using those from the <code>futures</code> crate. Once this has been stabilized, a swith to those channels might improve performance, since to the authors knowledge those are based on the more efficient <code>crossbeam</code> implementation;</li>
+<li>To implement this RFC, any async library or mix can be used. Other options to consider are <a href="https://github.com/tokio-rs/tokio"><code>tokio</code></a>, and for asynchronous channels <a href="https://github.com/zesterer/flume"><code>flume</code></a>. Using those libraries, might result in a much more efficient implementation;</li>
+<li><code>EndpointId</code> may be something different than a wrapper around an <code>Address</code>, but instead be derived from some sort of cryptographic hash;</li>
+</ul>
+<h1><a class="header" href="#unresolved-questions" id="unresolved-questions">Unresolved questions</a></h1>
+<ul>
+<li>The design has been tested in a prototype, and it seems to work reliably, so there are no unresolved questions in terms of the validity of this proposal;</li>
+<li>It is still unclear - due to the lack of benchmark results - how efficient this design is; however, due to its asynchronous design it should be able to make use from multicore systems;</li>
+<li>Handling of endpoints with dynamic IPs;</li>
+</ul>
+
+                    </main>
+
+                    <nav class="nav-wrapper" aria-label="Page navigation">
+                        <!-- Mobile navigation buttons -->
+                        
+                            <a rel="prev" href="0031-configuration.html" class="mobile-nav-chapters previous" title="Previous chapter" aria-label="Previous chapter" aria-keyshortcuts="Left">
+                                <i class="fa fa-angle-left"></i>
+                            </a>
+                        
+
+                        
+
+                        <div style="clear: both"></div>
+                    </nav>
+                </div>
+            </div>
+
+            <nav class="nav-wide-wrapper" aria-label="Page navigation">
+                
+                    <a rel="prev" href="0031-configuration.html" class="nav-chapters previous" title="Previous chapter" aria-label="Previous chapter" aria-keyshortcuts="Left">
+                        <i class="fa fa-angle-left"></i>
+                    </a>
+                
+
+                
+            </nav>
+
+        </div>
+
+        
+
+        
+
+        
+        
+        
+        <script type="text/javascript">
+            window.playpen_copyable = true;
+        </script>
+        
+
+        
+
+        
+        <script src="elasticlunr.min.js" type="text/javascript" charset="utf-8"></script>
+        <script src="mark.min.js" type="text/javascript" charset="utf-8"></script>
+        <script src="searcher.js" type="text/javascript" charset="utf-8"></script>
+        
+
+        <script src="clipboard.min.js" type="text/javascript" charset="utf-8"></script>
+        <script src="highlight.js" type="text/javascript" charset="utf-8"></script>
+        <script src="book.js" type="text/javascript" charset="utf-8"></script>
+
+        <!-- Custom JS scripts -->
+        
+
+        
+
+    </body>
+</html>
