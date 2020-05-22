@@ -89,7 +89,7 @@ In order to send a message to an endpoint, a node needs to know the endpoint's a
 * `Address`: a 0-cost wrapper around a `SocketAddr` which provides an adjusted, but overall simpler API than its inner type:
 
     ```rust
-    #[derive(Clone, Copy, Debug, Eq, Hash, PartialEq)
+    #[derive(Clone, Copy, Debug, Eq, Hash, PartialEq)]
     struct Address(SocketAddr);
     ```
 
