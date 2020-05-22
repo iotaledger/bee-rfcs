@@ -27,7 +27,7 @@ network.send(SendMessage { epid, bytes: "hello".as_bytes() }).await?;
 ```
 
 The purpose of this crate is to provide the following functionalities:
-* maintain a list of endpoints (not peers!),
+* maintain a list of endpoints,
 * establish and maintain connections with endpoints,
 * allow to send, multicast or broadcast byte encoded messages of variable size to any of the endpoints,
 * allow to receive byte encoded messages of variable size from any of the endpoints,
