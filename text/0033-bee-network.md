@@ -81,7 +81,7 @@ In order to send a message to an endpoint, a node needs to know the endpoint's a
 * `Port`: a 0-cost wrapper around a `u16`, which is introduced for type safety and better readability:
 
     ```rust
-    struct Port(pub u16);
+    struct Port(u16);
     ```
 
     For convenience, `Port` dereferences to `u16`.
