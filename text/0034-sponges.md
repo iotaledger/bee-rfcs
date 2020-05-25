@@ -1,7 +1,7 @@
 + Feature name: `sponges`
 + Start date: 2019-10-15
-+ RFC PR: [iotaledger/bee-rfcs#0000](https://github.com/iotaledger/bee-rfcs/pull/0000)
-+ Bee issue: [iotaledger/bee#0000](https://github.com/iotaledger/bee/issues/0000)
++ RFC PR: [iotaledger/bee-rfcs#34](https://github.com/iotaledger/bee-rfcs/pull/34)
++ Bee issue: [iotaledger/bee#77](https://github.com/iotaledger/bee/issues/77)
 
 # Summary
 
