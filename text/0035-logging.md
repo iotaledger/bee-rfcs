@@ -5,19 +5,19 @@
 
 # Summary
 
-This RFC introduces a logging library and some recommendations on how to log in the Bee project.
+This RFC introduces a logging library - `log` - and some recommendations on how to log in the Bee project.
 
 # Motivation
 
-Logging is done across almost all binary and library crates in the Bee project so consistency is needed to provide a
+Logging is done across almost all binary and library crates in the Bee project, so consistency is needed to provide a
 better user experience.
 
 # Detailed design
 
 Logging in Bee should be done through the [log](https://crates.io/crates/log) crate (`A Rust library providing a
-lightweight logging facade`) which is the Rust standard logging library.
+lightweight logging facade`) which is the de-facto standard library for logging in the Rust ecosystem.
 
-The `log` crate itself is just a frontend and support the implementation of many different backends.
+The `log` crate itself is just a frontend and supports the implementation of many different backends.
 
 > It provides a single logging API that abstracts over the actual logging implementation. Libraries can use the logging
 API provided by this crate, and the consumer of those libraries can choose the logging implementation that is most
@@ -28,7 +28,7 @@ suitable for its use case.
 > Libraries should link only to the log crate, and use the provided macros to log whatever information will be useful
 to downstream consumers.
 
-The `log` crate only provides macros for logging.
+The `log` crate provides the following macros, from lowest priority to highest priority:
 
 - `trace!`
 - `debug!`
@@ -61,7 +61,7 @@ initialized will be ignored.
 There are a lot of [available backends](https://docs.rs/log/0.4.8/log/#available-logging-implementations) for the `log`
 frontend.
 
-This RFC opt for the [fern](https://docs.rs/fern) backend which is a very complete one with an advanced configuration.
+This RFC opts for the [fern](https://docs.rs/fern) backend which is a very complete one with an advanced configuration.
 
 ### Initialization
 
@@ -110,7 +110,7 @@ level = "error"
 
 ### Errors
 
-Since different backends may have different errors, we need to abstract them  to provide a consistent `logger_init`
+Since different backends may have different errors, we need to abstract them to provide a consistent `logger_init`
 function.
 
 ```rust
@@ -121,8 +121,8 @@ enum LoggerError {
 }
 ```
 
-**Note**: The error has to be `non_exhaustive` to allow further improving / extending the logger without risking a
-breaking change.
+**Note**: The `LoggerError` enum has to be `non_exhaustive` to allow further improving / extending the logger without
+risking a breaking change.
 
 ## Format
 
@@ -138,7 +138,8 @@ All elements should be enclosed in brackets `[...]` with only a space between th
 
 Example: `[2020-05-25][10:23:03][bee_node::node][INFO] Initializing...`
 
-**Note**: All messages should end with a `...` if the event is happening or with a `.` if the event happened.
+**Note**: All messages should end either with `...` (3 dots) to indicate something potentially long-lasting is
+happening, or with `.` (1 dot) to indicate events that just happened.
 
 # Drawbacks
 
@@ -146,7 +147,7 @@ No specific drawbacks using this library.
 
 # Rationale and alternatives
 
-- The `log` crate is maintained by the rust team;
+- The `log` crate is maintained by the rust team, so it is a widely used and trusted dependency in the Bee framework;
 - Most of the logging crates in the Rust ecosystem are actually backends for the `log` crate with different features;
 - It should be very easy to switch to a different backend in the future by only changing the initialization function;
 - There are a lot of [available backends](https://docs.rs/log/0.4.8/log/#available-logging-implementations) but `fern`
