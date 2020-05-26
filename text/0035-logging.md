@@ -1,7 +1,7 @@
 + Feature name: `logging`
 + Start date: 2020-05-23
-+ RFC PR: [iotaledger/bee-rfcs#00](https://github.com/iotaledger/bee-rfcs/pull/00)
-+ Bee issue: [iotaledger/bee#00](https://github.com/iotaledger/bee/issues/00)
++ RFC PR: [iotaledger/bee-rfcs#35](https://github.com/iotaledger/bee-rfcs/pull/35)
++ Bee issue: [iotaledger/bee#78](https://github.com/iotaledger/bee/issues/78)
 
 # Summary
 
