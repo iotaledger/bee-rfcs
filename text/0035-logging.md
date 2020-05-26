@@ -40,7 +40,7 @@ These macros have a usage similar to the `println!` macro.
 
 A log request consists of a `target`, a `level`, and a `message`.
 
-The target is a string which defaults to the module path of the location of the log request but may be overridden.
+By default, the target represents the location of the log request, but may be overridden.
 
 Example with default target:
 ```rust
@@ -130,7 +130,7 @@ The following elements should appear in this order:
 - Date in the `%Y-%m-%d` format e.g. `2020-05-25`;
 - Time in the `%H:%M:%S` format e.g. `10:23:03`;
 - Target e.g. `bee_node::node`;
-    - The default target - module path - is preferred but can be overridden if needed;
+    - The default target is preferred but can be overridden if needed;
 - Level e.g. `INFO`;
 - Message e.g. `Initializing...`;
 
