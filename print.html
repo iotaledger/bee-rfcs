@@ -83,7 +83,7 @@
 
         <nav id="sidebar" class="sidebar" aria-label="Table of contents">
             <div class="sidebar-scrollbox">
-                <ol class="chapter"><li class="chapter-item expanded affix "><a href="introduction.html">Introduction</a></li><li class="chapter-item expanded "><a href="0030-protocol-messages.html">0030-protocol-messages</a></li><li class="chapter-item expanded "><a href="0031-configuration.html">0031-configuration</a></li><li class="chapter-item expanded "><a href="0033-bee-network.html">0033-bee-network</a></li></ol>
+                <ol class="chapter"><li class="chapter-item expanded affix "><a href="introduction.html">Introduction</a></li><li class="chapter-item expanded "><a href="0030-protocol-messages.html">0030-protocol-messages</a></li><li class="chapter-item expanded "><a href="0031-configuration.html">0031-configuration</a></li><li class="chapter-item expanded "><a href="0033-network.html">0033-network</a></li><li class="chapter-item expanded "><a href="0035-logging.html">0035-logging</a></li></ol>
             </div>
             <div id="sidebar-resize-handle" class="sidebar-resize-handle"></div>
         </nav>
@@ -1053,6 +1053,150 @@ enum Event {
 <li>It is still unclear - due to the lack of benchmark results - how efficient this design is; however, due to its asynchronous design it should be able to make use from multicore systems;</li>
 <li>Handling of endpoints with dynamic IPs;</li>
 </ul>
+<ul>
+<li>Feature name: <code>logging</code></li>
+<li>Start date: 2020-05-23</li>
+<li>RFC PR: <a href="https://github.com/iotaledger/bee-rfcs/pull/35">iotaledger/bee-rfcs#35</a></li>
+<li>Bee issue: <a href="https://github.com/iotaledger/bee/issues/78">iotaledger/bee#78</a></li>
+</ul>
+<h1><a class="header" href="#summary-3" id="summary-3">Summary</a></h1>
+<p>This RFC introduces a logging library - <code>log</code> - and some recommendations on how to log in the Bee project.</p>
+<h1><a class="header" href="#motivation-3" id="motivation-3">Motivation</a></h1>
+<p>Logging is done across almost all binary and library crates in the Bee project, so consistency is needed to provide a
+better user experience.</p>
+<h1><a class="header" href="#detailed-design-3" id="detailed-design-3">Detailed design</a></h1>
+<p>Logging in Bee should be done through the <a href="https://crates.io/crates/log">log</a> crate (<code>A Rust library providing a lightweight logging facade</code>) which is the de-facto standard library for logging in the Rust ecosystem.</p>
+<p>The <code>log</code> crate itself is just a frontend and supports the implementation of many different backends.</p>
+<blockquote>
+<p>It provides a single logging API that abstracts over the actual logging implementation. Libraries can use the logging
+API provided by this crate, and the consumer of those libraries can choose the logging implementation that is most
+suitable for its use case.</p>
+</blockquote>
+<h2><a class="header" href="#frontend" id="frontend">Frontend</a></h2>
+<blockquote>
+<p>Libraries should link only to the log crate, and use the provided macros to log whatever information will be useful
+to downstream consumers.</p>
+</blockquote>
+<p>The <code>log</code> crate provides the following macros, from lowest priority to highest priority:</p>
+<ul>
+<li><code>trace!</code></li>
+<li><code>debug!</code></li>
+<li><code>info!</code></li>
+<li><code>warn!</code></li>
+<li><code>error!</code></li>
+</ul>
+<p>These macros have a usage similar to the <code>println!</code> macro.</p>
+<p>A log request consists of a <code>target</code>, a <code>level</code>, and a <code>message</code>.</p>
+<p>By default, the target represents the location of the log request, but may be overridden.</p>
+<p>Example with default target:</p>
+<pre><pre class="playpen"><code class="language-rust">
+<span class="boring">#![allow(unused_variables)]
+</span><span class="boring">fn main() {
+</span>info!(&quot;Connected to port {} at {} Mb/s&quot;, conn_info.port, conn_info.speed);
+<span class="boring">}
+</span></code></pre></pre>
+<p>Example with overridden target:</p>
+<pre><pre class="playpen"><code class="language-rust">
+<span class="boring">#![allow(unused_variables)]
+</span><span class="boring">fn main() {
+</span>info!(target: &quot;connection_events&quot;, &quot;Successful connection, port: {}, speed: {}&quot;, conn_info.port, conn_info.speed);
+<span class="boring">}
+</span></code></pre></pre>
+<h2><a class="header" href="#backend" id="backend">Backend</a></h2>
+<blockquote>
+<p>Executables should choose a logging implementation and initialize it early in the runtime of the program. Logging
+implementations will typically include a function to do this. Any log messages generated before the implementation is
+initialized will be ignored.</p>
+</blockquote>
+<p>There are a lot of <a href="https://docs.rs/log/0.4.8/log/#available-logging-implementations">available backends</a> for the <code>log</code>
+frontend.</p>
+<p>This RFC opts for the <a href="https://docs.rs/fern">fern</a> backend which is a very complete one with an advanced configuration.</p>
+<h3><a class="header" href="#initialization-1" id="initialization-1">Initialization</a></h3>
+<p>The backend API is limited to one function call to initialize the logger. It is designed to be updatable without
+breaking changes by taking a <code>LoggerConfig</code> configuration object and returning a <code>Result</code>.</p>
+<pre><pre class="playpen"><code class="language-rust">
+<span class="boring">#![allow(unused_variables)]
+</span><span class="boring">fn main() {
+</span>fn logger_init(config: LoggerConfig) -&gt; Result&lt;(), LoggerError&gt;;
+<span class="boring">}
+</span></code></pre></pre>
+<h3><a class="header" href="#configuration-1" id="configuration-1">Configuration</a></h3>
+<p>The following configuration - compliant with <a href="https://github.com/iotaledger/bee-rfcs/blob/master/text/0031-configuration.md">RFC 31</a> -
+primarily allows configuring different outputs with different log levels.</p>
+<p><code>config.rs</code></p>
+<pre><pre class="playpen"><code class="language-rust">
+<span class="boring">#![allow(unused_variables)]
+</span><span class="boring">fn main() {
+</span>#[derive(Clone)]
+struct LoggerOutputConfig {
+    name: String,
+    level: LevelFilter,
+    ...
+}
+
+#[derive(Clone)]
+struct LoggerConfig {
+    color: bool,
+    outputs: Vec&lt;LoggerOutputConfig&gt;,
+    ...
+}
+<span class="boring">}
+</span></code></pre></pre>
+<p><code>config.toml</code></p>
+<pre><code class="language-toml">[logger]
+color = true
+[[logger.outputs]]
+name  = &quot;stdout&quot;
+level = &quot;info&quot;
+[[logger.outputs]]
+name  = &quot;errors.log&quot;
+level = &quot;error&quot;
+</code></pre>
+<p><strong>Note</strong>: <code>stdout</code> is a reserved name for the standard output of the console.</p>
+<h3><a class="header" href="#errors" id="errors">Errors</a></h3>
+<p>Since different backends may have different errors, we need to abstract them to provide a consistent <code>logger_init</code>
+function.</p>
+<pre><pre class="playpen"><code class="language-rust">
+<span class="boring">#![allow(unused_variables)]
+</span><span class="boring">fn main() {
+</span>#[derive(Debug)]
+#[non_exhaustive]
+enum LoggerError {
+    ...
+}
+<span class="boring">}
+</span></code></pre></pre>
+<p><strong>Note</strong>: The <code>LoggerError</code> enum has to be <code>non_exhaustive</code> to allow further improving / extending the logger without
+risking a breaking change.</p>
+<h2><a class="header" href="#format" id="format">Format</a></h2>
+<p>The following elements should appear in this order:</p>
+<ul>
+<li>Date in the <code>%Y-%m-%d</code> format e.g. <code>2020-05-25</code>;</li>
+<li>Time in the <code>%H:%M:%S</code> format e.g. <code>10:23:03</code>;</li>
+<li>Target e.g. <code>bee_node::node</code>;
+<ul>
+<li>The default target is preferred but can be overridden if needed;</li>
+</ul>
+</li>
+<li>Level e.g. <code>INFO</code>;</li>
+<li>Message e.g. <code>Initializing...</code>;</li>
+</ul>
+<p>All elements should be enclosed in brackets <code>[...]</code> with only a space between the level and the message.</p>
+<p>Example: <code>[2020-05-25][10:23:03][bee_node::node][INFO] Initializing...</code></p>
+<p><strong>Note</strong>: All messages should end either with <code>...</code> (3 dots) to indicate something potentially long-lasting is
+happening, or with <code>.</code> (1 dot) to indicate events that just happened.</p>
+<h1><a class="header" href="#drawbacks-3" id="drawbacks-3">Drawbacks</a></h1>
+<p>No specific drawbacks using this library.</p>
+<h1><a class="header" href="#rationale-and-alternatives-3" id="rationale-and-alternatives-3">Rationale and alternatives</a></h1>
+<ul>
+<li>The <code>log</code> crate is maintained by the rust team, so it is a widely used and trusted dependency in the Bee framework;</li>
+<li>Most of the logging crates in the Rust ecosystem are actually backends for the <code>log</code> crate with different features;</li>
+<li>It should be very easy to switch to a different backend in the future by only changing the initialization function;</li>
+<li>There are a lot of <a href="https://docs.rs/log/0.4.8/log/#available-logging-implementations">available backends</a> but <code>fern</code>
+offers a very fine-grained logging configuration;</li>
+</ul>
+<h1><a class="header" href="#unresolved-questions-3" id="unresolved-questions-3">Unresolved questions</a></h1>
+<p>There are no open questions as this RFC is pretty straightforward and the topic of logging is not a complex one.</p>
 
                     </main>
 
