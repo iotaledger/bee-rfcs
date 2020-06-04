@@ -83,7 +83,7 @@
 
         <nav id="sidebar" class="sidebar" aria-label="Table of contents">
             <div class="sidebar-scrollbox">
-                <ol class="chapter"><li class="chapter-item expanded affix "><a href="introduction.html">Introduction</a></li><li class="chapter-item expanded "><a href="0030-protocol-messages.html">0030-protocol-messages</a></li><li class="chapter-item expanded "><a href="0031-configuration.html">0031-configuration</a></li><li class="chapter-item expanded "><a href="0033-network.html">0033-network</a></li><li class="chapter-item expanded "><a href="0035-logging.html">0035-logging</a></li></ol>
+                <ol class="chapter"><li class="chapter-item expanded affix "><a href="introduction.html">Introduction</a></li><li class="chapter-item expanded "><a href="0030-protocol-messages.html">0030-protocol-messages</a></li><li class="chapter-item expanded "><a href="0031-configuration.html">0031-configuration</a></li><li class="chapter-item expanded "><a href="0033-network.html">0033-network</a></li><li class="chapter-item expanded "><a href="0035-logging.html">0035-logging</a></li><li class="chapter-item expanded "><a href="0036-ternary.html">0036-ternary</a></li></ol>
             </div>
             <div id="sidebar-resize-handle" class="sidebar-resize-handle"></div>
         </nav>
@@ -1197,6 +1197,291 @@ offers a very fine-grained logging configuration;</li>
 </ul>
 <h1><a class="header" href="#unresolved-questions-3" id="unresolved-questions-3">Unresolved questions</a></h1>
 <p>There are no open questions as this RFC is pretty straightforward and the topic of logging is not a complex one.</p>
+<ul>
+<li>Feature name: <code>ternary</code></li>
+<li>Start date: 2020-05-28</li>
+<li>RFC PR: <a href="https://github.com/iotaledger/bee-rfcs/pull/36">iotaledger/bee-rfcs#36</a></li>
+<li>Bee issue: <a href="https://github.com/iotaledger/bee/issues/80">iotaledger/bee#80</a></li>
+</ul>
+<h1><a class="header" href="#summary-4" id="summary-4">Summary</a></h1>
+<p>This RFC introduces both the API and implementation of the <code>bee-ternary</code>
+crate, a general-purpose ternary manipulation crate written in Rust that may be
+used to handle ternary data in the IOTA ecosystem.</p>
+<h1><a class="header" href="#motivation-4" id="motivation-4">Motivation</a></h1>
+<p>Ternary has been a fundamental part of the IOTA technology and is used
+throughout, including for fundamental features like wallet addresses and transaction
+identification.</p>
+<p>More information about ternary in IOTA can be found
+<a href="https://docs.iota.org/docs/getting-started/0.1/introduction/ternary">here</a>.</p>
+<p><em>Note that the IOTA foundation is seeking to reduce the prevalence of ternary
+in the IOTA protocol to better accomodate modern binary architectures. See
+<a href="https://blog.iota.org/chrysalis-b9906ec9d2de">Chrysalis</a> for more information.</em></p>
+<p>Manipulating ternary in an ergonomic manner on top of existing binary-driven
+code can require complexity and, up until now, comes either with a lot of
+boilerplate code, implementations that are difficult to verify as correct, or a
+lack of features.</p>
+<p><code>bee-ternary</code> seeks to become the canonical ternary crate in the Rust IOTA
+ecosystem by providing an API that is efficient, ergonomic, and featureful all
+at once.</p>
+<p><code>bee-ternary</code> will allow IOTA developers to more easily write code that works
+with ternary and allow the simplification of existing codebases through use of
+the API.</p>
+<p>Broadly, there are 3 main benefits that <code>bee-ternary</code> aims to provide
+over use-specific implementations of ternary manipulation code.</p>
+<ul>
+<li>
+<p><strong>Ergonomics</strong>: The API should be trivial to use correctly and should
+naturally guide developers towards correct and efficient solutions.</p>
+</li>
+<li>
+<p><strong>Features</strong>: The API should provide a fundamental set of core features that
+can be used together to cover most developer requirements. Examples of such
+features include multiple encoding schemes, binary/ternary conversion,
+(de)serialization, and tryte string de/encoding.</p>
+</li>
+<li>
+<p><strong>Performance</strong>: The API should allow 'acceptably' efficient manipulation of
+ternary data. This is difficult to ruggedly define, and implementation details
+may change later, but broadly this RFC intends to introduce an API that does not
+inherently inhibit high performance through poor design choices.</p>
+</li>
+</ul>
+<h1><a class="header" href="#detailed-design-4" id="detailed-design-4">Detailed design</a></h1>
+<p><code>bee-ternary</code> is designed to be extensible and is built on top of a handful of
+fundamental abstraction types. Below are listed the features of the API and a
+summary of the core API features.</p>
+<h2><a class="header" href="#features" id="features">Features</a></h2>
+<ul>
+<li>Efficient manipulation of ternary buffers (trits and trytes).</li>
+<li>Multiple encoding schemes.</li>
+<li>Extensible design that allows it to sit on top of existing data structures,
+avoiding unnecessary allocation and copying.</li>
+<li>An array of utility functions to allow for easy manipulation of ternary data.</li>
+<li>Zero-cost conversion between trit and tryte formats (i.e: no slower than
+the equivalent code would be if hand-written).</li>
+</ul>
+<h2><a class="header" href="#key-types--traits" id="key-types--traits">Key Types &amp; Traits</a></h2>
+<p>The crate supports both balanced and unbalanced trit representations, supported
+through two types, <code>Btrit</code> and <code>Utrit</code>. <code>Btrit</code> is the more common
+representation and so is the implicit default for most operations in the crate.</p>
+<h3><a class="header" href="#btrit-and-utrit" id="btrit-and-utrit"><code>Btrit</code> and <code>Utrit</code></a></h3>
+<pre><pre class="playpen"><code class="language-rust">
+<span class="boring">#![allow(unused_variables)]
+</span><span class="boring">fn main() {
+</span>enum Btrit { NegOne, Zero, PlusOne }
+enum Utrit { Zero, One, Two }
+<span class="boring">}
+</span></code></pre></pre>
+<h3><a class="header" href="#trits" id="trits"><code>Trits</code></a></h3>
+<pre><pre class="playpen"><code class="language-rust">
+<span class="boring">#![allow(unused_variables)]
+</span><span class="boring">fn main() {
+</span>struct Trits&lt;T: RawEncoding&gt; { ... }
+<span class="boring">}
+</span></code></pre></pre>
+<ul>
+<li>Generic across different trit encoding schemes (see below).</li>
+<li>Analogous to <code>str</code> or <code>[T]</code>.</li>
+<li>Unsized type, represents a buffer of trits of a specified encoding.</li>
+<li>Most commonly used from behind a reference (as with <code>&amp;str</code> and <code>&amp;[T]</code>),
+representing a 'trit slice'.</li>
+<li>Can be created from a variety of types such as<code>TritBuf</code> and <code>[i8]</code> with
+minimal overhead.</li>
+<li>Sub-slices can be created from trit slices at a per-trit level.</li>
+</ul>
+<h3><a class="header" href="#tritbuf" id="tritbuf"><code>TritBuf</code></a></h3>
+<pre><pre class="playpen"><code class="language-rust">
+<span class="boring">#![allow(unused_variables)]
+</span><span class="boring">fn main() {
+</span>struct TritBuf&lt;T: RawEncodingBuf&gt; { ... }
+<span class="boring">}
+</span></code></pre></pre>
+<ul>
+<li>Generic across different trit encoding schemes (see below).</li>
+<li>Analogous to <code>String</code> or <code>Vec&lt;T&gt;</code>.</li>
+<li>Most common way to manipulate trits.</li>
+<li>Allows pushing, popping, and collecting trits.</li>
+<li>Implements <code>Deref&lt;Target=Trits&gt;</code> (in the same way that <code>Vec&lt;T&gt;</code> implements
+<code>Deref&lt;[T]&gt;</code>).</li>
+</ul>
+<h3><a class="header" href="#rawencoding" id="rawencoding"><code>RawEncoding</code></a></h3>
+<pre><pre class="playpen"><code class="language-rust">
+<span class="boring">#![allow(unused_variables)]
+</span><span class="boring">fn main() {
+</span>trait RawEncoding { ... }
+<span class="boring">}
+</span></code></pre></pre>
+<ul>
+<li>Represents a raw trit buffer of some encoding.</li>
+<li>Common interface implemented by all trit encodings (<code>T1B1</code>, <code>T3B1</code>, <code>T5B1</code>,
+etc.).</li>
+<li>Largely an implementation detail, not something you need to care about unless
+implementing your own encodings.</li>
+<li>Minimal implementation requirements: safety and most utility functionality is
+provided by <code>Trits</code> instead.</li>
+</ul>
+<h3><a class="header" href="#rawencodingbuf" id="rawencodingbuf"><code>RawEncodingBuf</code></a></h3>
+<pre><pre class="playpen"><code class="language-rust">
+<span class="boring">#![allow(unused_variables)]
+</span><span class="boring">fn main() {
+</span>trait RawEncodingBuf { ... }
+<span class="boring">}
+</span></code></pre></pre>
+<ul>
+<li>Buffer counterpart of <code>RawEncoding</code>, always associated with a specific
+<code>RawEncoding</code>.</li>
+<li>Distinct from <code>RawEncoding</code> to permit different buffer-like data structures
+in the future (linked lists, stack-allocated arrays, etc.).</li>
+</ul>
+<h3><a class="header" href="#t1b1t2b1t3b1t4b1t5b1" id="t1b1t2b1t3b1t4b1t5b1"><code>T1B1</code>/<code>T2B1</code>/<code>T3B1</code>/<code>T4B1</code>/<code>T5B1</code></a></h3>
+<pre><pre class="playpen"><code class="language-rust">
+<span class="boring">#![allow(unused_variables)]
+</span><span class="boring">fn main() {
+</span>struct TXB1 { ... }
+<span class="boring">}
+</span></code></pre></pre>
+<ul>
+<li>Types that implement <code>RawEncoding</code>.</li>
+<li>Allow different encodings in <code>Trits</code> and <code>TritBuf</code> types.</li>
+</ul>
+<h3><a class="header" href="#t1b1buft2b1buft3b1buft4b1buft5b1buf" id="t1b1buft2b1buft3b1buft4b1buft5b1buf"><code>T1B1Buf</code>/<code>T2B1Buf</code>/<code>T3B1Buf</code>/<code>T4B1Buf</code>/<code>T5B1Buf</code></a></h3>
+<pre><pre class="playpen"><code class="language-rust">
+<span class="boring">#![allow(unused_variables)]
+</span><span class="boring">fn main() {
+</span>struct TXB1Buf { ... }
+<span class="boring">}
+</span></code></pre></pre>
+<ul>
+<li>Types that implement <code>RawEncodingBuf</code>.</li>
+<li>Allow different encodings in <code>TritBuf</code> types.</li>
+<li>Each type is associated with a <code>RawEncoding</code> type.</li>
+</ul>
+<h2><a class="header" href="#api" id="api">API</a></h2>
+<p>The API makes up the body of this RFC. Due to its considerable length, this RFC
+simply refers to the documentation in question. You can find those docs in the
+<code>bee</code> repository.</p>
+<h2><a class="header" href="#encodings" id="encodings">Encodings</a></h2>
+<p><code>bee-ternary</code> supports many different trit encodings. Notable encodings are
+explained in the crate documentation.</p>
+<h2><a class="header" href="#common-patterns" id="common-patterns">Common Patterns</a></h2>
+<p>When using the API, the most common types interacted with are <code>Trits</code> and
+<code>TritBuf</code>. These types are designed to play well with the rest of the Rust
+ecosystem. Here follows some examples of common patterns that you may wish to
+make use of.</p>
+<h3><a class="header" href="#turning-some-i8s-into-a-trit-buffer" id="turning-some-i8s-into-a-trit-buffer">Turning some <code>i8</code>s into a trit buffer</a></h3>
+<pre><pre class="playpen"><code class="language-rust">
+<span class="boring">#![allow(unused_variables)]
+</span><span class="boring">fn main() {
+</span>[-1, 0, 1, 1, -1, 0]
+	.iter()
+	.map(|x| Btrit::try_from(*x).unwrap())
+	.collect::&lt;TritBuf&gt;()
+<span class="boring">}
+</span></code></pre></pre>
+<p>Alternatively, for the <code>T1B1</code> encoding only, you may directly reinterpret the
+<code>i8</code> slice.</p>
+<pre><pre class="playpen"><code class="language-rust">
+<span class="boring">#![allow(unused_variables)]
+</span><span class="boring">fn main() {
+</span>let xs = [-1, 0, 1, 1, -1, 0];
+
+Trits::try_from_raw(&amp;xs, xs.len())
+	.unwrap()
+<span class="boring">}
+</span></code></pre></pre>
+<p>If you are <em>certain</em> that the slice contains <em>only</em> valid trits then it is
+possible to unsafely reinterpret with amortised O(1) cost (i.e: it's basically
+free). However, scenarios in which this is necessary and sound are exceedingly
+uncommon. If you find yourself doing this, ask yourself first whether it is
+necessary.</p>
+<pre><pre class="playpen"><code class="language-rust">
+<span class="boring">#![allow(unused_variables)]
+</span><span class="boring">fn main() {
+</span>let xs = [-1, 0, 1, 1, -1, 0];
+
+unsafe { Trits::from_raw_unchecked(&amp;xs, xs.len()) }
+<span class="boring">}
+</span></code></pre></pre>
+<h3><a class="header" href="#turning-a-trit-slice-into-a-tryte-string" id="turning-a-trit-slice-into-a-tryte-string">Turning a trit slice into a tryte string</a></h3>
+<pre><pre class="playpen"><code class="language-rust">
+<span class="boring">#![allow(unused_variables)]
+</span><span class="boring">fn main() {
+</span>trits
+	.iter_trytes()
+	.map(|trit| char::from(trit))
+	.collect::&lt;String&gt;()
+<span class="boring">}
+</span></code></pre></pre>
+<p>This becomes even more efficient easier with a <code>T3B1</code> trit slice since it has
+the same underlying representation as a tryte slice.</p>
+<pre><pre class="playpen"><code class="language-rust">
+<span class="boring">#![allow(unused_variables)]
+</span><span class="boring">fn main() {
+</span>trits
+	.as_trytes()
+	.iter()
+	.map(|trit| char::from(*trit))
+	.collect::&lt;String&gt;()
+<span class="boring">}
+</span></code></pre></pre>
+<h3><a class="header" href="#turning-a-tryte-string-into-a-t3b1-trit-buffer" id="turning-a-tryte-string-into-a-t3b1-trit-buffer">Turning a tryte string into a <code>T3B1</code> trit buffer</a></h3>
+<pre><pre class="playpen"><code class="language-rust">
+<span class="boring">#![allow(unused_variables)]
+</span><span class="boring">fn main() {
+</span>tryte_str
+	.chars()
+	.map(Tryte::try_from)
+	.collect::&lt;Result&lt;TryteBuf, _&gt;&gt;()
+	.unwrap()
+<span class="boring">}
+</span></code></pre></pre>
+<p>Since this is a common operation, there exists a shorthand.</p>
+<pre><pre class="playpen"><code class="language-rust">
+<span class="boring">#![allow(unused_variables)]
+</span><span class="boring">fn main() {
+</span>TryteBuf::try_from_str(tryte_str).unwrap()
+<span class="boring">}
+</span></code></pre></pre>
+<h3><a class="header" href="#turning-a-trit-slice-into-a-trit-buffer" id="turning-a-trit-slice-into-a-trit-buffer">Turning a trit slice into a trit buffer</a></h3>
+<pre><pre class="playpen"><code class="language-rust">
+<span class="boring">#![allow(unused_variables)]
+</span><span class="boring">fn main() {
+</span>trits.to_buf()
+<span class="boring">}
+</span></code></pre></pre>
+<h3><a class="header" href="#turning-a-trit-slice-into-a-trit-buffer-of-a-different-encoding" id="turning-a-trit-slice-into-a-trit-buffer-of-a-different-encoding">Turning a trit slice into a trit buffer of a different encoding</a></h3>
+<pre><pre class="playpen"><code class="language-rust">
+<span class="boring">#![allow(unused_variables)]
+</span><span class="boring">fn main() {
+</span>trits.encode::&lt;T5B1&gt;()
+<span class="boring">}
+</span></code></pre></pre>
+<h3><a class="header" href="#overwriting-a-sub-slice-of-a-trit-with-copies-of-a-trit" id="overwriting-a-sub-slice-of-a-trit-with-copies-of-a-trit">Overwriting a sub-slice of a trit with copies of a trit</a></h3>
+<pre><pre class="playpen"><code class="language-rust">
+<span class="boring">#![allow(unused_variables)]
+</span><span class="boring">fn main() {
+</span>trits[start..end].fill(Btrit::Zero)
+<span class="boring">}
+</span></code></pre></pre>
+<h3><a class="header" href="#copying-trits-from-a-source-slice-to-a-destination-slice" id="copying-trits-from-a-source-slice-to-a-destination-slice">Copying trits from a source slice to a destination slice</a></h3>
+<pre><pre class="playpen"><code class="language-rust">
+<span class="boring">#![allow(unused_variables)]
+</span><span class="boring">fn main() {
+</span>tgt.copy_from(&amp;src[start..end])
+<span class="boring">}
+</span></code></pre></pre>
+<h1><a class="header" href="#drawbacks-4" id="drawbacks-4">Drawbacks</a></h1>
+<p>This RFC does not have any particular drawbacks over an alternative approach.
+Ternary is currently essential to the function of much of the IOTA ecosystem
+and Bee requires a ternary API of some sort in order to effectively operate
+within it.</p>
+<h1><a class="header" href="#rationale-and-alternatives-4" id="rationale-and-alternatives-4">Rationale and alternatives</a></h1>
+<p>No suitable alternatives exist to this RFC. Rust does not have a mature ternary
+manipulation crate immediately available that suits our needs.</p>
+<h1><a class="header" href="#unresolved-questions-4" id="unresolved-questions-4">Unresolved questions</a></h1>
+<p>The API has now been in use in Bee for several months. Questions about
+additional API features exist, but the current API seems to have proved its
+suitability.</p>
 
                     </main>
 
