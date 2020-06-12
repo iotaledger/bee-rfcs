@@ -139,12 +139,21 @@ The way `CurlP` is defined, it can not actually fail, because the input or outpu
 Thus, the associated type `Error = !`, or `Error = Infallible` as `!` is not yet stabilized in Rust as of version
 `1.43`.
 
+This `enum` defines the number of rounds of hashing to apply before a hash is squeezed.
+```rust
+#[derive(Copy, Clone)]
+pub enum CurlPRounds {
+    Rounds27 = 27,
+    Rounds81 = 81,
+}
+```
+
 Type definition:
 
 ```rust
 struct CurlP {
     /// The number of rounds of hashing to apply before a hash is squeezed.
-    rounds: usize,
+    rounds: CurlPRounds,
 
     /// The internal state.
     state: TritBuf,
@@ -154,14 +163,14 @@ struct CurlP {
 }
 ```
 
-In addition, there are two wrapper types for the very common `CurlP` variants with `27` and `81`:
+In addition, there are two wrapper types for the very common `CurlP` variants with `27` and `81` rounds:
 
 ```rust
 struct CurlP27(CurlP);
 
 impl CurlP27 {
     pub fn new() -> Self {
-        Self(CurlP::new(27))
+        Self(CurlP::new(CurlPRounds::Rounds27))
     }
 }
 
@@ -169,7 +178,7 @@ struct CurlP81(CurlP);
 
 impl CurlP81 {
     pub fn new() -> Self {
-        Self(CurlP::new(81))
+        Self(CurlP::new(CurlPRounds::Rounds81))
     }
 }
 ```
