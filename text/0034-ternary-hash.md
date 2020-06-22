@@ -5,9 +5,9 @@
 
 # Summary
 
-This RFC proposes the `Sponge` trait, and two cryptographic hash functions `CurlP` and `Kerl` implementing it.
-The 3 cryptographic hash functions used in the IOTA current networks (i.e. as of IOTA Reference Implementation
-`iri v1.8.1`) are `Kerl`, `CurlP27`, and `CurlP81`.
+This RFC proposes the ternary `Hash` type, the `Sponge` trait, and two cryptographic hash functions `CurlP` and `Kerl`
+implementing it. The 3 cryptographic hash functions used in the IOTA current networks (i.e. as of IOTA Reference
+Implementation `iri v1.8.1`) are `Kerl`, `CurlP27`, and `CurlP81`.
 
 Useful links:
 
@@ -29,6 +29,17 @@ ternary, and `Kerl`, which first converts ternary input to a binary representati
 converts its binary output back to ternary. For `CurlP` specifically, its variants `CurlP27` and `CurlP81` are used.
 
 # Detailed design
+
+## Hash
+
+This RFC defines a ternary type `Hash`. The exact definition is implementation detail but an example definition could
+simply be the following.
+
+```rust
+struct Hash([i8; 243]);
+```
+
+## Sponges
 
 `CurlP` and `Kerl` are cryptographic sponge constructions. They are equipped with a memory state and a function that
 replaces the state memory using some input string (which can be the state memory itself). A portion of the memory state
@@ -118,7 +129,7 @@ from the data structure. `digest` is a convenience method calling `absorb` and `
 versions of these methods are for passing a buffer into which the calculated hashes are written.  The internal state
 will not be cleared unless `reset` is called.
 
-## Design of `CurlP`
+### Design of `CurlP`
 
 `CurlP` is designed as a hash function that acts on a `T1B1` binary-encoded ternary buffer, with a hash length of `243`
 trits and an inner state of `729` trits, which we take as constants:
@@ -183,7 +194,7 @@ impl CurlP81 {
 }
 ```
 
-## Design of `Kerl`
+### Design of `Kerl`
 
 The actual cryptographic hash function underlying `Kerl` is `keccak-384`. The actual task here is to transform an input
 of 243 (balanced) trits to 384 bits in a correct and performant way. This is done by interpreting the 243 trits as a
@@ -208,9 +219,9 @@ converter betWe en the ternary array interpreted as an integer, and its binary r
 representation, one can either use an existing big integer library, or write one from scratch with only a subset of
 required methods to make the conversion work.
 
-### Important implementation details
+#### Important implementation details
 
-#### Conversion is done via accumulation
+##### Conversion is done via accumulation
 
 Because a number like `3^242` does not fit into any existing primitive, it needs to be constructed from scratch by
 taking a *big integer*, setting its least significant number to `1`, and multiplying it by `3` `242` times. This is the
@@ -226,7 +237,7 @@ Thus, one iterates through the ternary buffer starting from the most significant
 integer (initially filled with `0`s), and then keeps looping through it, multiplying it by 3 and adding the next `t_i`.
 
 
-#### Conversion is done in unsigned space
+##### Conversion is done in unsigned space
 
 First and foremost, IOTA is primarily written with balanced ternary in mind, meaning that each trit represents an
 integer in the set `{-1, 0, +1}`. Because it is easier to do the conversion in positive space, the trits are shifted
@@ -262,7 +273,7 @@ In other words, the addition of the ternary buffer filled with `1`s that shifts 
 reverted after conversion to binary, where the buffer of `1`s is also converted to binary and then subtracted from the
 binary unsigned big integer. The result then is the integer `I` in binary.
 
-#### 243 trits do not fit into 384 bits
+##### 243 trits do not fit into 384 bits
 
 Since 243 trits do not fit into 384 bits, a choice has to be made about how to treat the most significant trit.
 For example, one could take the binary big integer, convert it to ternary, and then check if the 243 are smaller than
@@ -289,13 +300,13 @@ if J_b < (to_bin([0, 0, 0, ..., 0]) - to_bin([0, 1, 1, ..., 1])):
     J_b <- J_b + to_bin([1, 0, 0, ..., 0])
 ```
 
-#### Kerl updates the inner state by applying logical not
+##### Kerl updates the inner state by applying logical not
 
 The upstream keccak implementation uses a complicated permutation to update the inner state of the sponge construction
 after a hash was squeezed from it. `Kerl` opts to apply logical not, `!`, to the bytes squeezed from `keccak`, and
 updating `keccak`'s inner state with these.
 
-### Design and implementation
+#### Design and implementation
 
 The main goal of the implementation was to ensure that representation of the integer was cast into types. To that end,
 the following ternary types are defined as wrappers around `TritBuf` (read `T243` the same way you would think of `u32`
