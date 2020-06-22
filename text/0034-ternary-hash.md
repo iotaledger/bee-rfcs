@@ -11,6 +11,7 @@ Implementation `iri v1.8.1`) are `Kerl`, `CurlP27`, and `CurlP81`.
 
 Useful links:
 
++ [Sponge function](https://en.wikipedia.org/wiki/Sponge_function)
 + [The sponge and duplex constructions](https://keccak.team/sponge_duplex.html)
 + [Curl-p](https://github.com/iotaledger/iri/blob/dev/src/main/java/com/iota/iri/crypto/Curl.java)
 + [Kerl specification](https://github.com/iotaledger/kerl/blob/master/IOTA-Kerl-spec.md)
@@ -21,8 +22,8 @@ Useful links:
 
 In order to participate in the IOTA network, an application needs be able to construct valid messages that can be
 verified by nodes in the network. Conversely, a node needs to be able to verify other nodes messages. Among other
-operations, this is accomplished by checking transaction signatures (from which addresses are calculated), transaction
-hashes, and hashes of collections of transactions (so-called bundles).
+operations, this is accomplished by validating transaction signatures (from which addresses are calculated), transaction
+hashes and bundle hashes.
 
 The two hash functions currently used are both sponge constructions: `CurlP`, which is specified entirely in balanced
 ternary, and `Kerl`, which first converts ternary input to a binary representation, applies `keccak-384` to it, and then
@@ -34,8 +35,8 @@ converts its binary output back to ternary. For `CurlP` specifically, its varian
 
 <!-- TODO define HASH_LEN -->
 
-This RFC defines a ternary type `Hash`. The exact definition is implementation detail but an example definition could
-simply be the following.
+This RFC defines a ternary type `Hash`. The exact definition is an implementation detail but an example definition could
+simply be the following:
 
 ```rust
 struct Hash([i8; 243]);
@@ -55,7 +56,8 @@ The hash functions are expected to be used like this:
 // This is equivalent to calling `CurlP::new(CurlPRounds::Rounds81)`.
 let mut curlp = CurlP81::new();
 
-// Assume we have some input that is a Trits slice as defined by the bee_ternary crate, and an output buffer `TritBuf`:
+// Assume we have some input that is a `Trits` slice as defined by the `bee-ternary` crate, and an output buffer
+/// `TritBuf`:
 let transaction: &Trits<T1B1>;
 let mut tx_hash: TritBuf<T1B1Buf>;
 
@@ -73,16 +75,16 @@ let mut kerl = Kerl::new();
 let tx_hash = kerl.digest(&transaction);
 ```
 
-The main proposal of this RFC are the `Sponge` trait and the `CurlP` and `Kerl` types that are implemented in terms of
-it. This RFC relies on the the presence of the types `TritBuf` and `Trits`, which are assumed to be owning and borrowing
-collections of binary-coded ternary in the `T1B1` encoding (one trit per byte), similar to
+The main proposal of this RFC are the `Sponge` trait and the `CurlP` and `Kerl` types that are implementing it.
+This RFC relies on the the presence of the types `TritBuf` and `Trits`, which are assumed to be owning and borrowing
+collections of binary-encoded ternary in the `T1B1` encoding (one trit per byte), similar to
 [PathBuf](https://doc.rust-lang.org/std/path/struct.PathBuf.html) and
 [Path](https://doc.rust-lang.org/std/path/struct.Path.html).
 
 ```rust
 /// The common interface of cryptographic hash functions that follow the sponge construction and that act on ternary.
 trait Sponge {
-    /// An error indicating a that a failure has occured during `absorb`.
+    /// An error indicating that a failure has occured during `absorb`.
     type Error;
 
     /// Absorb `input` into the sponge.
@@ -194,7 +196,7 @@ impl CurlP81 {
 
 The actual cryptographic hash function underlying `Kerl` is `keccak-384`. The actual task here is to transform an input
 of 243 (balanced) trits to 384 bits in a correct and performant way. This is done by interpreting the 243 trits as a
-signed integer `I` and converting it to a binary basis. In other words, the ternary coded integer is expressed as the
+signed integer `I` and converting it to a binary basis. In other words, the ternary encoded integer is expressed as the
 series:
 
 ```
@@ -211,8 +213,8 @@ I = b_0 * 2^0 + b_1 * 2^1 + ... + b_382 * 2^382 + b_383 * 2^383,
 with `b_i` the bit at the `i-th` position.
 
 Assuming there exists an implementation of `keccak`, the main work in implementing `Kerl` is writing an efficient
-converter betWe en the ternary array interpreted as an integer, and its binary representation. For the binary
-representation, one can either use an existing big integer library, or write one from scratch with only a subset of
+converter between the ternary array interpreted as an integer, and its binary representation. For the binary
+representation, one can either use an existing big-integer library, or write one from scratch with only a subset of
 required methods to make the conversion work.
 
 #### Important implementation details
