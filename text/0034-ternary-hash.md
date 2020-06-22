@@ -32,6 +32,8 @@ converts its binary output back to ternary. For `CurlP` specifically, its varian
 
 ## Hash
 
+<!-- TODO define HASH_LEN -->
+
 This RFC defines a ternary type `Hash`. The exact definition is implementation detail but an example definition could
 simply be the following.
 
@@ -80,12 +82,6 @@ collections of binary-coded ternary in the `T1B1` encoding (one trit per byte), 
 ```rust
 /// The common interface of cryptographic hash functions that follow the sponge construction and that act on ternary.
 trait Sponge {
-    /// The expected length of the input to the sponge.
-    const IN_LEN: usize;
-
-    /// The length of the hash squeezed from the sponge.
-    const OUT_LEN: usize;
-
     /// An error indicating a that a failure has occured during `absorb`.
     type Error;
 
@@ -100,7 +96,7 @@ trait Sponge {
 
     /// Convenience function using `Sponge::squeeze_into` to to return an owned version of the hash.
     fn squeeze(&mut self) -> Result<TritBuf, Self::Error> {
-        let mut output = TritBuf::zeros(Self::OUT_LEN);
+        let mut output = TritBuf::zeros(HASH_LEN);
         self.squeeze_into(&mut output)?;
         Ok(output)
     }
@@ -392,10 +388,6 @@ U384<LittleEndian, U32Repr>::try_from_t243
 
 # Drawbacks
 
-+ The associated constants `IN_LEN` and `OUT_LEN` have to be implemented for every hash function, but don't fulfill a
-  role on the type level;
-+ `IN_LEN` and `OUT_LEN` might be considered more an implementation detail of the implementor of the `Sponge` trait
-  rather than a property of the interface;
 + All hash functions, no matter if they can fail or not, have to implement `Error`;
 + There are a lot of types. Is it important to encode that the most significant trit is `0` by having a `T242`?;
 
