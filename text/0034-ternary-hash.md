@@ -52,7 +52,7 @@ The hash functions are expected to be used like this:
 
 ```rust
 // Create a CurlP instance with 81 rounds.
-// This is equivalent to calling `CurlP::new(81)`.
+// This is equivalent to calling `CurlP::new(CurlPRounds::Rounds81)`.
 let mut curlp = CurlP81::new();
 
 // Assume we have some input that is a Trits slice as defined by the bee_ternary crate, and an output buffer `TritBuf`:
