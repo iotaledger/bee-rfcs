@@ -1,4 +1,4 @@
-+ Feature name: `ternary-conversion`
++ Feature name: `ternary-numeric-conversion`
 + Start date: 2020-06-24
 + RFC PR: [iotaledger/bee-rfcs#37](https://github.com/iotaledger/bee-rfcs/pull/37)
 + Bee issue: [iotaledger/bee#93](https://github.com/iotaledger/bee/issues/93)
@@ -9,7 +9,7 @@ Add a way to convert to and from binary types for ternary types.
 
 # Motivation
 
-Conversion between binary and ternary is often useful and a good solution to this is required.
+Conversion between binary and ternary is often useful and so a good solution to this is required.
 
 # Detailed design
 
