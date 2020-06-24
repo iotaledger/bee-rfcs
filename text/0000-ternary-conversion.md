@@ -1,6 +1,6 @@
 + Feature name: `ternary-conversion`
 + Start date: 2020-06-24
-+ RFC PR: [iotaledger/bee-rfcs#0000](https://github.com/iotaledger/bee-rfcs/pull/0000)
++ RFC PR: [iotaledger/bee-rfcs#37](https://github.com/iotaledger/bee-rfcs/pull/37)
 + Bee issue: [iotaledger/bee#93](https://github.com/iotaledger/bee/issues/93)
 
 # Summary
