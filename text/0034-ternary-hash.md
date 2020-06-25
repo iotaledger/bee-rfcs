@@ -192,6 +192,58 @@ impl CurlP81 {
 }
 ```
 
+For convenience, they should both dereference to an actual `CurlP``.
+
+```rust
+impl Deref for CurlP27 {
+    type Target = CurlP;
+
+    fn deref(&self) -> &Self::Target {
+        &self.0
+    }
+}
+
+impl DerefMut for CurlP27 {
+    fn deref_mut(&mut self) -> &mut Self::Target {
+        &mut self.0
+    }
+}
+
+impl Deref for CurlP81 {
+    type Target = CurlP;
+
+    fn deref(&self) -> &Self::Target {
+        &self.0
+    }
+}
+
+impl DerefMut for CurlP81 {
+    fn deref_mut(&mut self) -> &mut Self::Target {
+        &mut self.0
+    }
+}
+```
+
+This allows using them as a `Sponge` as well if there is a blanket implementation.
+
+```rust
+impl<T: Sponge, U: DerefMut<Target = T>> Sponge for U {
+    type Error = T::Error;
+
+    fn absorb(&mut self, input: &Trits) -> Result<(), Self::Error> {
+        T::absorb(self, input)
+    }
+
+    fn reset(&mut self) {
+        T::reset(self)
+    }
+
+    fn squeeze_into(&mut self, buf: &mut Trits) -> Result<(), Self::Error> {
+        T::squeeze_into(self, buf)
+    }
+}
+```
+
 ### Design of `Kerl`
 
 The actual cryptographic hash function underlying `Kerl` is `keccak-384`. The actual task here is to transform an input
