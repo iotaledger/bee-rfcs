@@ -7,12 +7,19 @@
         
         <meta name="robots" content="noindex" />
         
+        
+
+
+        <!-- Custom HTML head -->
+        
+
 
         <meta content="text/html; charset=utf-8" http-equiv="Content-Type">
         <meta name="description" content="">
         <meta name="viewport" content="width=device-width, initial-scale=1">
         <meta name="theme-color" content="#ffffff" />
 
+        <link rel="icon" href="favicon.svg">
         <link rel="shortcut icon" href="favicon.png">
         <link rel="stylesheet" href="css/variables.css">
         <link rel="stylesheet" href="css/general.css">
@@ -21,8 +28,9 @@
 
         <!-- Fonts -->
         <link rel="stylesheet" href="FontAwesome/css/font-awesome.css">
-        <link href="https://fonts.googleapis.com/css?family=Open+Sans:300italic,400italic,600italic,700italic,800italic,400,300,600,700,800" rel="stylesheet" type="text/css">
-        <link href="https://fonts.googleapis.com/css?family=Source+Code+Pro:500" rel="stylesheet" type="text/css">
+        
+        <link rel="stylesheet" href="fonts/fonts.css">
+        
 
         <!-- Highlight.js Stylesheets -->
         <link rel="stylesheet" href="highlight.css">
@@ -38,7 +46,7 @@
         <!-- Provide site root to javascript -->
         <script type="text/javascript">
             var path_to_root = "";
-            var default_theme = window.matchMedia("(prefers-color-scheme: dark)").matches ? "light" : "light";
+            var default_theme = window.matchMedia("(prefers-color-scheme: dark)").matches ? "navy" : "light";
         </script>
 
         <!-- Work around some values being stored in localStorage wrapped in quotes -->
@@ -306,8 +314,8 @@ a transport layer;</li>
 <p>The <code>Message</code> trait is protocol agnostic and only provides serialization and deserialization to and from byte buffers.
 It should not be used as is but rather be paired with a higher layer - like a type-length-value encoding - and as such
 does not provide any bounds check on inputs/outputs buffers.</p>
-<pre><pre class="playpen"><code class="language-rust">
-<span class="boring">#![allow(unused_variables)]
+<pre><pre class="playground"><code class="language-rust">
+<span class="boring">#![allow(unused)]
 </span><span class="boring">fn main() {
 </span>/// A trait describing the behavior of a message.
 trait Message {
@@ -346,8 +354,8 @@ is expected; hence, limiting the amount of allocation to the bare minimum;</li>
 It allows serialization/deserialization to/from a byte buffer ready to be sent/received to/from a transport layer by
 prepending or reading a header containing the type and length of the payload.</p>
 <h3><a class="header" href="#header" id="header">Header</a></h3>
-<pre><pre class="playpen"><code class="language-rust">
-<span class="boring">#![allow(unused_variables)]
+<pre><pre class="playground"><code class="language-rust">
+<span class="boring">#![allow(unused)]
 </span><span class="boring">fn main() {
 </span>/// A header for the type-length-value encoding.
 struct Header {
@@ -359,8 +367,8 @@ struct Header {
 <span class="boring">}
 </span></code></pre></pre>
 <h3><a class="header" href="#methods" id="methods">Methods</a></h3>
-<pre><pre class="playpen"><code class="language-rust">
-<span class="boring">#![allow(unused_variables)]
+<pre><pre class="playground"><code class="language-rust">
+<span class="boring">#![allow(unused)]
 </span><span class="boring">fn main() {
 </span>/// Deserializes a TLV header and a byte buffer into a message.
 /// * The advertised message type should match the required message type.
@@ -459,8 +467,8 @@ This message is sent when a node:</p>
 field are removed, providing a compression rate up to nearly 82%. Only the <code>payload</code> field is altered during this
 compression and the order of the fields stays the same.</p>
 <p>Proposed functions:</p>
-<pre><pre class="playpen"><code class="language-rust">
-<span class="boring">#![allow(unused_variables)]
+<pre><pre class="playground"><code class="language-rust">
+<span class="boring">#![allow(unused)]
 </span><span class="boring">fn main() {
 </span>fn compress_transaction_bytes(bytes: &amp;[u8]) -&gt; Vec&lt;u8&gt; {
     ...
@@ -537,8 +545,8 @@ meta_file_path  = &quot;./data/snapshot/mainnet.snapshot.meta&quot;
 state_file_path = &quot;./data/snapshot/mainnet.snapshot.state&quot;
 </code></pre>
 <p><code>config.rs</code></p>
-<pre><pre class="playpen"><code class="language-rust">
-<span class="boring">#![allow(unused_variables)]
+<pre><pre class="playground"><code class="language-rust">
+<span class="boring">#![allow(unused)]
 </span><span class="boring">fn main() {
 </span>const DEFAULT_META_FILE_PATH: &amp;str = &quot;./data/snapshot/mainnet.snapshot.meta&quot;;
 const DEFAULT_STATE_FILE_PATH: &amp;str = &quot;./data/snapshot/mainnet.snapshot.state&quot;;
@@ -597,8 +605,8 @@ meta_file_path  = &quot;./data/snapshot/mainnet.snapshot.meta&quot;
 state_file_path = &quot;./data/snapshot/mainnet.snapshot.state&quot;
 </code></pre>
 <p><code>config.rs</code></p>
-<pre><pre class="playpen"><code class="language-rust">
-<span class="boring">#![allow(unused_variables)]
+<pre><pre class="playground"><code class="language-rust">
+<span class="boring">#![allow(unused)]
 </span><span class="boring">fn main() {
 </span>#[derive(Clone)]
 pub struct SnapshotConfig {
@@ -623,8 +631,8 @@ impl SnapshotConfig {
 <span class="boring">}
 </span></code></pre></pre>
 <h3><a class="header" href="#read-a-configuration-builder-from-a-file" id="read-a-configuration-builder-from-a-file">Read a configuration builder from a file</a></h3>
-<pre><pre class="playpen"><code class="language-rust">
-<span class="boring">#![allow(unused_variables)]
+<pre><pre class="playground"><code class="language-rust">
+<span class="boring">#![allow(unused)]
 </span><span class="boring">fn main() {
 </span>let config_builder = match fs::read_to_string(&quot;config.toml&quot;) {
     Ok(toml) =&gt; match toml::from_str::&lt;SnapshotConfigBuilder&gt;(&amp;toml) {
@@ -644,8 +652,8 @@ let config = config_builder.finish();
 <span class="boring">}
 </span></code></pre></pre>
 <h3><a class="header" href="#write-a-configuration-to-a-file" id="write-a-configuration-to-a-file">Write a configuration to a file</a></h3>
-<pre><pre class="playpen"><code class="language-rust">
-<span class="boring">#![allow(unused_variables)]
+<pre><pre class="playground"><code class="language-rust">
+<span class="boring">#![allow(unused)]
 </span><span class="boring">fn main() {
 </span>match toml::to_string(&amp;config) {
     Ok(toml) =&gt; match fs::File::create(&quot;config.toml&quot;) {
@@ -675,8 +683,8 @@ state_file_path = &quot;./data/snapshot/local/mainnet.snapshot.state&quot;
 file_path       = &quot;./data/snapshot/global/mainnet.txt&quot;
 </code></pre>
 <p><code>config.rs</code></p>
-<pre><pre class="playpen"><code class="language-rust">
-<span class="boring">#![allow(unused_variables)]
+<pre><pre class="playground"><code class="language-rust">
+<span class="boring">#![allow(unused)]
 </span><span class="boring">fn main() {
 </span>#[derive(Default, Deserialize)]
 pub struct LocalSnapshotConfigBuilder {
@@ -784,8 +792,8 @@ have already pre-filled by the parsing of a configuration file. A CLI parser lib
 <li><code>Message</code>es: the information exchanged between peers, and its serialization/deserialization.</li>
 </ul>
 <p>Given some identifier <code>epid</code>, sending a message to its corresponding endpoint becomes a single line of asynchronous code:</p>
-<pre><pre class="playpen"><code class="language-rust">
-<span class="boring">#![allow(unused_variables)]
+<pre><pre class="playground"><code class="language-rust">
+<span class="boring">#![allow(unused)]
 </span><span class="boring">fn main() {
 </span>network.send(SendMessage { epid, bytes: &quot;hello&quot;.as_bytes() }).await?;
 <span class="boring">}
@@ -807,8 +815,8 @@ have already pre-filled by the parsing of a configuration file. A CLI parser lib
 <p>This crate favors message passing via channels over globally shared state and locks. Instead of keeping the list of endpoints in a globally accessible hashmap this crate separates and moves such state into workers that run asynchronously, and are listening for commands and events to act upon, and also notify listeners by sending events.</p>
 <h2><a class="header" href="#initialization" id="initialization">Initialization</a></h2>
 <p>In order for this crate to be used, it has to be initialized first by providing a <code>NetworkConfig</code>:</p>
-<pre><pre class="playpen"><code class="language-rust">
-<span class="boring">#![allow(unused_variables)]
+<pre><pre class="playground"><code class="language-rust">
+<span class="boring">#![allow(unused)]
 </span><span class="boring">fn main() {
 </span>struct NetworkConfig {
     // The server or binding TCP port that remote endpoints can connect and send to.
@@ -825,8 +833,8 @@ have already pre-filled by the parsing of a configuration file. A CLI parser lib
 <span class="boring">}
 </span></code></pre></pre>
 <p>This has the advantage of being easily extensible and keeping the signature of the static <code>init</code> function small:</p>
-<pre><pre class="playpen"><code class="language-rust">
-<span class="boring">#![allow(unused_variables)]
+<pre><pre class="playground"><code class="language-rust">
+<span class="boring">#![allow(unused)]
 </span><span class="boring">fn main() {
 </span>fn init(config: NetworkConfig) -&gt; (Network, Events, Shutdown) { ... }
 <span class="boring">}
@@ -838,8 +846,8 @@ have already pre-filled by the parsing of a configuration file. A CLI parser lib
 <ul>
 <li>
 <p><code>Port</code>: a 0-cost wrapper around a <code>u16</code>, which is introduced for type safety and better readability:</p>
-<pre><pre class="playpen"><code class="language-rust">
-<span class="boring">#![allow(unused_variables)]
+<pre><pre class="playground"><code class="language-rust">
+<span class="boring">#![allow(unused)]
 </span><span class="boring">fn main() {
 </span>struct Port(u16);
 <span class="boring">}
@@ -848,16 +856,16 @@ have already pre-filled by the parsing of a configuration file. A CLI parser lib
 </li>
 <li>
 <p><code>Address</code>: a 0-cost wrapper around a <code>SocketAddr</code> which provides an adjusted, but overall simpler API than its inner type:</p>
-<pre><pre class="playpen"><code class="language-rust">
-<span class="boring">#![allow(unused_variables)]
+<pre><pre class="playground"><code class="language-rust">
+<span class="boring">#![allow(unused)]
 </span><span class="boring">fn main() {
 </span>#[derive(Clone, Copy, Debug, Eq, Hash, PartialEq)]
 struct Address(SocketAddr);
 <span class="boring">}
 </span></code></pre></pre>
 <p>An <code>Address</code> can be constructed from Ipv4 and Ipv6 addresses and a port:</p>
-<pre><pre class="playpen"><code class="language-rust">
-<span class="boring">#![allow(unused_variables)]
+<pre><pre class="playground"><code class="language-rust">
+<span class="boring">#![allow(unused)]
 </span><span class="boring">fn main() {
 </span>// Infallible construction of an `Address` from Ipv4.
 fn from_v4_addr_and_port(address: Ipv4Addr, port: Port) -&gt; Self { ... }
@@ -873,8 +881,8 @@ async fn from_addr_str(address: &amp;str) -&gt; Result&lt;Self&gt; { ... }
 </li>
 <li>
 <p><code>Protocol</code>: an <code>enum</code>eration of supported communication protocols:</p>
-<pre><pre class="playpen"><code class="language-rust">
-<span class="boring">#![allow(unused_variables)]
+<pre><pre class="playground"><code class="language-rust">
+<span class="boring">#![allow(unused)]
 </span><span class="boring">fn main() {
 </span>#[non_exhaustive]
 enum Protocol {
@@ -886,8 +894,8 @@ enum Protocol {
 </li>
 <li>
 <p><code>Url</code>: an <code>enum</code>eration that can always be constructed from an <code>Address</code> and a <code>Protocol</code> (infallible), or from a <code>&amp;str</code>, which can fail if parsing or domain name resolution fails. If successfull however, it resolves to an Ipv4 or Ipv6 address stored in a variant of the <code>enum</code> depending on the url scheme part. Note, that this crate therefore expects the <code>Url</code> string to always provide a scheme (e.g. <code>tcp://</code>) and a port (e.g. <code>15600</code>) when specifying an endpoint's address.</p>
-<pre><pre class="playpen"><code class="language-rust">
-<span class="boring">#![allow(unused_variables)]
+<pre><pre class="playground"><code class="language-rust">
+<span class="boring">#![allow(unused)]
 </span><span class="boring">fn main() {
 </span>#[non_exhaustive]
 enum Url {
@@ -897,8 +905,8 @@ enum Url {
 <span class="boring">}
 </span></code></pre></pre>
 <p>Note, that future updates may support different protocols, which is why this enum is declared as <code>non_exhaustive</code>, see <code>Unresolved Questions</code> section.</p>
-<pre><pre class="playpen"><code class="language-rust">
-<span class="boring">#![allow(unused_variables)]
+<pre><pre class="playground"><code class="language-rust">
+<span class="boring">#![allow(unused)]
 </span><span class="boring">fn main() {
 </span>// Infallible construction of a `Url` from an `Address` and a `Protocol`.
 fn new(addr: Address, proto: Protocol) -&gt; Self { ... }
@@ -912,8 +920,8 @@ async fn from_url_str(url: &amp;str) -&gt; Result&lt;Self&gt; { ... }
 </ul>
 <h2><a class="header" href="#endpoint-and-endpointid" id="endpoint-and-endpointid"><code>Endpoint</code> and <code>EndpointId</code></a></h2>
 <p>To model the remote part of a connection, this crate introduces the <code>Endpoint</code> type:</p>
-<pre><pre class="playpen"><code class="language-rust">
-<span class="boring">#![allow(unused_variables)]
+<pre><pre class="playground"><code class="language-rust">
+<span class="boring">#![allow(unused)]
 </span><span class="boring">fn main() {
 </span>struct Endpoint {
     // The id of the endpoint.
@@ -929,8 +937,8 @@ async fn from_url_str(url: &amp;str) -&gt; Result&lt;Self&gt; { ... }
 </span></code></pre></pre>
 <p>Note: In a peer-to-peer (p2p) network peers usually have two endpoints initially as they are actively trying to connect, but also need to accept connections from their peers. This crate is agnostic about how to handle duplicate connections as this is usually resolved by a handshaking protocol defined at a higher layer.</p>
 <p>To uniquely identify an <code>Endpoint</code>, this crate proposes the <code>EndpointId</code> type, which can be implemented as a wrapper around an <code>Address</code>.</p>
-<pre><pre class="playpen"><code class="language-rust">
-<span class="boring">#![allow(unused_variables)]
+<pre><pre class="playground"><code class="language-rust">
+<span class="boring">#![allow(unused)]
 </span><span class="boring">fn main() {
 </span>#[derive(Clone, Copy, Eq, PartialEq, Hash)]
 struct EndpointId(Address);
@@ -939,8 +947,8 @@ struct EndpointId(Address);
 <p>Note, that this <code>EndpointId</code> should be <code>Clone</code> and <code>Copy</code>, and requires to implement <code>Eq</code>, <code>PartialEq</code>, and <code>Hash</code>, because it is used as a hashmap key in several instances.</p>
 <h2><a class="header" href="#command" id="command"><code>Command</code></a></h2>
 <p><code>Command</code>s are messages that are supposed to be issued by higher level business logic like a protocol layer. They are implemented as an <code>enum</code>, which in Rust is one way of expressing a polymorphic type:</p>
-<pre><pre class="playpen"><code class="language-rust">
-<span class="boring">#![allow(unused_variables)]
+<pre><pre class="playground"><code class="language-rust">
+<span class="boring">#![allow(unused)]
 </span><span class="boring">fn main() {
 </span>enum Command {
     // Adds an endpoint to the list.
@@ -969,8 +977,8 @@ struct EndpointId(Address);
 <p>This <code>enum</code> makes the things the consumer can do with the crate very explicit and descriptive, and also easily extensible.</p>
 <h3><a class="header" href="#event" id="event"><code>Event</code></a></h3>
 <p>Similarly to <code>Command</code>s, the different kinds of <code>Event</code>s in the system are implemented as an <code>enum</code> allowing various types of concrete events being sent over event channels:</p>
-<pre><pre class="playpen"><code class="language-rust">
-<span class="boring">#![allow(unused_variables)]
+<pre><pre class="playground"><code class="language-rust">
+<span class="boring">#![allow(unused)]
 </span><span class="boring">fn main() {
 </span>#[non_exhaustive]
 enum Event {
@@ -1014,8 +1022,8 @@ enum Event {
 <p>Note: connection attempts from unknown IP addresses (i.e. not part of the static whitelist) will be rejected.</p>
 <h2><a class="header" href="#shutdown" id="shutdown">Shutdown</a></h2>
 <p><code>Shutdown</code> is a <code>struct</code> that facilitates a graceful shutdown. It stores the sender halfs of <code>oneshot</code> channels (<code>ShutdownNotifier</code>) and the task handles (<code>WorkerTask</code>).</p>
-<pre><pre class="playpen"><code class="language-rust">
-<span class="boring">#![allow(unused_variables)]
+<pre><pre class="playground"><code class="language-rust">
+<span class="boring">#![allow(unused)]
 </span><span class="boring">fn main() {
 </span>struct Shutdown {
     notifiers: Vec&lt;ShutdownNotifier&gt;,
@@ -1024,8 +1032,8 @@ enum Event {
 <span class="boring">}
 </span></code></pre></pre>
 <p>Apart from providing the necessary API to register channels and tasks, executing the shutdown happens by calling:</p>
-<pre><pre class="playpen"><code class="language-rust">
-<span class="boring">#![allow(unused_variables)]
+<pre><pre class="playground"><code class="language-rust">
+<span class="boring">#![allow(unused)]
 </span>
 <span class="boring">fn main() {
 </span>async fn execute(self) -&gt; Result&lt;()&gt; { ... }
@@ -1089,15 +1097,15 @@ to downstream consumers.</p>
 <p>A log request consists of a <code>target</code>, a <code>level</code>, and a <code>message</code>.</p>
 <p>By default, the target represents the location of the log request, but may be overridden.</p>
 <p>Example with default target:</p>
-<pre><pre class="playpen"><code class="language-rust">
-<span class="boring">#![allow(unused_variables)]
+<pre><pre class="playground"><code class="language-rust">
+<span class="boring">#![allow(unused)]
 </span><span class="boring">fn main() {
 </span>info!(&quot;Connected to port {} at {} Mb/s&quot;, conn_info.port, conn_info.speed);
 <span class="boring">}
 </span></code></pre></pre>
 <p>Example with overridden target:</p>
-<pre><pre class="playpen"><code class="language-rust">
-<span class="boring">#![allow(unused_variables)]
+<pre><pre class="playground"><code class="language-rust">
+<span class="boring">#![allow(unused)]
 </span><span class="boring">fn main() {
 </span>info!(target: &quot;connection_events&quot;, &quot;Successful connection, port: {}, speed: {}&quot;, conn_info.port, conn_info.speed);
 <span class="boring">}
@@ -1114,18 +1122,18 @@ frontend.</p>
 <h3><a class="header" href="#initialization-1" id="initialization-1">Initialization</a></h3>
 <p>The backend API is limited to one function call to initialize the logger. It is designed to be updatable without
 breaking changes by taking a <code>LoggerConfig</code> configuration object and returning a <code>Result</code>.</p>
-<pre><pre class="playpen"><code class="language-rust">
-<span class="boring">#![allow(unused_variables)]
+<pre><pre class="playground"><code class="language-rust">
+<span class="boring">#![allow(unused)]
 </span><span class="boring">fn main() {
-</span>fn logger_init(config: LoggerConfig) -&gt; Result&lt;(), LoggerError&gt;;
+</span>fn logger_init(config: LoggerConfig) -&gt; Result&lt;(), Error&gt;;
 <span class="boring">}
 </span></code></pre></pre>
 <h3><a class="header" href="#configuration-1" id="configuration-1">Configuration</a></h3>
 <p>The following configuration - compliant with <a href="https://github.com/iotaledger/bee-rfcs/blob/master/text/0031-configuration.md">RFC 31</a> -
 primarily allows configuring different outputs with different log levels.</p>
 <p><code>config.rs</code></p>
-<pre><pre class="playpen"><code class="language-rust">
-<span class="boring">#![allow(unused_variables)]
+<pre><pre class="playground"><code class="language-rust">
+<span class="boring">#![allow(unused)]
 </span><span class="boring">fn main() {
 </span>#[derive(Clone)]
 struct LoggerOutputConfig {
@@ -1156,17 +1164,17 @@ level = &quot;error&quot;
 <h3><a class="header" href="#errors" id="errors">Errors</a></h3>
 <p>Since different backends may have different errors, we need to abstract them to provide a consistent <code>logger_init</code>
 function.</p>
-<pre><pre class="playpen"><code class="language-rust">
-<span class="boring">#![allow(unused_variables)]
+<pre><pre class="playground"><code class="language-rust">
+<span class="boring">#![allow(unused)]
 </span><span class="boring">fn main() {
 </span>#[derive(Debug)]
 #[non_exhaustive]
-enum LoggerError {
+enum Error {
     ...
 }
 <span class="boring">}
 </span></code></pre></pre>
-<p><strong>Note</strong>: The <code>LoggerError</code> enum has to be <code>non_exhaustive</code> to allow further improving / extending the logger without
+<p><strong>Note</strong>: The <code>Error</code> enum has to be <code>non_exhaustive</code> to allow further improving / extending the logger without
 risking a breaking change.</p>
 <h2><a class="header" href="#format" id="format">Format</a></h2>
 <p>The following elements should appear in this order:</p>
@@ -1265,16 +1273,16 @@ the equivalent code would be if hand-written).</li>
 through two types, <code>Btrit</code> and <code>Utrit</code>. <code>Btrit</code> is the more common
 representation and so is the implicit default for most operations in the crate.</p>
 <h3><a class="header" href="#btrit-and-utrit" id="btrit-and-utrit"><code>Btrit</code> and <code>Utrit</code></a></h3>
-<pre><pre class="playpen"><code class="language-rust">
-<span class="boring">#![allow(unused_variables)]
+<pre><pre class="playground"><code class="language-rust">
+<span class="boring">#![allow(unused)]
 </span><span class="boring">fn main() {
 </span>enum Btrit { NegOne, Zero, PlusOne }
 enum Utrit { Zero, One, Two }
 <span class="boring">}
 </span></code></pre></pre>
 <h3><a class="header" href="#trits" id="trits"><code>Trits</code></a></h3>
-<pre><pre class="playpen"><code class="language-rust">
-<span class="boring">#![allow(unused_variables)]
+<pre><pre class="playground"><code class="language-rust">
+<span class="boring">#![allow(unused)]
 </span><span class="boring">fn main() {
 </span>struct Trits&lt;T: RawEncoding&gt; { ... }
 <span class="boring">}
@@ -1290,8 +1298,8 @@ minimal overhead.</li>
 <li>Sub-slices can be created from trit slices at a per-trit level.</li>
 </ul>
 <h3><a class="header" href="#tritbuf" id="tritbuf"><code>TritBuf</code></a></h3>
-<pre><pre class="playpen"><code class="language-rust">
-<span class="boring">#![allow(unused_variables)]
+<pre><pre class="playground"><code class="language-rust">
+<span class="boring">#![allow(unused)]
 </span><span class="boring">fn main() {
 </span>struct TritBuf&lt;T: RawEncodingBuf&gt; { ... }
 <span class="boring">}
@@ -1305,8 +1313,8 @@ minimal overhead.</li>
 <code>Deref&lt;[T]&gt;</code>).</li>
 </ul>
 <h3><a class="header" href="#rawencoding" id="rawencoding"><code>RawEncoding</code></a></h3>
-<pre><pre class="playpen"><code class="language-rust">
-<span class="boring">#![allow(unused_variables)]
+<pre><pre class="playground"><code class="language-rust">
+<span class="boring">#![allow(unused)]
 </span><span class="boring">fn main() {
 </span>trait RawEncoding { ... }
 <span class="boring">}
@@ -1321,8 +1329,8 @@ implementing your own encodings.</li>
 provided by <code>Trits</code> instead.</li>
 </ul>
 <h3><a class="header" href="#rawencodingbuf" id="rawencodingbuf"><code>RawEncodingBuf</code></a></h3>
-<pre><pre class="playpen"><code class="language-rust">
-<span class="boring">#![allow(unused_variables)]
+<pre><pre class="playground"><code class="language-rust">
+<span class="boring">#![allow(unused)]
 </span><span class="boring">fn main() {
 </span>trait RawEncodingBuf { ... }
 <span class="boring">}
@@ -1334,8 +1342,8 @@ provided by <code>Trits</code> instead.</li>
 in the future (linked lists, stack-allocated arrays, etc.).</li>
 </ul>
 <h3><a class="header" href="#t1b1t2b1t3b1t4b1t5b1" id="t1b1t2b1t3b1t4b1t5b1"><code>T1B1</code>/<code>T2B1</code>/<code>T3B1</code>/<code>T4B1</code>/<code>T5B1</code></a></h3>
-<pre><pre class="playpen"><code class="language-rust">
-<span class="boring">#![allow(unused_variables)]
+<pre><pre class="playground"><code class="language-rust">
+<span class="boring">#![allow(unused)]
 </span><span class="boring">fn main() {
 </span>struct TXB1 { ... }
 <span class="boring">}
@@ -1345,8 +1353,8 @@ in the future (linked lists, stack-allocated arrays, etc.).</li>
 <li>Allow different encodings in <code>Trits</code> and <code>TritBuf</code> types.</li>
 </ul>
 <h3><a class="header" href="#t1b1buft2b1buft3b1buft4b1buft5b1buf" id="t1b1buft2b1buft3b1buft4b1buft5b1buf"><code>T1B1Buf</code>/<code>T2B1Buf</code>/<code>T3B1Buf</code>/<code>T4B1Buf</code>/<code>T5B1Buf</code></a></h3>
-<pre><pre class="playpen"><code class="language-rust">
-<span class="boring">#![allow(unused_variables)]
+<pre><pre class="playground"><code class="language-rust">
+<span class="boring">#![allow(unused)]
 </span><span class="boring">fn main() {
 </span>struct TXB1Buf { ... }
 <span class="boring">}
@@ -1369,8 +1377,8 @@ explained in the crate documentation.</p>
 ecosystem. Here follows some examples of common patterns that you may wish to
 make use of.</p>
 <h3><a class="header" href="#turning-some-i8s-into-a-trit-buffer" id="turning-some-i8s-into-a-trit-buffer">Turning some <code>i8</code>s into a trit buffer</a></h3>
-<pre><pre class="playpen"><code class="language-rust">
-<span class="boring">#![allow(unused_variables)]
+<pre><pre class="playground"><code class="language-rust">
+<span class="boring">#![allow(unused)]
 </span><span class="boring">fn main() {
 </span>[-1, 0, 1, 1, -1, 0]
 	.iter()
@@ -1380,8 +1388,8 @@ make use of.</p>
 </span></code></pre></pre>
 <p>Alternatively, for the <code>T1B1</code> encoding only, you may directly reinterpret the
 <code>i8</code> slice.</p>
-<pre><pre class="playpen"><code class="language-rust">
-<span class="boring">#![allow(unused_variables)]
+<pre><pre class="playground"><code class="language-rust">
+<span class="boring">#![allow(unused)]
 </span><span class="boring">fn main() {
 </span>let xs = [-1, 0, 1, 1, -1, 0];
 
@@ -1394,8 +1402,8 @@ possible to unsafely reinterpret with amortised O(1) cost (i.e: it's basically
 free). However, scenarios in which this is necessary and sound are exceedingly
 uncommon. If you find yourself doing this, ask yourself first whether it is
 necessary.</p>
-<pre><pre class="playpen"><code class="language-rust">
-<span class="boring">#![allow(unused_variables)]
+<pre><pre class="playground"><code class="language-rust">
+<span class="boring">#![allow(unused)]
 </span><span class="boring">fn main() {
 </span>let xs = [-1, 0, 1, 1, -1, 0];
 
@@ -1403,8 +1411,8 @@ unsafe { Trits::from_raw_unchecked(&amp;xs, xs.len()) }
 <span class="boring">}
 </span></code></pre></pre>
 <h3><a class="header" href="#turning-a-trit-slice-into-a-tryte-string" id="turning-a-trit-slice-into-a-tryte-string">Turning a trit slice into a tryte string</a></h3>
-<pre><pre class="playpen"><code class="language-rust">
-<span class="boring">#![allow(unused_variables)]
+<pre><pre class="playground"><code class="language-rust">
+<span class="boring">#![allow(unused)]
 </span><span class="boring">fn main() {
 </span>trits
 	.iter_trytes()
@@ -1414,8 +1422,8 @@ unsafe { Trits::from_raw_unchecked(&amp;xs, xs.len()) }
 </span></code></pre></pre>
 <p>This becomes even more efficient easier with a <code>T3B1</code> trit slice since it has
 the same underlying representation as a tryte slice.</p>
-<pre><pre class="playpen"><code class="language-rust">
-<span class="boring">#![allow(unused_variables)]
+<pre><pre class="playground"><code class="language-rust">
+<span class="boring">#![allow(unused)]
 </span><span class="boring">fn main() {
 </span>trits
 	.as_trytes()
@@ -1425,8 +1433,8 @@ the same underlying representation as a tryte slice.</p>
 <span class="boring">}
 </span></code></pre></pre>
 <h3><a class="header" href="#turning-a-tryte-string-into-a-t3b1-trit-buffer" id="turning-a-tryte-string-into-a-t3b1-trit-buffer">Turning a tryte string into a <code>T3B1</code> trit buffer</a></h3>
-<pre><pre class="playpen"><code class="language-rust">
-<span class="boring">#![allow(unused_variables)]
+<pre><pre class="playground"><code class="language-rust">
+<span class="boring">#![allow(unused)]
 </span><span class="boring">fn main() {
 </span>tryte_str
 	.chars()
@@ -1436,36 +1444,36 @@ the same underlying representation as a tryte slice.</p>
 <span class="boring">}
 </span></code></pre></pre>
 <p>Since this is a common operation, there exists a shorthand.</p>
-<pre><pre class="playpen"><code class="language-rust">
-<span class="boring">#![allow(unused_variables)]
+<pre><pre class="playground"><code class="language-rust">
+<span class="boring">#![allow(unused)]
 </span><span class="boring">fn main() {
 </span>TryteBuf::try_from_str(tryte_str).unwrap()
 <span class="boring">}
 </span></code></pre></pre>
 <h3><a class="header" href="#turning-a-trit-slice-into-a-trit-buffer" id="turning-a-trit-slice-into-a-trit-buffer">Turning a trit slice into a trit buffer</a></h3>
-<pre><pre class="playpen"><code class="language-rust">
-<span class="boring">#![allow(unused_variables)]
+<pre><pre class="playground"><code class="language-rust">
+<span class="boring">#![allow(unused)]
 </span><span class="boring">fn main() {
 </span>trits.to_buf()
 <span class="boring">}
 </span></code></pre></pre>
 <h3><a class="header" href="#turning-a-trit-slice-into-a-trit-buffer-of-a-different-encoding" id="turning-a-trit-slice-into-a-trit-buffer-of-a-different-encoding">Turning a trit slice into a trit buffer of a different encoding</a></h3>
-<pre><pre class="playpen"><code class="language-rust">
-<span class="boring">#![allow(unused_variables)]
+<pre><pre class="playground"><code class="language-rust">
+<span class="boring">#![allow(unused)]
 </span><span class="boring">fn main() {
 </span>trits.encode::&lt;T5B1&gt;()
 <span class="boring">}
 </span></code></pre></pre>
 <h3><a class="header" href="#overwriting-a-sub-slice-of-a-trit-with-copies-of-a-trit" id="overwriting-a-sub-slice-of-a-trit-with-copies-of-a-trit">Overwriting a sub-slice of a trit with copies of a trit</a></h3>
-<pre><pre class="playpen"><code class="language-rust">
-<span class="boring">#![allow(unused_variables)]
+<pre><pre class="playground"><code class="language-rust">
+<span class="boring">#![allow(unused)]
 </span><span class="boring">fn main() {
 </span>trits[start..end].fill(Btrit::Zero)
 <span class="boring">}
 </span></code></pre></pre>
 <h3><a class="header" href="#copying-trits-from-a-source-slice-to-a-destination-slice" id="copying-trits-from-a-source-slice-to-a-destination-slice">Copying trits from a source slice to a destination slice</a></h3>
-<pre><pre class="playpen"><code class="language-rust">
-<span class="boring">#![allow(unused_variables)]
+<pre><pre class="playground"><code class="language-rust">
+<span class="boring">#![allow(unused)]
 </span><span class="boring">fn main() {
 </span>tgt.copy_from(&amp;src[start..end])
 <span class="boring">}
@@ -1509,10 +1517,10 @@ suitability.</p>
         
 
         
-        
+
         
         <script type="text/javascript">
-            window.playpen_copyable = true;
+            window.playground_copyable = true;
         </script>
         
 

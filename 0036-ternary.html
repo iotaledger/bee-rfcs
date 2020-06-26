@@ -5,12 +5,19 @@
         <meta charset="UTF-8">
         <title>0036-ternary - The Bee RFC Book</title>
         
+        
+
+
+        <!-- Custom HTML head -->
+        
+
 
         <meta content="text/html; charset=utf-8" http-equiv="Content-Type">
         <meta name="description" content="">
         <meta name="viewport" content="width=device-width, initial-scale=1">
         <meta name="theme-color" content="#ffffff" />
 
+        <link rel="icon" href="favicon.svg">
         <link rel="shortcut icon" href="favicon.png">
         <link rel="stylesheet" href="css/variables.css">
         <link rel="stylesheet" href="css/general.css">
@@ -19,8 +26,9 @@
 
         <!-- Fonts -->
         <link rel="stylesheet" href="FontAwesome/css/font-awesome.css">
-        <link href="https://fonts.googleapis.com/css?family=Open+Sans:300italic,400italic,600italic,700italic,800italic,400,300,600,700,800" rel="stylesheet" type="text/css">
-        <link href="https://fonts.googleapis.com/css?family=Source+Code+Pro:500" rel="stylesheet" type="text/css">
+        
+        <link rel="stylesheet" href="fonts/fonts.css">
+        
 
         <!-- Highlight.js Stylesheets -->
         <link rel="stylesheet" href="highlight.css">
@@ -36,7 +44,7 @@
         <!-- Provide site root to javascript -->
         <script type="text/javascript">
             var path_to_root = "";
-            var default_theme = window.matchMedia("(prefers-color-scheme: dark)").matches ? "light" : "light";
+            var default_theme = window.matchMedia("(prefers-color-scheme: dark)").matches ? "navy" : "light";
         </script>
 
         <!-- Work around some values being stored in localStorage wrapped in quotes -->
@@ -215,16 +223,16 @@ the equivalent code would be if hand-written).</li>
 through two types, <code>Btrit</code> and <code>Utrit</code>. <code>Btrit</code> is the more common
 representation and so is the implicit default for most operations in the crate.</p>
 <h3><a class="header" href="#btrit-and-utrit" id="btrit-and-utrit"><code>Btrit</code> and <code>Utrit</code></a></h3>
-<pre><pre class="playpen"><code class="language-rust">
-<span class="boring">#![allow(unused_variables)]
+<pre><pre class="playground"><code class="language-rust">
+<span class="boring">#![allow(unused)]
 </span><span class="boring">fn main() {
 </span>enum Btrit { NegOne, Zero, PlusOne }
 enum Utrit { Zero, One, Two }
 <span class="boring">}
 </span></code></pre></pre>
 <h3><a class="header" href="#trits" id="trits"><code>Trits</code></a></h3>
-<pre><pre class="playpen"><code class="language-rust">
-<span class="boring">#![allow(unused_variables)]
+<pre><pre class="playground"><code class="language-rust">
+<span class="boring">#![allow(unused)]
 </span><span class="boring">fn main() {
 </span>struct Trits&lt;T: RawEncoding&gt; { ... }
 <span class="boring">}
@@ -240,8 +248,8 @@ minimal overhead.</li>
 <li>Sub-slices can be created from trit slices at a per-trit level.</li>
 </ul>
 <h3><a class="header" href="#tritbuf" id="tritbuf"><code>TritBuf</code></a></h3>
-<pre><pre class="playpen"><code class="language-rust">
-<span class="boring">#![allow(unused_variables)]
+<pre><pre class="playground"><code class="language-rust">
+<span class="boring">#![allow(unused)]
 </span><span class="boring">fn main() {
 </span>struct TritBuf&lt;T: RawEncodingBuf&gt; { ... }
 <span class="boring">}
@@ -255,8 +263,8 @@ minimal overhead.</li>
 <code>Deref&lt;[T]&gt;</code>).</li>
 </ul>
 <h3><a class="header" href="#rawencoding" id="rawencoding"><code>RawEncoding</code></a></h3>
-<pre><pre class="playpen"><code class="language-rust">
-<span class="boring">#![allow(unused_variables)]
+<pre><pre class="playground"><code class="language-rust">
+<span class="boring">#![allow(unused)]
 </span><span class="boring">fn main() {
 </span>trait RawEncoding { ... }
 <span class="boring">}
@@ -271,8 +279,8 @@ implementing your own encodings.</li>
 provided by <code>Trits</code> instead.</li>
 </ul>
 <h3><a class="header" href="#rawencodingbuf" id="rawencodingbuf"><code>RawEncodingBuf</code></a></h3>
-<pre><pre class="playpen"><code class="language-rust">
-<span class="boring">#![allow(unused_variables)]
+<pre><pre class="playground"><code class="language-rust">
+<span class="boring">#![allow(unused)]
 </span><span class="boring">fn main() {
 </span>trait RawEncodingBuf { ... }
 <span class="boring">}
@@ -284,8 +292,8 @@ provided by <code>Trits</code> instead.</li>
 in the future (linked lists, stack-allocated arrays, etc.).</li>
 </ul>
 <h3><a class="header" href="#t1b1t2b1t3b1t4b1t5b1" id="t1b1t2b1t3b1t4b1t5b1"><code>T1B1</code>/<code>T2B1</code>/<code>T3B1</code>/<code>T4B1</code>/<code>T5B1</code></a></h3>
-<pre><pre class="playpen"><code class="language-rust">
-<span class="boring">#![allow(unused_variables)]
+<pre><pre class="playground"><code class="language-rust">
+<span class="boring">#![allow(unused)]
 </span><span class="boring">fn main() {
 </span>struct TXB1 { ... }
 <span class="boring">}
@@ -295,8 +303,8 @@ in the future (linked lists, stack-allocated arrays, etc.).</li>
 <li>Allow different encodings in <code>Trits</code> and <code>TritBuf</code> types.</li>
 </ul>
 <h3><a class="header" href="#t1b1buft2b1buft3b1buft4b1buft5b1buf" id="t1b1buft2b1buft3b1buft4b1buft5b1buf"><code>T1B1Buf</code>/<code>T2B1Buf</code>/<code>T3B1Buf</code>/<code>T4B1Buf</code>/<code>T5B1Buf</code></a></h3>
-<pre><pre class="playpen"><code class="language-rust">
-<span class="boring">#![allow(unused_variables)]
+<pre><pre class="playground"><code class="language-rust">
+<span class="boring">#![allow(unused)]
 </span><span class="boring">fn main() {
 </span>struct TXB1Buf { ... }
 <span class="boring">}
@@ -319,8 +327,8 @@ explained in the crate documentation.</p>
 ecosystem. Here follows some examples of common patterns that you may wish to
 make use of.</p>
 <h3><a class="header" href="#turning-some-i8s-into-a-trit-buffer" id="turning-some-i8s-into-a-trit-buffer">Turning some <code>i8</code>s into a trit buffer</a></h3>
-<pre><pre class="playpen"><code class="language-rust">
-<span class="boring">#![allow(unused_variables)]
+<pre><pre class="playground"><code class="language-rust">
+<span class="boring">#![allow(unused)]
 </span><span class="boring">fn main() {
 </span>[-1, 0, 1, 1, -1, 0]
 	.iter()
@@ -330,8 +338,8 @@ make use of.</p>
 </span></code></pre></pre>
 <p>Alternatively, for the <code>T1B1</code> encoding only, you may directly reinterpret the
 <code>i8</code> slice.</p>
-<pre><pre class="playpen"><code class="language-rust">
-<span class="boring">#![allow(unused_variables)]
+<pre><pre class="playground"><code class="language-rust">
+<span class="boring">#![allow(unused)]
 </span><span class="boring">fn main() {
 </span>let xs = [-1, 0, 1, 1, -1, 0];
 
@@ -344,8 +352,8 @@ possible to unsafely reinterpret with amortised O(1) cost (i.e: it's basically
 free). However, scenarios in which this is necessary and sound are exceedingly
 uncommon. If you find yourself doing this, ask yourself first whether it is
 necessary.</p>
-<pre><pre class="playpen"><code class="language-rust">
-<span class="boring">#![allow(unused_variables)]
+<pre><pre class="playground"><code class="language-rust">
+<span class="boring">#![allow(unused)]
 </span><span class="boring">fn main() {
 </span>let xs = [-1, 0, 1, 1, -1, 0];
 
@@ -353,8 +361,8 @@ unsafe { Trits::from_raw_unchecked(&amp;xs, xs.len()) }
 <span class="boring">}
 </span></code></pre></pre>
 <h3><a class="header" href="#turning-a-trit-slice-into-a-tryte-string" id="turning-a-trit-slice-into-a-tryte-string">Turning a trit slice into a tryte string</a></h3>
-<pre><pre class="playpen"><code class="language-rust">
-<span class="boring">#![allow(unused_variables)]
+<pre><pre class="playground"><code class="language-rust">
+<span class="boring">#![allow(unused)]
 </span><span class="boring">fn main() {
 </span>trits
 	.iter_trytes()
@@ -364,8 +372,8 @@ unsafe { Trits::from_raw_unchecked(&amp;xs, xs.len()) }
 </span></code></pre></pre>
 <p>This becomes even more efficient easier with a <code>T3B1</code> trit slice since it has
 the same underlying representation as a tryte slice.</p>
-<pre><pre class="playpen"><code class="language-rust">
-<span class="boring">#![allow(unused_variables)]
+<pre><pre class="playground"><code class="language-rust">
+<span class="boring">#![allow(unused)]
 </span><span class="boring">fn main() {
 </span>trits
 	.as_trytes()
@@ -375,8 +383,8 @@ the same underlying representation as a tryte slice.</p>
 <span class="boring">}
 </span></code></pre></pre>
 <h3><a class="header" href="#turning-a-tryte-string-into-a-t3b1-trit-buffer" id="turning-a-tryte-string-into-a-t3b1-trit-buffer">Turning a tryte string into a <code>T3B1</code> trit buffer</a></h3>
-<pre><pre class="playpen"><code class="language-rust">
-<span class="boring">#![allow(unused_variables)]
+<pre><pre class="playground"><code class="language-rust">
+<span class="boring">#![allow(unused)]
 </span><span class="boring">fn main() {
 </span>tryte_str
 	.chars()
@@ -386,36 +394,36 @@ the same underlying representation as a tryte slice.</p>
 <span class="boring">}
 </span></code></pre></pre>
 <p>Since this is a common operation, there exists a shorthand.</p>
-<pre><pre class="playpen"><code class="language-rust">
-<span class="boring">#![allow(unused_variables)]
+<pre><pre class="playground"><code class="language-rust">
+<span class="boring">#![allow(unused)]
 </span><span class="boring">fn main() {
 </span>TryteBuf::try_from_str(tryte_str).unwrap()
 <span class="boring">}
 </span></code></pre></pre>
 <h3><a class="header" href="#turning-a-trit-slice-into-a-trit-buffer" id="turning-a-trit-slice-into-a-trit-buffer">Turning a trit slice into a trit buffer</a></h3>
-<pre><pre class="playpen"><code class="language-rust">
-<span class="boring">#![allow(unused_variables)]
+<pre><pre class="playground"><code class="language-rust">
+<span class="boring">#![allow(unused)]
 </span><span class="boring">fn main() {
 </span>trits.to_buf()
 <span class="boring">}
 </span></code></pre></pre>
 <h3><a class="header" href="#turning-a-trit-slice-into-a-trit-buffer-of-a-different-encoding" id="turning-a-trit-slice-into-a-trit-buffer-of-a-different-encoding">Turning a trit slice into a trit buffer of a different encoding</a></h3>
-<pre><pre class="playpen"><code class="language-rust">
-<span class="boring">#![allow(unused_variables)]
+<pre><pre class="playground"><code class="language-rust">
+<span class="boring">#![allow(unused)]
 </span><span class="boring">fn main() {
 </span>trits.encode::&lt;T5B1&gt;()
 <span class="boring">}
 </span></code></pre></pre>
 <h3><a class="header" href="#overwriting-a-sub-slice-of-a-trit-with-copies-of-a-trit" id="overwriting-a-sub-slice-of-a-trit-with-copies-of-a-trit">Overwriting a sub-slice of a trit with copies of a trit</a></h3>
-<pre><pre class="playpen"><code class="language-rust">
-<span class="boring">#![allow(unused_variables)]
+<pre><pre class="playground"><code class="language-rust">
+<span class="boring">#![allow(unused)]
 </span><span class="boring">fn main() {
 </span>trits[start..end].fill(Btrit::Zero)
 <span class="boring">}
 </span></code></pre></pre>
 <h3><a class="header" href="#copying-trits-from-a-source-slice-to-a-destination-slice" id="copying-trits-from-a-source-slice-to-a-destination-slice">Copying trits from a source slice to a destination slice</a></h3>
-<pre><pre class="playpen"><code class="language-rust">
-<span class="boring">#![allow(unused_variables)]
+<pre><pre class="playground"><code class="language-rust">
+<span class="boring">#![allow(unused)]
 </span><span class="boring">fn main() {
 </span>tgt.copy_from(&amp;src[start..end])
 <span class="boring">}
@@ -467,10 +475,10 @@ suitability.</p>
         
 
         
-        
+
         
         <script type="text/javascript">
-            window.playpen_copyable = true;
+            window.playground_copyable = true;
         </script>
         
 
