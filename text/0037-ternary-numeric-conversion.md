@@ -5,11 +5,21 @@
 
 # Summary
 
-Add a way to convert to and from binary types for ternary types.
+Add a way to convert to and from numeric binary types for ternary types.
 
 # Motivation
 
-Conversion between binary and ternary is often useful and so a good solution to this is required.
+Conversion between binary and ternary is often useful and so a good solution to
+this is required.
+
+For example, this feature permits the following conversions.
+
+```rust
+let x = 42;
+let x_trits = TritBuf::from(x);
+let y = i64::try_from(x_trits.as_slice()).unwrap();
+assert_eq!(x, y);
+```
 
 # Detailed design
 
@@ -26,8 +36,10 @@ impl<'a, T: RawEncoding<Trit = Btrit> + ?Sized> TryFrom<&'a Trits<T>> for i16 {}
 impl<'a, T: RawEncoding<Trit = Btrit> + ?Sized> TryFrom<&'a Trits<T>> for i8 {}
 ```
 
-The aforementioned trait implementations allow conversion to and from a variety of binary types for ternary types.
-The `AsPrimitive` trait comes from the `num_traits` crate, common throughout the Rust ecosystem.
+The aforementioned trait implementations allow conversion to and from a variety
+of numeric binary types for ternary types. The `AsPrimitive` trait comes from
+the [`num_traits`](https://docs.rs/num-traits/0.2.12/num_traits/cast/trait.AsPrimitive.html)
+crate, common throughout the Rust ecosystem.
 
 # Drawbacks
 
@@ -35,7 +47,7 @@ It doesn't allow *arbitrary* binary conversion, only for fixed-size integers.
 
 # Rationale and alternatives
 
-The previous implementation used only `i64`. This implementation works for a wider range of types.
+No alternatives exist.
 
 # Unresolved questions
 
