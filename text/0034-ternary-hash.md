@@ -20,10 +20,9 @@ Useful links:
 
 # Motivation
 
-In order to participate in the IOTA network, an application needs be able to construct valid messages that can be
-verified by nodes in the network. Conversely, a node needs to be able to verify other nodes messages. Among other
-operations, this is accomplished by validating transaction signatures (from which addresses are calculated), transaction
-hashes and bundle hashes.
+In order to participate in the IOTA network, an application needs to be able to construct valid messages that can be
+verified by other participants in the network. Among other operations, this is accomplished by validating transaction
+signatures, transaction hashes and bundle hashes.
 
 The two hash functions currently used are both sponge constructions: `CurlP`, which is specified entirely in balanced
 ternary, and `Kerl`, which first converts ternary input to a binary representation, applies `keccak-384` to it, and then
@@ -76,10 +75,9 @@ let tx_hash = kerl.digest(&transaction);
 ```
 
 The main proposal of this RFC are the `Sponge` trait and the `CurlP` and `Kerl` types that are implementing it.
-This RFC relies on the the presence of the types `TritBuf` and `Trits`, which are assumed to be owning and borrowing
-collections of binary-encoded ternary in the `T1B1` encoding (one trit per byte), similar to
-[PathBuf](https://doc.rust-lang.org/std/path/struct.PathBuf.html) and
-[Path](https://doc.rust-lang.org/std/path/struct.Path.html).
+This RFC relies on the the presence of the types `TritBuf` and `Trits`, as defined by
+[RFC36](https://github.com/iotaledger/bee-rfcs/blob/master/text/0036-ternary.md), which are assumed to be owning and
+borrowing collections of binary-encoded ternary in the `T1B1` encoding (one trit per byte).
 
 ```rust
 /// The common interface of cryptographic hash functions that follow the sponge construction and that act on ternary.
