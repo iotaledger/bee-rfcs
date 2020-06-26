@@ -32,13 +32,16 @@ converts its binary output back to ternary. For `CurlP` specifically, its varian
 
 ## Hash
 
-<!-- TODO define HASH_LEN -->
-
 This RFC defines a ternary type `Hash`. The exact definition is an implementation detail but an example definition could
 simply be the following:
 
 ```rust
-struct Hash([i8; 243]);
+struct Hash([i8; HASH_LENGTH]);
+```
+
+Where the length of a hash in units of binary-coded balanced trits would be defined as:
+```rust
+const HASH_LENGTH: usize = 243;
 ```
 
 ## Sponges
@@ -96,7 +99,7 @@ trait Sponge {
 
     /// Convenience function using `Sponge::squeeze_into` to to return an owned version of the hash.
     fn squeeze(&mut self) -> Result<TritBuf, Self::Error> {
-        let mut output = TritBuf::zeros(HASH_LEN);
+        let mut output = TritBuf::zeros(HASH_LENGTH);
         self.squeeze_into(&mut output)?;
         Ok(output)
     }
