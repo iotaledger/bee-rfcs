@@ -69,7 +69,7 @@ The backend API is limited to one function call to initialize the logger. It is 
 breaking changes by taking a `LoggerConfig` configuration object and returning a `Result`.
 
 ```rust
-fn logger_init(config: LoggerConfig) -> Result<(), LoggerError>;
+fn logger_init(config: LoggerConfig) -> Result<(), Error>;
 ```
 
 ### Configuration
@@ -116,12 +116,12 @@ function.
 ```rust
 #[derive(Debug)]
 #[non_exhaustive]
-enum LoggerError {
+enum Error {
     ...
 }
 ```
 
-**Note**: The `LoggerError` enum has to be `non_exhaustive` to allow further improving / extending the logger without
+**Note**: The `Error` enum has to be `non_exhaustive` to allow further improving / extending the logger without
 risking a breaking change.
 
 ## Format
