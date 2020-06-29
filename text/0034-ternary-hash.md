@@ -140,19 +140,17 @@ trits and an inner state of `729`:
 const STATE_LENGTH: usize = HASH_LENGTH * 3;
 ```
 
-In addition, a lookup table is used as part of the absorption step. The formula `t + (t' << 2) + 5`, where `t` and `t'`
-are two balanced trits, gives indexes to use to find the resulting trit:
+In addition, a lookup table is used as part of the absorption step:
 
 ||-1|0|1|
 |-|-|-|-|
-|**-1**|0|4|8|
-|**0**|1|5|9|
-|**1**|2|6|10
+|**-1**|1|1|-1|
+|**0**|0|-1|1|
+|**1**|-1|0|0|
 
-Since the indexes `3` and `7` are not produced by this truth table, `2` is used to pad the table:
-
+Given two balanced trits `t` and `t'`, the following table can easily be accessed by shifting them to unbalanced trits:
 ```rust
-const TRUTH_TABLE: [i8; 11] = [1, 0, -1, 2, 1, -1, 0, 2, -1, 1, 0];
+const TRUTH_TABLE: [[i8; 3]; 3] = [[1, 0, -1], [1, -1, 0], [-1, 1, 0]];
 ```
 
 The way `CurlP` is defined, it can not actually fail, because the input or outputs can be of arbitrary size; hence,
