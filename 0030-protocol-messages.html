@@ -286,9 +286,9 @@ and 21.</li>
 <h3><a class="header" href="#version-1" id="version-1">Version 1</a></h3>
 <h4><a class="header" href="#legacygossip" id="legacygossip"><code>LegacyGossip</code></a></h4>
 <p>Type ID: <code>2</code></p>
-<p>A legacy message to broadcast a transaction and request another one at the same time.</p>
+<p>A legacy message to send a transaction and request another one at the same time.</p>
 <table><thead><tr><th>Name</th><th>Description</th><th>Type</th><th>Length</th></tr></thead><tbody>
-<tr><td><code>transaction</code></td><td>Transaction to broadcast. Can be compressed<sup>1</sup>.</td><td><code>Vec&lt;u8&gt;</code></td><td>292-1604</td></tr>
+<tr><td><code>transaction</code></td><td>Transaction to send. Can be compressed<sup>1</sup>.</td><td><code>Vec&lt;u8&gt;</code></td><td>292-1604</td></tr>
 <tr><td><code>hash</code></td><td>Hash of the requested transaction.</td><td><code>[u8; 49]</code></td><td>49</td></tr>
 </tbody></table>
 <p><sup>1</sup> Compression is detailed at the end.</p>
@@ -302,11 +302,11 @@ on the node design and as such will not be implemented by Bee.</p>
 <table><thead><tr><th>Name</th><th>Description</th><th>Type</th><th>Length</th></tr></thead><tbody>
 <tr><td><code>index</code></td><td>Index of the requested milestone.</td><td><code>u32</code></td><td>4</td></tr>
 </tbody></table>
-<h4><a class="header" href="#transactionbroadcast" id="transactionbroadcast"><code>TransactionBroadcast</code></a></h4>
+<h4><a class="header" href="#transaction" id="transaction"><code>Transaction</code></a></h4>
 <p>Type ID: <code>4</code></p>
-<p>A message to broadcast a transaction.</p>
+<p>A message to send a transaction.</p>
 <table><thead><tr><th>Name</th><th>Description</th><th>Type</th><th>Length</th></tr></thead><tbody>
-<tr><td><code>transaction</code></td><td>Transaction to broadcast. Can be compressed<sup>1</sup>.</td><td><code>Vec&lt;u8&gt;</code></td><td>292-1604</td></tr>
+<tr><td><code>transaction</code></td><td>Transaction to send. Can be compressed<sup>1</sup>.</td><td><code>Vec&lt;u8&gt;</code></td><td>292-1604</td></tr>
 </tbody></table>
 <p><sup>1</sup> Compression is detailed at the end.</p>
 <h4><a class="header" href="#transactionrequest" id="transactionrequest"><code>TransactionRequest</code></a></h4>
