@@ -6,7 +6,7 @@
 # Summary
 
 This RFC proposes the ternary `Hash` type, the `Sponge` trait, and two cryptographic hash functions `CurlP` and `Kerl`
-implementing it. The 3 cryptographic hash functions used in the IOTA current networks (i.e. as of IOTA Reference
+implementing it. The 3 cryptographic hash functions used in the current IOTA networks (i.e. as of IOTA Reference
 Implementation `iri v1.8.1`) are `Kerl`, `CurlP27`, and `CurlP81`.
 
 Useful links:
@@ -16,7 +16,7 @@ Useful links:
 + [Curl-p](https://github.com/iotaledger/iri/blob/dev/src/main/java/com/iota/iri/crypto/Curl.java)
 + [Kerl specification](https://github.com/iotaledger/kerl/blob/master/IOTA-Kerl-spec.md)
 + [`iri v1.8.1`](https://github.com/iotaledger/iri/releases/tag/v1.8.1-RELEASE)
-+ [IOTA transactions and bundle](https://docs.iota.org/docs/dev-essentials/0.1/concepts/bundles-and-transactions)
++ [IOTA transactions](https://docs.iota.org/docs/getting-started/1.0/understanding-iota/transactions)
 
 # Motivation
 
@@ -32,7 +32,8 @@ converts its binary output back to ternary. For `CurlP` specifically, its varian
 
 ## Hash
 
-This RFC defines a ternary type `Hash`. The exact definition is an implementation detail but an example definition could
+This RFC defines a ternary type `Hash` which is the base input and output of the `Sponge`.
+The exact definition is an implementation detail but an example definition could
 simply be the following:
 
 ```rust
@@ -47,45 +48,47 @@ const HASH_LENGTH: usize = 243;
 ## Sponges
 
 `CurlP` and `Kerl` are cryptographic sponge constructions. They are equipped with a memory state and a function that
-replaces the state memory using some input string (which can be the state memory itself). A portion of the memory state
-is then the output. In the sponge metaphor, the process of replacing the memory state by an input string is said to
-`absorb` the input, while the process of producing an output is said to `squeeze` out an output.
+replaces the state memory using some input string. A portion of the memory state is then the output. In the sponge
+metaphor, the process of replacing the memory state by an input string is said to `absorb` the input, while the process
+of producing an output is said to `squeeze` out an output.
 
 The hash functions are expected to be used like this:
 
-```rust
-// Create a CurlP instance with 81 rounds.
-// This is equivalent to calling `CurlP::new(CurlPRounds::Rounds81)`.
-let mut curlp = CurlP81::new();
+- `curlp`
+  ```rust
+  // Create a CurlP instance with 81 rounds.
+  // This is equivalent to calling `CurlP::new(CurlPRounds::Rounds81)`.
+  let mut curlp = CurlP81::new();
 
-// Assume we have some input that is a `Trits` slice as defined by the `bee-ternary` crate, and an output buffer
-/// `TritBuf`:
-let transaction: &Trits<T1B1>;
-let mut tx_hash: TritBuf<T1B1Buf>;
+  // Assume we have some transaction trits, all zeroes for the sake of this example.
+  let transaction = TritBuf::<T1B1Buf>::zeros(6561);
+  let mut hash = TritBuf::<T1B1Buf>::zeros(243);
 
-// Absorb the transaction.
-curlp.absorb(&Trits::from_i8_unchecked(&transaction));
-// And squeeze into the `tx_hash` buffer.
-curlp.squeeze_into(&mut tx_hash);
-```
-```rust
-// Create a Kerl instance. Kerl does not come with a configurable number of rounds.
-let mut kerl = Kerl::new();
+  // Absorb the transaction.
+  curlp.absorb(&transaction);
+  // Squeeze out a hash.
+  curlp.squeeze_into(&mut hash);
+  ```
 
-// `Kerl::digest` is a function that combines `Kerl::absorb` and `Kerl::squeeze`.
-// `Kerl::digest_into` combines `Kerl::absorb` with `Kerl::squeeze_into`. `CurlP` provides the same methods.
-let tx_hash = kerl.digest(&transaction);
-```
+- `kerl`
+  ```rust
+  // Create a Kerl instance.
+  let mut kerl = Kerl::new();
+
+  // `Kerl::digest` is a function that combines `Kerl::absorb` and `Kerl::squeeze`.
+  // `Kerl::digest_into` combines `Kerl::absorb` with `Kerl::squeeze_into`.
+  let hash = kerl.digest(&transaction);
+  ```
 
 The main proposal of this RFC are the `Sponge` trait and the `CurlP` and `Kerl` types that are implementing it.
-This RFC relies on the the presence of the types `TritBuf` and `Trits`, as defined by
+This RFC relies on the presence of the types `TritBuf` and `Trits`, as defined by
 [RFC36](https://github.com/iotaledger/bee-rfcs/blob/master/text/0036-ternary.md), which are assumed to be owning and
 borrowing collections of binary-encoded ternary in the `T1B1` encoding (one trit per byte).
 
 ```rust
 /// The common interface of cryptographic hash functions that follow the sponge construction and that act on ternary.
 trait Sponge {
-    /// An error indicating that a failure has occured during `absorb`.
+    /// An error indicating that a failure has occured during a sponge operation.
     type Error;
 
     /// Absorb `input` into the sponge.
@@ -97,7 +100,7 @@ trait Sponge {
     /// Squeeze the sponge into a buffer
     fn squeeze_into(&mut self, buf: &mut Trits) -> Result<(), Self::Error>;
 
-    /// Convenience function using `Sponge::squeeze_into` to to return an owned version of the hash.
+    /// Convenience function using `Sponge::squeeze_into` to return an owned version of the hash.
     fn squeeze(&mut self) -> Result<TritBuf, Self::Error> {
         let mut output = TritBuf::zeros(HASH_LENGTH);
         self.squeeze_into(&mut output)?;
@@ -113,7 +116,7 @@ trait Sponge {
     }
 
     /// Convenience function to absorb `input`, squeeze the sponge, and reset the sponge in one go.
-    /// Returns an owned versin of the hash.
+    /// Returns an owned version of the hash.
     fn digest(&mut self, input: &Trits) -> Result<TritBuf, Self::Error> {
         self.absorb(input)?;
         let output = self.squeeze()?;
@@ -123,33 +126,32 @@ trait Sponge {
 }
 ```
 
-Following the sponge metaphor, an input reference provided by the user is `absorb`ed, and an output will be `squeeze`d
-from the data structure. `digest` is a convenience method calling `absorb` and `squeeze` in one go. The `*_into`
-versions of these methods are for passing a buffer into which the calculated hashes are written.  The internal state
-will not be cleared unless `reset` is called.
+Following the sponge metaphor, an input provided by the user is `absorb`ed, and an output will be `squeeze`d from the
+data structure. `digest` is a convenience method calling `absorb` and `squeeze` in one go. The `*_into` versions of
+these methods are for passing a buffer into which the calculated hashes are written. The internal state will not be
+cleared unless `reset` is called.
 
 ### Design of `CurlP`
 
 `CurlP` is designed as a hash function that acts on a `T1B1` binary-encoded ternary buffer, with a hash length of `243`
-trits and an inner state of `729` trits, which we take as constants:
+trits and an inner state of `729`:
 
 ```rust
-const HASH_LENGTH: usize = 243;
 const STATE_LENGTH: usize = HASH_LENGTH * 3;
 ```
 
 In addition, a lookup table is used as part of the absorption step.
-2 is used to pad the table since there are only 9 combinations should be taken:
+
+`2` is used to pad the table since there are only 9 combinations should be taken:
 
 ```rust
 const TRUTH_TABLE: [i8; 11] = [1, 0, -1, 2, 1, -1, 0, 2, -1, 1, 0];
 ```
 
-The way `CurlP` is defined, it can not actually fail, because the input or outputs can be of arbitrary size.
-Thus, the associated type `Error = !`, or `Error = Infallible` as `!` is not yet stabilized in Rust as of version
-`1.43`.
+The way `CurlP` is defined, it can not actually fail, because the input or outputs can be of arbitrary size; hence,
+the associated type `Error = Infallible`.
 
-This `enum` defines the number of rounds of hashing to apply before a hash is squeezed.
+`CurlP` has two common variants depending on the number of rounds of hashing to apply before a hash is squeezed.
 ```rust
 #[derive(Copy, Clone)]
 pub enum CurlPRounds {
@@ -168,12 +170,12 @@ struct CurlP {
     /// The internal state.
     state: TritBuf,
 
-    /// Workspace for performing transformations
+    /// Workspace for performing transformations.
     work_state: TritBuf,
 }
 ```
 
-In addition, there are two wrapper types for the very common `CurlP` variants with `27` and `81` rounds:
+In addition, the two wrapper types for the very common `CurlP` variants with `27` and `81` rounds:
 
 ```rust
 struct CurlP27(CurlP);
@@ -193,7 +195,7 @@ impl CurlP81 {
 }
 ```
 
-For convenience, they should both dereference to an actual `CurlP``.
+For convenience, they should both dereference to an actual `CurlP`:
 
 ```rust
 impl Deref for CurlP27 {
@@ -225,7 +227,7 @@ impl DerefMut for CurlP81 {
 }
 ```
 
-This allows using them as a `Sponge` as well if there is a blanket implementation.
+This allows using them as a `Sponge` as well if there is a blanket implementation like this:
 
 ```rust
 impl<T: Sponge, U: DerefMut<Target = T>> Sponge for U {
