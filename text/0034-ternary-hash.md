@@ -140,9 +140,16 @@ trits and an inner state of `729`:
 const STATE_LENGTH: usize = HASH_LENGTH * 3;
 ```
 
-In addition, a lookup table is used as part of the absorption step.
+In addition, a lookup table is used as part of the absorption step. The formula `t + (t' << 2) + 5`, where `t` and `t'`
+are two balanced trits, gives indexes to use to find the resulting trit:
 
-`2` is used to pad the table since there are only 9 combinations should be taken:
+||-1|0|1|
+|-|-|-|-|
+|**-1**|0|4|8|
+|**0**|1|5|9|
+|**1**|2|6|10
+
+Since the indexes `3` and `7` are not produced by this truth table, `2` is used to pad the table:
 
 ```rust
 const TRUTH_TABLE: [i8; 11] = [1, 0, -1, 2, 1, -1, 0, 2, -1, 1, 0];
