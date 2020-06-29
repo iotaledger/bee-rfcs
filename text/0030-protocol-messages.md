@@ -143,11 +143,11 @@ Up to 32 bytes are supported, limiting the number of protocol versions to 256. E
 
 Type ID: `2`
 
-A legacy message to broadcast a transaction and request another one at the same time.
+A legacy message to send a transaction and request another one at the same time.
 
 |Name|Description|Type|Length|
 |----|-----------|----|------|
-|`transaction`|Transaction to broadcast. Can be compressed<sup>1</sup>.|`Vec<u8>`|292-1604|
+|`transaction`|Transaction to send. Can be compressed<sup>1</sup>.|`Vec<u8>`|292-1604|
 |`hash`|Hash of the requested transaction.|`[u8; 49]`|49|
 
 <sup>1</sup> Compression is detailed at the end.
@@ -168,15 +168,15 @@ A message to request a milestone.
 |----|-----------|----|------|
 |`index`|Index of the requested milestone.|`u32`|4|
 
-#### `TransactionBroadcast`
+#### `Transaction`
 
 Type ID: `4`
 
-A message to broadcast a transaction.
+A message to send a transaction.
 
 |Name|Description|Type|Length|
 |----|-----------|----|------|
-|`transaction`|Transaction to broadcast. Can be compressed<sup>1</sup>.|`Vec<u8>`|292-1604|
+|`transaction`|Transaction to send. Can be compressed<sup>1</sup>.|`Vec<u8>`|292-1604|
 
 <sup>1</sup> Compression is detailed at the end.
 
