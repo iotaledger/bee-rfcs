@@ -7,7 +7,7 @@
 
 This RFC proposes the ternary `Hash` type, the `Sponge` trait, and two cryptographic hash functions `CurlP` and `Kerl`
 implementing it. The 3 cryptographic hash functions used in the current IOTA networks (i.e. as of IOTA Reference
-Implementation `iri v1.8.1`) are `Kerl`, `CurlP27`, and `CurlP81`.
+Implementation `iri v1.8.6`) are `Kerl`, `CurlP27`, and `CurlP81`.
 
 Useful links:
 
@@ -15,7 +15,7 @@ Useful links:
 + [The sponge and duplex constructions](https://keccak.team/sponge_duplex.html)
 + [Curl-p](https://github.com/iotaledger/iri/blob/dev/src/main/java/com/iota/iri/crypto/Curl.java)
 + [Kerl specification](https://github.com/iotaledger/kerl/blob/master/IOTA-Kerl-spec.md)
-+ [`iri v1.8.1`](https://github.com/iotaledger/iri/releases/tag/v1.8.1-RELEASE)
++ [`iri v1.8.6`](https://github.com/iotaledger/iri/releases/tag/v1.8.6-RELEASE)
 + [IOTA transactions](https://docs.iota.org/docs/getting-started/1.0/understanding-iota/transactions)
 
 # Motivation
@@ -97,7 +97,7 @@ trait Sponge {
     /// Reset the inner state of the sponge.
     fn reset(&mut self);
 
-    /// Squeeze the sponge into a buffer
+    /// Squeeze the sponge into a buffer.
     fn squeeze_into(&mut self, buf: &mut Trits) -> Result<(), Self::Error>;
 
     /// Convenience function using `Sponge::squeeze_into` to return an owned version of the hash.
@@ -107,7 +107,7 @@ trait Sponge {
         Ok(output)
     }
 
-    /// Convenience function to absorb `input`, squeeze the sponge into a buffer, and reset the sponge in one go.
+    /// Convenience function to absorb `input`, squeeze the sponge into a buffer `buf`, and reset the sponge in one go.
     fn digest_into(&mut self, input: &Trits, buf: &mut Trits) -> Result<(), Self::Error> {
         self.absorb(input)?;
         self.squeeze_into(buf)?;
@@ -128,12 +128,12 @@ trait Sponge {
 
 Following the sponge metaphor, an input provided by the user is `absorb`ed, and an output will be `squeeze`d from the
 data structure. `digest` is a convenience method calling `absorb` and `squeeze` in one go. The `*_into` versions of
-these methods are for passing a buffer into which the calculated hashes are written. The internal state will not be
+these methods are for passing a buffer, into which the calculated hashes are written. The internal state will not be
 cleared unless `reset` is called.
 
 ### Design of `CurlP`
 
-`CurlP` is designed as a hash function that acts on a `T1B1` binary-encoded ternary buffer, with a hash length of `243`
+`CurlP` is designed as a hash function, that acts on a `T1B1` binary-encoded ternary buffer, with a hash length of `243`
 trits and an inner state of `729`:
 
 ```rust
@@ -159,7 +159,7 @@ the associated type `Error = Infallible`.
 `CurlP` has two common variants depending on the number of rounds of hashing to apply before a hash is squeezed.
 ```rust
 #[derive(Copy, Clone)]
-pub enum CurlPRounds {
+enum CurlPRounds {
     Rounds27 = 27,
     Rounds81 = 81,
 }
@@ -180,13 +180,20 @@ struct CurlP {
 }
 ```
 
+```rust
+impl Sponge for CurlP {
+    type Error = Infallible;
+    ...
+}
+```
+
 In addition, the two wrapper types for the very common `CurlP` variants with `27` and `81` rounds:
 
 ```rust
 struct CurlP27(CurlP);
 
 impl CurlP27 {
-    pub fn new() -> Self {
+    fn new() -> Self {
         Self(CurlP::new(CurlPRounds::Rounds27))
     }
 }
@@ -194,7 +201,7 @@ impl CurlP27 {
 struct CurlP81(CurlP);
 
 impl CurlP81 {
-    pub fn new() -> Self {
+    fn new() -> Self {
         Self(CurlP::new(CurlPRounds::Rounds81))
     }
 }
@@ -253,6 +260,26 @@ impl<T: Sponge, U: DerefMut<Target = T>> Sponge for U {
 ```
 
 ### Design of `Kerl`
+
+Type definition:
+
+```rust
+struct Kerl {
+    /// Actual keccak hash function.
+    keccak: Keccak,
+    /// Binary working state.
+    binary_state: I384<BigEndian, U8Repr>,
+    /// Ternary working state.
+    ternary_state: T243<Btrit>,
+}
+```
+
+```rust
+impl Sponge for Kerl {
+    type Error = Error;
+    ...
+}
+```
 
 The actual cryptographic hash function underlying `Kerl` is `keccak-384`. The real task here is to transform an input
 of 243 (balanced) trits to 384 bits in a correct and performant way. This is done by interpreting the 243 trits as a
@@ -454,11 +481,10 @@ U384<LittleEndian, U32Repr>::try_from_t243
 # Drawbacks
 
 + All hash functions, no matter if they can fail or not, have to implement `Error`;
-+ There are a lot of types. Is it important to encode that the most significant trit is `0` by having a `T242`?;
 
 # Rationale and alternatives
 
-+ `CurlP` and `Kerl` are fundamental to the `iri v1.8.1` mainnet. They are thus essential for compatibility with it;
++ `CurlP` and `Kerl` are fundamental to the `iri v1.8.6` mainnet. They are thus essential for compatibility with it;
 + These types are idiomatic in Rust, and users are not required to know the implementation details of each hash
   algorithm;
 
@@ -469,4 +495,4 @@ U384<LittleEndian, U32Repr>::try_from_t243
 + Implementation of each hash functions and other utilities like HMAC should have separate RFCs for them;
 + Decision on implementation of `Troika` is still unknown;
 + Can (should?) the `CurlP` algorithm be explained in more detail?;
-+ The truth table should be expressed in terms of `TritsBuf`;
++ Is it important to encode that the most significant trit is `0` by having a `T242`?;
