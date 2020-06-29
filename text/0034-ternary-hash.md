@@ -60,7 +60,7 @@ The hash functions are expected to be used like this:
   // This is equivalent to calling `CurlP::new(CurlPRounds::Rounds81)`.
   let mut curlp = CurlP81::new();
 
-  // Assume we have some transaction trits, all zeroes for the sake of this example.
+  // Assume there are some transaction trits, all zeroes for the sake of this example.
   let transaction = TritBuf::<T1B1Buf>::zeros(6561);
   let mut hash = TritBuf::<T1B1Buf>::zeros(243);
 
@@ -281,6 +281,21 @@ required methods to make the conversion work.
 
 #### Important implementation details
 
+When absorbing into the sponge the conversion flows like this (little and big are short for little and big endian,
+respectively):
+
+```
+Balanced t243 -> unbalanced t242 -> u32 little u384 -> u32 little i384 -> u8 big i384
+```
+
+When squeezing and thus converting back to ternary the conversion flows like this:
+
+```
+u8 big i384 -> u32 little i384 -> u32 little u384 -> unbalanced t243 -> balanced t243 -> balanced t242
+```
+
+These steps will now be explained in detail.
+
 ##### Conversion is done via accumulation
 
 Because a number like `3^242` does not fit into any existing primitive, it needs to be constructed from scratch by
@@ -319,9 +334,8 @@ underscore `_t` means a ternary representation (either balanced or unbalanced):
 I_t + H_t = [0, -1, +1, -1, -1, 0, 0, 0, +1] + [+1, +1, +1, +1, +1, +1, +1, +1] = I'_t
 ```
 
-After changing the base to binary using some function which we call `to_bin` and which we require to distribute over
-addition (because the base in which a number is represented should have no bearing over adding said numbers), `H` needs
-to be subtracted again. We use `_b` to signify a binary representation:
+After changing the base to binary using some function which would be called `to_bin` and which would be required to be
+distributed over addition, `H` needs to be subtracted again. We use `_b` to signify a binary representation:
 
 ```
 I'_b = to_bin(I'_t) = to_bin(I_t + H_t) = to_bin(I_t) + to_bin(H_t) = I_b + H_b
@@ -423,20 +437,9 @@ impl EndianType for LittleEndian {}
 ```
 
 The underlying arrays and endianness are important, because `keccak` expects bytes as input, and because `Kerl` made the
-choice to revert the order of the integers in binary big int. When absorbing into the sponge the conversion thus flows
-like this (little and big are short for little and big endian, respectively):
+choice to revert the order of the integers in binary big int.
 
-```
-Balanced t243 -> unbalanced t242 -> u32 little u384 -> u32 little i384 -> u8 big i384
-```
-
-When squeezing and thus converting back to ternary the conversion flows like this:
-
-```
-u8 big i384 -> u32 little i384 -> u32 little u384 -> unbalanced t243 -> balanced t243 -> balanced t242
-```
-
-To understand the implementation in the prototype, the most important methods are:
+To understand the implementation, the most important methods are:
 
 ```rust
 T242<Btrit>::from_i384_ignoring_mst
@@ -463,8 +466,8 @@ U384<LittleEndian, U32Repr>::try_from_t243
 
 # Unresolved questions
 
-+ Parameters are slice reference in both input and output. Do we want to consume value or create a new instance as
-  return values?;
++ Parameters are slice reference in both input and output. Do values need to be consumed or should new instances as
+  return values be created?;
 + Implementation of each hash functions and other utilities like HMAC should have separate RFCs for them;
 + Decision on implementation of `Troika` is still unknown;
 + Can (should?) the `CurlP` algorithm be explained in more detail?;
