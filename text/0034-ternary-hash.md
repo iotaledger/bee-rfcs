@@ -249,7 +249,7 @@ impl<T: Sponge, U: DerefMut<Target = T>> Sponge for U {
 
 ### Design of `Kerl`
 
-The actual cryptographic hash function underlying `Kerl` is `keccak-384`. The actual task here is to transform an input
+The actual cryptographic hash function underlying `Kerl` is `keccak-384`. The real task here is to transform an input
 of 243 (balanced) trits to 384 bits in a correct and performant way. This is done by interpreting the 243 trits as a
 signed integer `I` and converting it to a binary basis. In other words, the ternary encoded integer is expressed as the
 series:
