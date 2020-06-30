@@ -187,7 +187,9 @@ impl Sponge for CurlP {
 }
 ```
 
-In addition, the two wrapper types for the very common `CurlP` variants with `27` and `81` rounds:
+In addition, this RFC proposes two wrapper types for the very common `CurlP` variants with `27` and `81` rounds.
+In most use cases, `Sponge` is required to implement `Default` so these variants need to be new types instead of just
+providing `new27` or `new81` methods to `CurlP`.
 
 ```rust
 struct CurlP27(CurlP);
