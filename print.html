@@ -91,7 +91,7 @@
 
         <nav id="sidebar" class="sidebar" aria-label="Table of contents">
             <div class="sidebar-scrollbox">
-                <ol class="chapter"><li class="chapter-item expanded affix "><a href="introduction.html">Introduction</a></li><li class="chapter-item expanded "><a href="0030-protocol-messages.html">0030-protocol-messages</a></li><li class="chapter-item expanded "><a href="0031-configuration.html">0031-configuration</a></li><li class="chapter-item expanded "><a href="0033-network.html">0033-network</a></li><li class="chapter-item expanded "><a href="0035-logging.html">0035-logging</a></li><li class="chapter-item expanded "><a href="0036-ternary.html">0036-ternary</a></li><li class="chapter-item expanded "><a href="0037-ternary-numeric-conversion.html">0037-ternary-numeric-conversion</a></li></ol>
+                <ol class="chapter"><li class="chapter-item expanded affix "><a href="introduction.html">Introduction</a></li><li class="chapter-item expanded "><a href="0030-protocol-messages.html">0030-protocol-messages</a></li><li class="chapter-item expanded "><a href="0031-configuration.html">0031-configuration</a></li><li class="chapter-item expanded "><a href="0033-network.html">0033-network</a></li><li class="chapter-item expanded "><a href="0034-ternary-hash.html">0034-ternary-hash</a></li><li class="chapter-item expanded "><a href="0035-logging.html">0035-logging</a></li><li class="chapter-item expanded "><a href="0036-ternary.html">0036-ternary</a></li><li class="chapter-item expanded "><a href="0037-ternary-numeric-conversion.html">0037-ternary-numeric-conversion</a></li></ol>
             </div>
             <div id="sidebar-resize-handle" class="sidebar-resize-handle"></div>
         </nav>
@@ -1062,17 +1062,490 @@ enum Event {
 <li>Handling of endpoints with dynamic IPs;</li>
 </ul>
 <ul>
+<li>Feature name: <code>ternary-hash</code></li>
+<li>Start date: 2019-10-15</li>
+<li>RFC PR: <a href="https://github.com/iotaledger/bee-rfcs/pull/34">iotaledger/bee-rfcs#34</a></li>
+<li>Bee issue: <a href="https://github.com/iotaledger/bee/issues/77">iotaledger/bee#77</a></li>
+</ul>
+<h1><a class="header" href="#summary-3" id="summary-3">Summary</a></h1>
+<p>This RFC proposes the ternary <code>Hash</code> type, the <code>Sponge</code> trait, and two cryptographic hash functions <code>CurlP</code> and <code>Kerl</code>
+implementing it. The 3 cryptographic hash functions used in the current IOTA networks (i.e. as of IOTA Reference
+Implementation <code>iri v1.8.6</code>) are <code>Kerl</code>, <code>CurlP27</code>, and <code>CurlP81</code>.</p>
+<p>Useful links:</p>
+<ul>
+<li><a href="https://en.wikipedia.org/wiki/Sponge_function">Sponge function</a></li>
+<li><a href="https://keccak.team/sponge_duplex.html">The sponge and duplex constructions</a></li>
+<li><a href="https://github.com/iotaledger/iri/blob/dev/src/main/java/com/iota/iri/crypto/Curl.java">Curl-p</a></li>
+<li><a href="https://github.com/iotaledger/kerl/blob/master/IOTA-Kerl-spec.md">Kerl specification</a></li>
+<li><a href="https://github.com/iotaledger/iri/releases/tag/v1.8.6-RELEASE"><code>iri v1.8.6</code></a></li>
+<li><a href="https://docs.iota.org/docs/getting-started/1.0/understanding-iota/transactions">IOTA transactions</a></li>
+</ul>
+<h1><a class="header" href="#motivation-3" id="motivation-3">Motivation</a></h1>
+<p>In order to participate in the IOTA network, an application needs to be able to construct valid messages that can be
+verified by other participants in the network. Among other operations, this is accomplished by validating transaction
+signatures, transaction hashes and bundle hashes.</p>
+<p>The two hash functions currently used are both sponge constructions: <code>CurlP</code>, which is specified entirely in balanced
+ternary, and <code>Kerl</code>, which first converts ternary input to a binary representation, applies <code>keccak-384</code> to it, and then
+converts its binary output back to ternary. For <code>CurlP</code> specifically, its variants <code>CurlP27</code> and <code>CurlP81</code> are used.</p>
+<h1><a class="header" href="#detailed-design-3" id="detailed-design-3">Detailed design</a></h1>
+<h2><a class="header" href="#hash" id="hash">Hash</a></h2>
+<p>This RFC defines a ternary type <code>Hash</code> which is the base input and output of the <code>Sponge</code>.
+The exact definition is an implementation detail but an example definition could
+simply be the following:</p>
+<pre><pre class="playground"><code class="language-rust">
+<span class="boring">#![allow(unused)]
+</span><span class="boring">fn main() {
+</span>struct Hash([i8; HASH_LENGTH]);
+<span class="boring">}
+</span></code></pre></pre>
+<p>Where the length of a hash in units of binary-coded balanced trits would be defined as:</p>
+<pre><pre class="playground"><code class="language-rust">
+<span class="boring">#![allow(unused)]
+</span><span class="boring">fn main() {
+</span>const HASH_LENGTH: usize = 243;
+<span class="boring">}
+</span></code></pre></pre>
+<h2><a class="header" href="#sponges" id="sponges">Sponges</a></h2>
+<p><code>CurlP</code> and <code>Kerl</code> are cryptographic sponge constructions. They are equipped with a memory state and a function that
+replaces the state memory using some input string. A portion of the memory state is then the output. In the sponge
+metaphor, the process of replacing the memory state by an input string is said to <code>absorb</code> the input, while the process
+of producing an output is said to <code>squeeze</code> out an output.</p>
+<p>The hash functions are expected to be used like this:</p>
+<ul>
+<li>
+<p><code>curlp</code></p>
+<pre><pre class="playground"><code class="language-rust">
+<span class="boring">#![allow(unused)]
+</span><span class="boring">fn main() {
+</span>// Create a CurlP instance with 81 rounds.
+// This is equivalent to calling `CurlP::new(CurlPRounds::Rounds81)`.
+let mut curlp = CurlP81::new();
+
+// Assume there are some transaction trits, all zeroes for the sake of this example.
+let transaction = TritBuf::&lt;T1B1Buf&gt;::zeros(6561);
+let mut hash = TritBuf::&lt;T1B1Buf&gt;::zeros(243);
+
+// Absorb the transaction.
+curlp.absorb(&amp;transaction);
+// Squeeze out a hash.
+curlp.squeeze_into(&amp;mut hash);
+<span class="boring">}
+</span></code></pre></pre>
+</li>
+<li>
+<p><code>kerl</code></p>
+<pre><pre class="playground"><code class="language-rust">
+<span class="boring">#![allow(unused)]
+</span><span class="boring">fn main() {
+</span>// Create a Kerl instance.
+let mut kerl = Kerl::new();
+
+// `Kerl::digest` is a function that combines `Kerl::absorb` and `Kerl::squeeze`.
+// `Kerl::digest_into` combines `Kerl::absorb` with `Kerl::squeeze_into`.
+let hash = kerl.digest(&amp;transaction);
+<span class="boring">}
+</span></code></pre></pre>
+</li>
+</ul>
+<p>The main proposal of this RFC are the <code>Sponge</code> trait and the <code>CurlP</code> and <code>Kerl</code> types that are implementing it.
+This RFC relies on the presence of the types <code>TritBuf</code> and <code>Trits</code>, as defined by
+<a href="https://github.com/iotaledger/bee-rfcs/blob/master/text/0036-ternary.md">RFC36</a>, which are assumed to be owning and
+borrowing collections of binary-encoded ternary in the <code>T1B1</code> encoding (one trit per byte).</p>
+<pre><pre class="playground"><code class="language-rust">
+<span class="boring">#![allow(unused)]
+</span><span class="boring">fn main() {
+</span>/// The common interface of cryptographic hash functions that follow the sponge construction and that act on ternary.
+trait Sponge {
+    /// An error indicating that a failure has occured during a sponge operation.
+    type Error;
+
+    /// Absorb `input` into the sponge.
+    fn absorb(&amp;mut self, input: &amp;Trits) -&gt; Result&lt;(), Self::Error&gt;;
+
+    /// Reset the inner state of the sponge.
+    fn reset(&amp;mut self);
+
+    /// Squeeze the sponge into a buffer.
+    fn squeeze_into(&amp;mut self, buf: &amp;mut Trits) -&gt; Result&lt;(), Self::Error&gt;;
+
+    /// Convenience function using `Sponge::squeeze_into` to return an owned version of the hash.
+    fn squeeze(&amp;mut self) -&gt; Result&lt;TritBuf, Self::Error&gt; {
+        let mut output = TritBuf::zeros(HASH_LENGTH);
+        self.squeeze_into(&amp;mut output)?;
+        Ok(output)
+    }
+
+    /// Convenience function to absorb `input`, squeeze the sponge into a buffer `buf`, and reset the sponge in one go.
+    fn digest_into(&amp;mut self, input: &amp;Trits, buf: &amp;mut Trits) -&gt; Result&lt;(), Self::Error&gt; {
+        self.absorb(input)?;
+        self.squeeze_into(buf)?;
+        self.reset();
+        Ok(())
+    }
+
+    /// Convenience function to absorb `input`, squeeze the sponge, and reset the sponge in one go.
+    /// Returns an owned version of the hash.
+    fn digest(&amp;mut self, input: &amp;Trits) -&gt; Result&lt;TritBuf, Self::Error&gt; {
+        self.absorb(input)?;
+        let output = self.squeeze()?;
+        self.reset();
+        Ok(output)
+    }
+}
+<span class="boring">}
+</span></code></pre></pre>
+<p>Following the sponge metaphor, an input provided by the user is <code>absorb</code>ed, and an output will be <code>squeeze</code>d from the
+data structure. <code>digest</code> is a convenience method calling <code>absorb</code> and <code>squeeze</code> in one go. The <code>*_into</code> versions of
+these methods are for passing a buffer, into which the calculated hashes are written. The internal state will not be
+cleared unless <code>reset</code> is called.</p>
+<h3><a class="header" href="#design-of-curlp" id="design-of-curlp">Design of <code>CurlP</code></a></h3>
+<p><code>CurlP</code> is designed as a hash function, that acts on a <code>T1B1</code> binary-encoded ternary buffer, with a hash length of <code>243</code>
+trits and an inner state of <code>729</code>:</p>
+<pre><pre class="playground"><code class="language-rust">
+<span class="boring">#![allow(unused)]
+</span><span class="boring">fn main() {
+</span>const STATE_LENGTH: usize = HASH_LENGTH * 3;
+<span class="boring">}
+</span></code></pre></pre>
+<p>In addition, a lookup table is used as part of the absorption step:</p>
+<table><thead><tr><th></th><th>-1</th><th>0</th><th>1</th></tr></thead><tbody>
+<tr><td><strong>-1</strong></td><td>1</td><td>1</td><td>-1</td></tr>
+<tr><td><strong>0</strong></td><td>0</td><td>-1</td><td>1</td></tr>
+<tr><td><strong>1</strong></td><td>-1</td><td>0</td><td>0</td></tr>
+</tbody></table>
+<p>Given two balanced trits <code>t</code> and <code>t'</code>, the following table can easily be accessed by shifting them to unbalanced trits:</p>
+<pre><pre class="playground"><code class="language-rust">
+<span class="boring">#![allow(unused)]
+</span><span class="boring">fn main() {
+</span>const TRUTH_TABLE: [[i8; 3]; 3] = [[1, 0, -1], [1, -1, 0], [-1, 1, 0]];
+<span class="boring">}
+</span></code></pre></pre>
+<p>The way <code>CurlP</code> is defined, it can not actually fail, because the input or outputs can be of arbitrary size; hence,
+the associated type <code>Error = Infallible</code>.</p>
+<p><code>CurlP</code> has two common variants depending on the number of rounds of hashing to apply before a hash is squeezed.</p>
+<pre><pre class="playground"><code class="language-rust">
+<span class="boring">#![allow(unused)]
+</span><span class="boring">fn main() {
+</span>#[derive(Copy, Clone)]
+enum CurlPRounds {
+    Rounds27 = 27,
+    Rounds81 = 81,
+}
+<span class="boring">}
+</span></code></pre></pre>
+<p>Type definition:</p>
+<pre><pre class="playground"><code class="language-rust">
+<span class="boring">#![allow(unused)]
+</span><span class="boring">fn main() {
+</span>struct CurlP {
+    /// The number of rounds of hashing to apply before a hash is squeezed.
+    rounds: CurlPRounds,
+
+    /// The internal state.
+    state: TritBuf,
+
+    /// Workspace for performing transformations.
+    work_state: TritBuf,
+}
+<span class="boring">}
+</span></code></pre></pre>
+<pre><pre class="playground"><code class="language-rust">
+<span class="boring">#![allow(unused)]
+</span><span class="boring">fn main() {
+</span>impl Sponge for CurlP {
+    type Error = Infallible;
+    ...
+}
+<span class="boring">}
+</span></code></pre></pre>
+<p>In addition, this RFC proposes two wrapper types for the very common <code>CurlP</code> variants with <code>27</code> and <code>81</code> rounds.
+In most use cases, <code>Sponge</code> is required to implement <code>Default</code> so these variants need to be new types instead of just
+providing <code>new27</code> or <code>new81</code> methods to <code>CurlP</code>.</p>
+<pre><pre class="playground"><code class="language-rust">
+<span class="boring">#![allow(unused)]
+</span><span class="boring">fn main() {
+</span>struct CurlP27(CurlP);
+
+impl CurlP27 {
+    fn new() -&gt; Self {
+        Self(CurlP::new(CurlPRounds::Rounds27))
+    }
+}
+
+struct CurlP81(CurlP);
+
+impl CurlP81 {
+    fn new() -&gt; Self {
+        Self(CurlP::new(CurlPRounds::Rounds81))
+    }
+}
+<span class="boring">}
+</span></code></pre></pre>
+<p>For convenience, they should both dereference to an actual <code>CurlP</code>:</p>
+<pre><pre class="playground"><code class="language-rust">
+<span class="boring">#![allow(unused)]
+</span><span class="boring">fn main() {
+</span>impl Deref for CurlP27 {
+    type Target = CurlP;
+
+    fn deref(&amp;self) -&gt; &amp;Self::Target {
+        &amp;self.0
+    }
+}
+
+impl DerefMut for CurlP27 {
+    fn deref_mut(&amp;mut self) -&gt; &amp;mut Self::Target {
+        &amp;mut self.0
+    }
+}
+
+impl Deref for CurlP81 {
+    type Target = CurlP;
+
+    fn deref(&amp;self) -&gt; &amp;Self::Target {
+        &amp;self.0
+    }
+}
+
+impl DerefMut for CurlP81 {
+    fn deref_mut(&amp;mut self) -&gt; &amp;mut Self::Target {
+        &amp;mut self.0
+    }
+}
+<span class="boring">}
+</span></code></pre></pre>
+<p>This allows using them as a <code>Sponge</code> as well if there is a blanket implementation like this:</p>
+<pre><pre class="playground"><code class="language-rust">
+<span class="boring">#![allow(unused)]
+</span><span class="boring">fn main() {
+</span>impl&lt;T: Sponge, U: DerefMut&lt;Target = T&gt;&gt; Sponge for U {
+    type Error = T::Error;
+
+    fn absorb(&amp;mut self, input: &amp;Trits) -&gt; Result&lt;(), Self::Error&gt; {
+        T::absorb(self, input)
+    }
+
+    fn reset(&amp;mut self) {
+        T::reset(self)
+    }
+
+    fn squeeze_into(&amp;mut self, buf: &amp;mut Trits) -&gt; Result&lt;(), Self::Error&gt; {
+        T::squeeze_into(self, buf)
+    }
+}
+<span class="boring">}
+</span></code></pre></pre>
+<h3><a class="header" href="#design-of-kerl" id="design-of-kerl">Design of <code>Kerl</code></a></h3>
+<p>Type definition:</p>
+<pre><pre class="playground"><code class="language-rust">
+<span class="boring">#![allow(unused)]
+</span><span class="boring">fn main() {
+</span>struct Kerl {
+    /// Actual keccak hash function.
+    keccak: Keccak,
+    /// Binary working state.
+    binary_state: I384&lt;BigEndian, U8Repr&gt;,
+    /// Ternary working state.
+    ternary_state: T243&lt;Btrit&gt;,
+}
+<span class="boring">}
+</span></code></pre></pre>
+<pre><pre class="playground"><code class="language-rust">
+<span class="boring">#![allow(unused)]
+</span><span class="boring">fn main() {
+</span>impl Sponge for Kerl {
+    type Error = Error;
+    ...
+}
+<span class="boring">}
+</span></code></pre></pre>
+<p>The actual cryptographic hash function underlying <code>Kerl</code> is <code>keccak-384</code>. The real task here is to transform an input
+of 243 (balanced) trits to 384 bits in a correct and performant way. This is done by interpreting the 243 trits as a
+signed integer <code>I</code> and converting it to a binary basis. In other words, the ternary encoded integer is expressed as the
+series:</p>
+<pre><code>I = t_0 * 3^0 + t_1 * 3^1 + ... + t_241 * 3^241 + t_242 * 3^242,
+</code></pre>
+<p>where <code>t_i</code> is the trit at the <code>i</code>-th position in the ternary input array. The challenge is then to convert this integer
+to base <code>2</code>, i.e. find a a series such that:</p>
+<pre><code>I = b_0 * 2^0 + b_1 * 2^1 + ... + b_382 * 2^382 + b_383 * 2^383,
+</code></pre>
+<p>with <code>b_i</code> the bit at the <code>i-th</code> position.</p>
+<p>Assuming there exists an implementation of <code>keccak</code>, the main work in implementing <code>Kerl</code> is writing an efficient
+converter between the ternary array interpreted as an integer, and its binary representation. For the binary
+representation, one can either use an existing big-integer library, or write one from scratch with only a subset of
+required methods to make the conversion work.</p>
+<h4><a class="header" href="#important-implementation-details" id="important-implementation-details">Important implementation details</a></h4>
+<p>When absorbing into the sponge the conversion flows like this (little and big are short for little and big endian,
+respectively):</p>
+<pre><code>Balanced t243 -&gt; unbalanced t242 -&gt; u32 little u384 -&gt; u32 little i384 -&gt; u8 big i384
+</code></pre>
+<p>When squeezing and thus converting back to ternary the conversion flows like this:</p>
+<pre><code>u8 big i384 -&gt; u32 little i384 -&gt; u32 little u384 -&gt; unbalanced t243 -&gt; balanced t243 -&gt; balanced t242
+</code></pre>
+<p>These steps will now be explained in detail.</p>
+<h5><a class="header" href="#conversion-is-done-via-accumulation" id="conversion-is-done-via-accumulation">Conversion is done via accumulation</a></h5>
+<p>Because a number like <code>3^242</code> does not fit into any existing primitive, it needs to be constructed from scratch by
+taking a <em>big integer</em>, setting its least significant number to <code>1</code>, and multiplying it by <code>3</code> <code>242</code> times. This is the
+core of the conversion mechanism. Essentially, the polynomial used to express the integer in ternary can be rewritten
+like this:</p>
+<pre><code>I = t_0 * 3^0 + t_1 * 3^1 + ... + t_241 * 3^241 + t_242 * 3^242,
+  = ((...((t_242 * 3 + t_241) * 3 + t_240) * 3 + ...) * 3 + t_1) * 3 + t_0
+</code></pre>
+<p>Thus, one iterates through the ternary buffer starting from the most significant trit, adds <code>t_242</code> onto the binary big
+integer (initially filled with <code>0</code>s), and then keeps looping through it, multiplying it by 3 and adding the next <code>t_i</code>.</p>
+<h5><a class="header" href="#conversion-is-done-in-unsigned-space" id="conversion-is-done-in-unsigned-space">Conversion is done in unsigned space</a></h5>
+<p>First and foremost, IOTA is primarily written with balanced ternary in mind, meaning that each trit represents an
+integer in the set <code>{-1, 0, +1}</code>. Because it is easier to do the conversion in positive space, the trits are shifted
+into <em>unbalanced</em> space, by adding <code>+1</code> at each position, so that each unbalanced trit represents an integer in
+<code>{0, 1, 2}</code>.</p>
+<p>For example, the balanced ternary buffer (using only 9 trits to demonstrate the point) becomes after the shift (leaving
+out signs in the unbalanced case):</p>
+<pre><code>[0, -1, +1, -1, -1, 0, 0, 0, +1] -&gt; [1, 0, 2, 0, 0, 1, 1, 1, 2]
+</code></pre>
+<p>Remembering that each ternary array is actually some integer <code>I</code>, this is akin to adding another integer <code>H</code> to it, with
+all trits in the ternary buffer representing it set to <code>1</code>, where <code>I'</code> is <code>I</code> shifted into unsigned space, and the
+underscore <code>_t</code> means a ternary representation (either balanced or unbalanced):</p>
+<pre><code>I_t + H_t = [0, -1, +1, -1, -1, 0, 0, 0, +1] + [+1, +1, +1, +1, +1, +1, +1, +1] = I'_t
+</code></pre>
+<p>After changing the base to binary using some function which would be called <code>to_bin</code> and which would be required to be
+distributed over addition, <code>H</code> needs to be subtracted again. We use <code>_b</code> to signify a binary representation:</p>
+<pre><code>I'_b = to_bin(I'_t) = to_bin(I_t + H_t) = to_bin(I_t) + to_bin(H_t) = I_b + H_b
+=&gt;
+I_b = I'_b - H_b
+</code></pre>
+<p>In other words, the addition of the ternary buffer filled with <code>1</code>s that shifts all trits into unbalanced space is
+reverted after conversion to binary, where the buffer of <code>1</code>s is also converted to binary and then subtracted from the
+binary unsigned big integer. The result then is the integer <code>I</code> in binary.</p>
+<h5><a class="header" href="#243-trits-do-not-fit-into-384-bits" id="243-trits-do-not-fit-into-384-bits">243 trits do not fit into 384 bits</a></h5>
+<p>Since 243 trits do not fit into 384 bits, a choice has to be made about how to treat the most significant trit.
+For example, one could take the binary big integer, convert it to ternary, and then check if the 243 are smaller than
+this converted maximum 384 bit big int. With <code>Kerl</code>, the choice was made to disregard the most significant trit, so that
+one only ever converts 242 trits to 384 bits, which always fits.</p>
+<p>For the direction <code>ternary -&gt; binary</code> this does not pose challenges, other than making sure that one sets the most
+significant trit to <code>0</code> after the shift by applying <code>+1</code> (if one chooses to reuse the array of 243 trits), and by making
+sure to subtract <code>H_b</code> (see previous section) with the most significant trit set to <code>0</code> and all others set to <code>1</code>.</p>
+<p>The direction <code>binary -&gt; ternary</code> (the conversion of the 384-bit hash squeezed from keccak) is the challenging part: one
+needs to ensure that the most significant trit is is set to 0 before the binary-encoded integer is converted to ternary.
+However, this has to happen in binary space!</p>
+<p>Take <code>J_b</code> as the 384 bit integer coming out of the sponge. Then after conversion to ternary, <code>to_ter(J_b) = J_t</code>, the
+most significant trit (MST) of <code>J_t</code> might be <code>+1</code> or <code>-1</code>. However, since by convention the MST has to be 0, one needs
+to check whether <code>J_b</code> would cause <code>J_t</code> to have its MST set after conversion. This is done the following way:</p>
+<pre><code>if J_b &gt; to_bin([0, 1, 1, ..., 1]):
+    J_b &lt;- J_b - to_bin([1, 0, 0, ..., 0])
+
+if J_b &lt; (to_bin([0, 0, 0, ..., 0]) - to_bin([0, 1, 1, ..., 1])):
+    J_b &lt;- J_b + to_bin([1, 0, 0, ..., 0])
+</code></pre>
+<h5><a class="header" href="#kerl-updates-the-inner-state-by-applying-logical-not" id="kerl-updates-the-inner-state-by-applying-logical-not">Kerl updates the inner state by applying logical not</a></h5>
+<p>The upstream keccak implementation uses a complicated permutation to update the inner state of the sponge construction
+after a hash was squeezed from it. <code>Kerl</code> opts to apply logical not, <code>!</code>, to the bytes squeezed from <code>keccak</code>, and
+updating <code>keccak</code>'s inner state with these.</p>
+<h4><a class="header" href="#design-and-implementation" id="design-and-implementation">Design and implementation</a></h4>
+<p>The main goal of the implementation was to ensure that representation of the integer was cast into types. To that end,
+the following ternary types are defined as wrappers around <code>TritBuf</code> (read <code>T243</code> the same way you would think of <code>u32</code>
+or <code>i64</code>):</p>
+<pre><pre class="playground"><code class="language-rust">
+<span class="boring">#![allow(unused)]
+</span><span class="boring">fn main() {
+</span>struct T242&lt;T: Trit&gt; {
+    inner: TritBuf&lt;T1B1Buf&lt;T&gt;&gt;,
+}
+
+struct T243&lt;T: Trit&gt; {
+    inner: TritBuf&lt;T1B1Buf&lt;T&gt;&gt;,
+}
+<span class="boring">}
+</span></code></pre></pre>
+<p>where <code>TritBuf</code>, <code>T1B1Buf</code>, and <code>Trit</code> are types and traits defined in the <code>bee-ternary</code> crate. The bound <code>Trit</code> ensures
+that the structs only contain ternary buffers with <code>Btrit</code> (for balancer ternary), and <code>Utrit</code> (for unbalanced ternary).
+Methods on <code>T242</code> and <code>T243</code> assume that the most significant trit is always in the last position (think “little
+endian”).</p>
+<p>For the binary representation of the integer, the types <code>I384</code> (“signed” integer akin to <code>i64</code>), and <code>U384</code> (“unsigned”
+akin to <code>u64</code>) are defined:</p>
+<pre><pre class="playground"><code class="language-rust">
+<span class="boring">#![allow(unused)]
+</span><span class="boring">fn main() {
+</span>struct I384&lt;E, T&gt; {
+    inner: T,
+    _phantom: PhantomData&lt;E&gt;.
+}
+
+struct U384&lt;E, T&gt; {
+    inner: T,
+    _phantom: PhantomData&lt;E&gt;.
+}
+<span class="boring">}
+</span></code></pre></pre>
+<p><code>inner: T</code> for encoding the inner fixed-size arrays used for storing either bytes, <code>u8</code>, or integers, <code>u32</code>:</p>
+<pre><pre class="playground"><code class="language-rust">
+<span class="boring">#![allow(unused)]
+</span><span class="boring">fn main() {
+</span>type U8Repr = [u8; 48];
+type U32Repr = [u32; 12];
+<span class="boring">}
+</span></code></pre></pre>
+<p>The phantom type <code>E</code> is used to encode endianness, <code>BigEndian</code> and <code>LittleEndian</code>. These are just used as marker types
+without any methods.</p>
+<pre><pre class="playground"><code class="language-rust">
+<span class="boring">#![allow(unused)]
+</span><span class="boring">fn main() {
+</span>struct BigEndian {}
+struct LittleEndian {}
+
+trait EndianType {}
+
+impl EndianType for BigEndian {}
+impl EndianType for LittleEndian {}
+<span class="boring">}
+</span></code></pre></pre>
+<p>The underlying arrays and endianness are important, because <code>keccak</code> expects bytes as input, and because <code>Kerl</code> made the
+choice to revert the order of the integers in binary big int.</p>
+<p>To understand the implementation, the most important methods are:</p>
+<pre><pre class="playground"><code class="language-rust">
+<span class="boring">#![allow(unused)]
+</span><span class="boring">fn main() {
+</span>T242&lt;Btrit&gt;::from_i384_ignoring_mst
+T243&lt;Utrit&gt;::from_u384
+I384&lt;LittleEndian, U32Repr&gt;::from_t242
+I384&lt;LittleEndian, U32Repr&gt;::try_from_t242
+U384&lt;LittleEndian, U32Repr&gt;::add_inplace
+U384&lt;LittleEndian, U32Repr&gt;::add_digit_inplace
+U384&lt;LittleEndian, U32Repr&gt;::sub_inplace
+U384&lt;LittleEndian, U32Repr&gt;::from_t242
+U384&lt;LittleEndian, U32Repr&gt;::try_from_t243
+<span class="boring">}
+</span></code></pre></pre>
+<h1><a class="header" href="#drawbacks-3" id="drawbacks-3">Drawbacks</a></h1>
+<ul>
+<li>All hash functions, no matter if they can fail or not, have to implement <code>Error</code>;</li>
+</ul>
+<h1><a class="header" href="#rationale-and-alternatives-3" id="rationale-and-alternatives-3">Rationale and alternatives</a></h1>
+<ul>
+<li><code>CurlP</code> and <code>Kerl</code> are fundamental to the <code>iri v1.8.6</code> mainnet. They are thus essential for compatibility with it;</li>
+<li>These types are idiomatic in Rust, and users are not required to know the implementation details of each hash
+algorithm;</li>
+</ul>
+<h1><a class="header" href="#unresolved-questions-3" id="unresolved-questions-3">Unresolved questions</a></h1>
+<ul>
+<li>Parameters are slice reference in both input and output. Do values need to be consumed or should new instances as
+return values be created?;</li>
+<li>Implementation of each hash functions and other utilities like HMAC should have separate RFCs for them;</li>
+<li>Decision on implementation of <code>Troika</code> is still unknown;</li>
+<li>Can (should?) the <code>CurlP</code> algorithm be explained in more detail?;</li>
+<li>Is it important to encode that the most significant trit is <code>0</code> by having a <code>T242</code>?;</li>
+</ul>
+<ul>
 <li>Feature name: <code>logging</code></li>
 <li>Start date: 2020-05-23</li>
 <li>RFC PR: <a href="https://github.com/iotaledger/bee-rfcs/pull/35">iotaledger/bee-rfcs#35</a></li>
 <li>Bee issue: <a href="https://github.com/iotaledger/bee/issues/78">iotaledger/bee#78</a></li>
 </ul>
-<h1><a class="header" href="#summary-3" id="summary-3">Summary</a></h1>
+<h1><a class="header" href="#summary-4" id="summary-4">Summary</a></h1>
 <p>This RFC introduces a logging library - <code>log</code> - and some recommendations on how to log in the Bee project.</p>
-<h1><a class="header" href="#motivation-3" id="motivation-3">Motivation</a></h1>
+<h1><a class="header" href="#motivation-4" id="motivation-4">Motivation</a></h1>
 <p>Logging is done across almost all binary and library crates in the Bee project, so consistency is needed to provide a
 better user experience.</p>
-<h1><a class="header" href="#detailed-design-3" id="detailed-design-3">Detailed design</a></h1>
+<h1><a class="header" href="#detailed-design-4" id="detailed-design-4">Detailed design</a></h1>
 <p>Logging in Bee should be done through the <a href="https://crates.io/crates/log">log</a> crate (<code>A Rust library providing a lightweight logging facade</code>) which is the de-facto standard library for logging in the Rust ecosystem.</p>
 <p>The <code>log</code> crate itself is just a frontend and supports the implementation of many different backends.</p>
 <blockquote>
@@ -1193,9 +1666,9 @@ risking a breaking change.</p>
 <p>Example: <code>[2020-05-25][10:23:03][bee_node::node][INFO] Initializing...</code></p>
 <p><strong>Note</strong>: All messages should end either with <code>...</code> (3 dots) to indicate something potentially long-lasting is
 happening, or with <code>.</code> (1 dot) to indicate events that just happened.</p>
-<h1><a class="header" href="#drawbacks-3" id="drawbacks-3">Drawbacks</a></h1>
+<h1><a class="header" href="#drawbacks-4" id="drawbacks-4">Drawbacks</a></h1>
 <p>No specific drawbacks using this library.</p>
-<h1><a class="header" href="#rationale-and-alternatives-3" id="rationale-and-alternatives-3">Rationale and alternatives</a></h1>
+<h1><a class="header" href="#rationale-and-alternatives-4" id="rationale-and-alternatives-4">Rationale and alternatives</a></h1>
 <ul>
 <li>The <code>log</code> crate is maintained by the rust team, so it is a widely used and trusted dependency in the Bee framework;</li>
 <li>Most of the logging crates in the Rust ecosystem are actually backends for the <code>log</code> crate with different features;</li>
@@ -1203,7 +1676,7 @@ happening, or with <code>.</code> (1 dot) to indicate events that just happened.
 <li>There are a lot of <a href="https://docs.rs/log/0.4.8/log/#available-logging-implementations">available backends</a> but <code>fern</code>
 offers a very fine-grained logging configuration;</li>
 </ul>
-<h1><a class="header" href="#unresolved-questions-3" id="unresolved-questions-3">Unresolved questions</a></h1>
+<h1><a class="header" href="#unresolved-questions-4" id="unresolved-questions-4">Unresolved questions</a></h1>
 <p>There are no open questions as this RFC is pretty straightforward and the topic of logging is not a complex one.</p>
 <ul>
 <li>Feature name: <code>ternary</code></li>
@@ -1211,11 +1684,11 @@ offers a very fine-grained logging configuration;</li>
 <li>RFC PR: <a href="https://github.com/iotaledger/bee-rfcs/pull/36">iotaledger/bee-rfcs#36</a></li>
 <li>Bee issue: <a href="https://github.com/iotaledger/bee/issues/80">iotaledger/bee#80</a></li>
 </ul>
-<h1><a class="header" href="#summary-4" id="summary-4">Summary</a></h1>
+<h1><a class="header" href="#summary-5" id="summary-5">Summary</a></h1>
 <p>This RFC introduces both the API and implementation of the <code>bee-ternary</code>
 crate, a general-purpose ternary manipulation crate written in Rust that may be
 used to handle ternary data in the IOTA ecosystem.</p>
-<h1><a class="header" href="#motivation-4" id="motivation-4">Motivation</a></h1>
+<h1><a class="header" href="#motivation-5" id="motivation-5">Motivation</a></h1>
 <p>Ternary has been a fundamental part of the IOTA technology and is used
 throughout, including for fundamental features like wallet addresses and transaction
 identification.</p>
@@ -1254,7 +1727,7 @@ may change later, but broadly this RFC intends to introduce an API that does not
 inherently inhibit high performance through poor design choices.</p>
 </li>
 </ul>
-<h1><a class="header" href="#detailed-design-4" id="detailed-design-4">Detailed design</a></h1>
+<h1><a class="header" href="#detailed-design-5" id="detailed-design-5">Detailed design</a></h1>
 <p><code>bee-ternary</code> is designed to be extensible and is built on top of a handful of
 fundamental abstraction types. Below are listed the features of the API and a
 summary of the core API features.</p>
@@ -1478,15 +1951,15 @@ the same underlying representation as a tryte slice.</p>
 </span>tgt.copy_from(&amp;src[start..end])
 <span class="boring">}
 </span></code></pre></pre>
-<h1><a class="header" href="#drawbacks-4" id="drawbacks-4">Drawbacks</a></h1>
+<h1><a class="header" href="#drawbacks-5" id="drawbacks-5">Drawbacks</a></h1>
 <p>This RFC does not have any particular drawbacks over an alternative approach.
 Ternary is currently essential to the function of much of the IOTA ecosystem
 and Bee requires a ternary API of some sort in order to effectively operate
 within it.</p>
-<h1><a class="header" href="#rationale-and-alternatives-4" id="rationale-and-alternatives-4">Rationale and alternatives</a></h1>
+<h1><a class="header" href="#rationale-and-alternatives-5" id="rationale-and-alternatives-5">Rationale and alternatives</a></h1>
 <p>No suitable alternatives exist to this RFC. Rust does not have a mature ternary
 manipulation crate immediately available that suits our needs.</p>
-<h1><a class="header" href="#unresolved-questions-4" id="unresolved-questions-4">Unresolved questions</a></h1>
+<h1><a class="header" href="#unresolved-questions-5" id="unresolved-questions-5">Unresolved questions</a></h1>
 <p>The API has now been in use in Bee for several months. Questions about
 additional API features exist, but the current API seems to have proved its
 suitability.</p>
@@ -1496,9 +1969,9 @@ suitability.</p>
 <li>RFC PR: <a href="https://github.com/iotaledger/bee-rfcs/pull/37">iotaledger/bee-rfcs#37</a></li>
 <li>Bee issue: <a href="https://github.com/iotaledger/bee/issues/93">iotaledger/bee#93</a></li>
 </ul>
-<h1><a class="header" href="#summary-5" id="summary-5">Summary</a></h1>
+<h1><a class="header" href="#summary-6" id="summary-6">Summary</a></h1>
 <p>Add a way to convert to and from numeric binary types for ternary types.</p>
-<h1><a class="header" href="#motivation-5" id="motivation-5">Motivation</a></h1>
+<h1><a class="header" href="#motivation-6" id="motivation-6">Motivation</a></h1>
 <p>Conversion between binary and ternary is often useful and so a good solution to
 this is required.</p>
 <p>For example, this feature permits the following conversions.</p>
@@ -1511,7 +1984,7 @@ let y = i64::try_from(x_trits.as_slice()).unwrap();
 assert_eq!(x, y);
 <span class="boring">}
 </span></code></pre></pre>
-<h1><a class="header" href="#detailed-design-5" id="detailed-design-5">Detailed design</a></h1>
+<h1><a class="header" href="#detailed-design-6" id="detailed-design-6">Detailed design</a></h1>
 <p>This RFC introduces the following trait implementations:</p>
 <pre><pre class="playground"><code class="language-rust">
 <span class="boring">#![allow(unused)]
@@ -1530,11 +2003,11 @@ impl&lt;'a, T: RawEncoding&lt;Trit = Btrit&gt; + ?Sized&gt; TryFrom&lt;&amp;'a T
 of numeric binary types for ternary types. The <code>AsPrimitive</code> trait comes from
 the <a href="https://docs.rs/num-traits/0.2.12/num_traits/cast/trait.AsPrimitive.html"><code>num_traits</code></a>
 crate, common throughout the Rust ecosystem.</p>
-<h1><a class="header" href="#drawbacks-5" id="drawbacks-5">Drawbacks</a></h1>
+<h1><a class="header" href="#drawbacks-6" id="drawbacks-6">Drawbacks</a></h1>
 <p>It doesn't allow <em>arbitrary</em> binary conversion, only for fixed-size integers.</p>
-<h1><a class="header" href="#rationale-and-alternatives-5" id="rationale-and-alternatives-5">Rationale and alternatives</a></h1>
+<h1><a class="header" href="#rationale-and-alternatives-6" id="rationale-and-alternatives-6">Rationale and alternatives</a></h1>
 <p>No alternatives exist.</p>
-<h1><a class="header" href="#unresolved-questions-5" id="unresolved-questions-5">Unresolved questions</a></h1>
+<h1><a class="header" href="#unresolved-questions-6" id="unresolved-questions-6">Unresolved questions</a></h1>
 <p>None so far.</p>
 
                     </main>
