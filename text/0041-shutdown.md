@@ -1,7 +1,7 @@
 + Feature name: `shutdown`
 + Start date: 2020-07-03
-+ RFC PR: [iotaledger/bee-rfcs#00xx](https://github.com/iotaledger/bee-rfcs/pull/00xx)
-+ Bee issue: [iotaledger/bee#00xx](https://github.com/iotaledger/bee/issues/00xx)
++ RFC PR: [iotaledger/bee-rfcs#41](https://github.com/iotaledger/bee-rfcs/pull/41)
++ Bee issue: [iotaledger/bee#96](https://github.com/iotaledger/bee/issues/96)
 
 # Summary
 
