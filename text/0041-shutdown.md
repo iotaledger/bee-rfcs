@@ -44,7 +44,7 @@ type WorkerShutdown = Box<dyn Future<Output = Result<(), WorkerError>> + Unpin>;
 // actions to prevent data loss and/or data corruption. Therefore each worker can register
 // an arbitrary amount of actions, that will be executed as the final step of the shutdown
 // process.
-type Action = Box<dyn Fn()>;
+type Action = Box<dyn FnOnce()>;
 ```
 
 **NOTE:** `WorkerShutdown` and `Action` are boxed trait objects; hence have a single owner, and are stored on the heap. The `Unpin` marker trait requirement ensures that the given trait object can be moved into the internal datastructure. If the worker terminates with an error, it will be wrapped by a variant of the `WorkerError` enum. If the worker terminates without any error, `()` is returned - this time indicating that the worker doesn't produce a return value.
@@ -79,38 +79,38 @@ impl Shutdown {
         Self::default()
     }
 
-    // Registers a shutdown notification channel by providing its sender half.
-    fn add_notifier(&mut self, notifier: ShutdownNotifier) {
-        self.notifiers.push(notifier);
-    }
-
     // Registers a worker shutdown future, which completes once the worker terminates in one
-    // way or another.
-    fn add_worker_shutdown(&mut self, worker: impl Future<Output = Result<(), WorkerError>> + Unpin + 'static) {
+    // way or another, and registers a shutdown notification channel by providing its sender half.
+    fn add_worker_shutdown(
+        &mut self,
+        worker: impl Future<Output = Result<(), WorkerError>> + Unpin + 'static,
+        notifier: ShutdownNotifier,
+    ) {
+        self.notifiers.push(notifier);
         self.worker_shutdowns.push(Box::new(worker));
     }
 
     // Registers an action to perform when the shutdown is executed.
-    fn add_action(&mut self, action: impl Fn() + 'static) {
+    fn add_action(&mut self, action: impl FnOnce() + 'static) {
         self.actions.push(Box::new(action));
     }
 
     // Executes the shutdown.
-    async fn execute(self) -> Result<(), Error> {
-        // Step 1: notify all registrees
-        for notifier in self.notifiers {
+    async fn execute(mut self) -> Result<(), Error> {
+        // Step 1: notify all registrees.
+        while let Some(notifier) = self.notifiers.pop() {
             notifier.send(()).map_err(|_| Error::SendingShutdownSignalFailed)?
         }
 
-        // Step 2: await workers to terminate their event loop
-        for worker in self.worker_shutdowns {
-            if let Err(e) = worker.await {
+        // Step 2: await workers to terminate their event loop.
+        while let Some(worker_shutdown) = self.worker_shutdowns.pop() {
+            if let Err(e) = worker_shutdown.await {
                 error!("Awaiting worker failed: {:?}.", e);
             }
         }
 
-        // Step 3: perform finalizing actions to prevent data/resource corruption
-        for action in self.actions {
+        // Step 3: perform finalizing actions to prevent data/resource corruption.
+        while let Some(action) = self.actions.pop() {
             action();
         }
 
@@ -119,10 +119,11 @@ impl Shutdown {
 }
 ```
 
-About the `execute` method there are two things worth mentioning:
+About the `execute` method there are three things worth mentioning:
 
-1. takes `self` - in other words - claims ownership over the `Shutdown` instance, which means that it will be deallocated at the end of the method body, and can no longer be used.
-2. is decorated with the `async` keyword, which means that under the hood it returns a `Future` that needs to be polled by an async runtime in order to make progress. In this specific case of a shutdown it almost always makes sense to `block_on` this method.
+1. takes `self` by value - in other words - claims ownership over the `Shutdown` instance, which means that it will be deallocated at the end of the method body, and can no longer be used;
+2. is decorated with the `async` keyword, which means that under the hood it returns a `Future` that needs to be polled by an async runtime in order to make progress. In this specific case of a shutdown it almost always makes sense to `block_on` this method;
+3. workers shut down in reverse order as they registered;
 
 
 # Drawbacks
