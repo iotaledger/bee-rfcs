@@ -71,7 +71,6 @@ struct Shutdown {
 
 The API of `Shutdown` is very small. It only needs to allow filling those internal lists, and provide an `execute` method to facilitate the actual shutdown:
 
-The implementation of `Shutdown` looks like this:
 ```rust
 impl Shutdown {
 
