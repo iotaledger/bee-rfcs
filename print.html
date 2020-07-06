@@ -1837,6 +1837,57 @@ in the future (linked lists, stack-allocated arrays, etc.).</li>
 <li>Allow different encodings in <code>TritBuf</code> types.</li>
 <li>Each type is associated with a <code>RawEncoding</code> type.</li>
 </ul>
+<h3><a class="header" href="#tryte" id="tryte"><code>Tryte</code></a></h3>
+<pre><pre class="playground"><code class="language-rust">
+<span class="boring">#![allow(unused)]
+</span><span class="boring">fn main() {
+</span>enum Tryte {
+    N = -13,
+    O = -12,
+    P = -11,
+    Q = -10,
+    R = -9,
+    S = -8,
+    T = -7,
+    U = -6,
+    V = -5,
+    W = -4,
+    X = -3,
+    Y = -2,
+    Z = -1,
+    Nine = 0,
+    A = 1,
+    B = 2,
+    C = 3,
+    D = 4,
+    E = 5,
+    F = 6,
+    G = 7,
+    H = 8,
+    I = 9,
+    J = 10,
+    K = 11,
+    L = 12,
+    M = 13,
+}
+<span class="boring">}
+</span></code></pre></pre>
+<ul>
+<li>Type that represents a ternary tryte.</li>
+<li>Has the same representation as 3 <code>T3B1</code> byte-aligned trits.</li>
+</ul>
+<h3><a class="header" href="#trytebuf" id="trytebuf"><code>TryteBuf</code></a></h3>
+<pre><pre class="playground"><code class="language-rust">
+<span class="boring">#![allow(unused)]
+</span><span class="boring">fn main() {
+</span>struct TryteBuf { ... }
+<span class="boring">}
+</span></code></pre></pre>
+<ul>
+<li>A growable linear buffer of <code>Tryte</code>s.</li>
+<li>Roughly analogous to <code>Vec</code>.</li>
+<li>Has utility methods for converting to/from tryte strings.</li>
+</ul>
 <h2><a class="header" href="#api" id="api">API</a></h2>
 <p>The API makes up the body of this RFC. Due to its considerable length, this RFC
 simply refers to the documentation in question. You can find those docs in the
@@ -1905,7 +1956,7 @@ the same underlying representation as a tryte slice.</p>
 	.collect::&lt;String&gt;()
 <span class="boring">}
 </span></code></pre></pre>
-<h3><a class="header" href="#turning-a-tryte-string-into-a-t3b1-trit-buffer" id="turning-a-tryte-string-into-a-t3b1-trit-buffer">Turning a tryte string into a <code>T3B1</code> trit buffer</a></h3>
+<h3><a class="header" href="#turning-a-tryte-string-into-a-tryte-buffer" id="turning-a-tryte-string-into-a-tryte-buffer">Turning a tryte string into a tryte buffer</a></h3>
 <pre><pre class="playground"><code class="language-rust">
 <span class="boring">#![allow(unused)]
 </span><span class="boring">fn main() {
