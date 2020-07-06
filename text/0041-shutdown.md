@@ -83,8 +83,8 @@ impl Shutdown {
     // way or another, and registers a shutdown notification channel by providing its sender half.
     fn add_worker_shutdown(
         &mut self,
-        worker: impl Future<Output = Result<(), WorkerError>> + Unpin + 'static,
         notifier: ShutdownNotifier,
+        worker: impl Future<Output = Result<(), WorkerError>> + Unpin + 'static,
     ) {
         self.notifiers.push(notifier);
         self.worker_shutdowns.push(Box::new(worker));
