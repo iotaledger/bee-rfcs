@@ -3,7 +3,7 @@
     <head>
         <!-- Book generated using mdBook -->
         <meta charset="UTF-8">
-        <title>0035-logging - The Bee RFC Book</title>
+        <title>0041-shutdown - The Bee RFC Book</title>
         
         
 
@@ -89,7 +89,7 @@
 
         <nav id="sidebar" class="sidebar" aria-label="Table of contents">
             <div class="sidebar-scrollbox">
-                <ol class="chapter"><li class="chapter-item expanded affix "><a href="introduction.html">Introduction</a></li><li class="chapter-item expanded "><a href="0030-protocol-messages.html">0030-protocol-messages</a></li><li class="chapter-item expanded "><a href="0031-configuration.html">0031-configuration</a></li><li class="chapter-item expanded "><a href="0033-network.html">0033-network</a></li><li class="chapter-item expanded "><a href="0034-ternary-hash.html">0034-ternary-hash</a></li><li class="chapter-item expanded "><a href="0035-logging.html" class="active">0035-logging</a></li><li class="chapter-item expanded "><a href="0036-ternary.html">0036-ternary</a></li><li class="chapter-item expanded "><a href="0037-ternary-numeric-conversion.html">0037-ternary-numeric-conversion</a></li><li class="chapter-item expanded "><a href="0041-shutdown.html">0041-shutdown</a></li></ol>
+                <ol class="chapter"><li class="chapter-item expanded affix "><a href="introduction.html">Introduction</a></li><li class="chapter-item expanded "><a href="0030-protocol-messages.html">0030-protocol-messages</a></li><li class="chapter-item expanded "><a href="0031-configuration.html">0031-configuration</a></li><li class="chapter-item expanded "><a href="0033-network.html">0033-network</a></li><li class="chapter-item expanded "><a href="0034-ternary-hash.html">0034-ternary-hash</a></li><li class="chapter-item expanded "><a href="0035-logging.html">0035-logging</a></li><li class="chapter-item expanded "><a href="0036-ternary.html">0036-ternary</a></li><li class="chapter-item expanded "><a href="0037-ternary-numeric-conversion.html">0037-ternary-numeric-conversion</a></li><li class="chapter-item expanded "><a href="0041-shutdown.html" class="active">0041-shutdown</a></li></ol>
             </div>
             <div id="sidebar-resize-handle" class="sidebar-resize-handle"></div>
         </nav>
@@ -156,164 +156,149 @@
                 <div id="content" class="content">
                     <main>
                         <ul>
-<li>Feature name: <code>logging</code></li>
-<li>Start date: 2020-05-23</li>
-<li>RFC PR: <a href="https://github.com/iotaledger/bee-rfcs/pull/35">iotaledger/bee-rfcs#35</a></li>
-<li>Bee issue: <a href="https://github.com/iotaledger/bee/issues/78">iotaledger/bee#78</a></li>
+<li>Feature name: <code>shutdown</code></li>
+<li>Start date: 2020-07-03</li>
+<li>RFC PR: <a href="https://github.com/iotaledger/bee-rfcs/pull/41">iotaledger/bee-rfcs#41</a></li>
+<li>Bee issue: <a href="https://github.com/iotaledger/bee/issues/96">iotaledger/bee#96</a></li>
 </ul>
 <h1><a class="header" href="#summary" id="summary">Summary</a></h1>
-<p>This RFC introduces a logging library - <code>log</code> - and some recommendations on how to log in the Bee project.</p>
+<p>This RFC proposes a unified way of achieving a graceful shutdown of arbitrarily many async workers and their utilized resources in the Bee framework.</p>
 <h1><a class="header" href="#motivation" id="motivation">Motivation</a></h1>
-<p>Logging is done across almost all binary and library crates in the Bee project, so consistency is needed to provide a
-better user experience.</p>
+<p>Rust provides one of the most powerful, performant, and still safest abstractions to deal with <em>concurrency</em>. You can read about Rust's concurrency story <a href="https://doc.rust-lang.org/book/ch16-00-concurrency.html">here</a>.</p>
+<p>One problem that arises when dealing with many asynchronous tasks within a system is to ensure that all of them terminate gracefully once an agreed upon shutdown signal was issued. An example for this is when a software intercepts the press of <code>^C</code> in the terminal, and then executes specialized instructions to prevent data corruption before finally exiting the application.</p>
+<p>This feature solves this problem by introducing a type called <code>Shutdown</code>, that allows to register ansynchronous workers, and <code>execute</code> a shutdown in a 3-step process:</p>
+<ol>
+<li>Send a shutdown signal to all registered workers;</li>
+<li>Wait for all the workers to terminate;</li>
+<li>Perform final actions (like flushing buffers to databases, saving files, etc.)</li>
+</ol>
 <h1><a class="header" href="#detailed-design" id="detailed-design">Detailed design</a></h1>
-<p>Logging in Bee should be done through the <a href="https://crates.io/crates/log">log</a> crate (<code>A Rust library providing a lightweight logging facade</code>) which is the de-facto standard library for logging in the Rust ecosystem.</p>
-<p>The <code>log</code> crate itself is just a frontend and supports the implementation of many different backends.</p>
-<blockquote>
-<p>It provides a single logging API that abstracts over the actual logging implementation. Libraries can use the logging
-API provided by this crate, and the consumer of those libraries can choose the logging implementation that is most
-suitable for its use case.</p>
-</blockquote>
-<h2><a class="header" href="#frontend" id="frontend">Frontend</a></h2>
-<blockquote>
-<p>Libraries should link only to the log crate, and use the provided macros to log whatever information will be useful
-to downstream consumers.</p>
-</blockquote>
-<p>The <code>log</code> crate provides the following macros, from lowest priority to highest priority:</p>
-<ul>
-<li><code>trace!</code></li>
-<li><code>debug!</code></li>
-<li><code>info!</code></li>
-<li><code>warn!</code></li>
-<li><code>error!</code></li>
-</ul>
-<p>These macros have a usage similar to the <code>println!</code> macro.</p>
-<p>A log request consists of a <code>target</code>, a <code>level</code>, and a <code>message</code>.</p>
-<p>By default, the target represents the location of the log request, but may be overridden.</p>
-<p>Example with default target:</p>
+<p>As the shutdown signal itself contains no data, the zero-sized unit type <code>()</code> is used to model it. Furthermore, as the synchronizing mechanism, this RFC proposes the use of <code>oneshot</code> channels from the <code>futures</code> crate. Those channels are consumed, i.e. destroyed, when calling <code>send</code> once; this way Rust ensures at compile-time, that no further redundant shutdown signals can be sent to the same listener.</p>
+<p>To make the code more readable and less verbose, this RFC proposes the following type aliases:</p>
 <pre><pre class="playground"><code class="language-rust">
 <span class="boring">#![allow(unused)]
 </span><span class="boring">fn main() {
-</span>info!(&quot;Connected to port {} at {} Mb/s&quot;, conn_info.port, conn_info.speed);
-<span class="boring">}
-</span></code></pre></pre>
-<p>Example with overridden target:</p>
-<pre><pre class="playground"><code class="language-rust">
-<span class="boring">#![allow(unused)]
-</span><span class="boring">fn main() {
-</span>info!(target: &quot;connection_events&quot;, &quot;Successful connection, port: {}, speed: {}&quot;, conn_info.port, conn_info.speed);
-<span class="boring">}
-</span></code></pre></pre>
-<h2><a class="header" href="#backend" id="backend">Backend</a></h2>
-<blockquote>
-<p>Executables should choose a logging implementation and initialize it early in the runtime of the program. Logging
-implementations will typically include a function to do this. Any log messages generated before the implementation is
-initialized will be ignored.</p>
-</blockquote>
-<p>There are a lot of <a href="https://docs.rs/log/0.4.8/log/#available-logging-implementations">available backends</a> for the <code>log</code>
-frontend.</p>
-<p>This RFC opts for the <a href="https://docs.rs/fern">fern</a> backend which is a very complete one with an advanced configuration.</p>
-<h3><a class="header" href="#initialization" id="initialization">Initialization</a></h3>
-<p>The backend API is limited to one function call to initialize the logger. It is designed to be updatable without
-breaking changes by taking a <code>LoggerConfig</code> configuration object and returning a <code>Result</code>.</p>
-<pre><pre class="playground"><code class="language-rust">
-<span class="boring">#![allow(unused)]
-</span><span class="boring">fn main() {
-</span>fn logger_init(config: LoggerConfig) -&gt; Result&lt;(), Error&gt;;
-<span class="boring">}
-</span></code></pre></pre>
-<h3><a class="header" href="#configuration" id="configuration">Configuration</a></h3>
-<p>The following configuration - compliant with <a href="https://github.com/iotaledger/bee-rfcs/blob/master/text/0031-configuration.md">RFC 31</a> -
-primarily allows configuring different outputs with different log levels.</p>
-<p><code>config.rs</code></p>
-<pre><pre class="playground"><code class="language-rust">
-<span class="boring">#![allow(unused)]
-</span><span class="boring">fn main() {
-</span>#[derive(Clone)]
-struct LoggerOutputConfig {
-    name: String,
-    level: LevelFilter,
-    ...
-}
+</span>// The &quot;notifier&quot; is the origin of the shutdown signal. For each spawned worker a
+// dedicated notifier will be created and kept in a list.
+type ShutdownNotifier = oneshot::Sender&lt;()&gt;;
 
-#[derive(Clone)]
-struct LoggerConfig {
-    color: bool,
-    outputs: Vec&lt;LoggerOutputConfig&gt;,
-    ...
-}
+// The &quot;listener&quot; is the receiver of the shutdown signal. It awaits the shutdown
+// signal as part of the event loop of the corresponding worker.
+type ShutdownListener = oneshot::Receiver&lt;()&gt;;
+
+// For each async worker the async runtime creates a `Future`, that completes when the
+// worker terminates, i.e. shuts down. To make sure, the shutdown is complete, one has
+// to store those `Future`s in a list, and await all of them iteratively before exiting
+// the program.
+type WorkerShutdown = Box&lt;dyn Future&lt;Output = Result&lt;(), WorkerError&gt;&gt; + Unpin&gt;;
+
+// Before shutting down a system, workers oftentimes need to perform one or more final
+// actions to prevent data loss and/or data corruption. Therefore each worker can register
+// an arbitrary amount of actions, that will be executed as the final step of the shutdown
+// process.
+type Action = Box&lt;dyn FnOnce()&gt;;
 <span class="boring">}
 </span></code></pre></pre>
-<p><code>config.toml</code></p>
-<pre><code class="language-toml">[logger]
-color = true
-[[logger.outputs]]
-name  = &quot;stdout&quot;
-level = &quot;info&quot;
-[[logger.outputs]]
-name  = &quot;errors.log&quot;
-level = &quot;error&quot;
-</code></pre>
-<p><strong>Note</strong>: <code>stdout</code> is a reserved name for the standard output of the console.</p>
-<h3><a class="header" href="#errors" id="errors">Errors</a></h3>
-<p>Since different backends may have different errors, we need to abstract them to provide a consistent <code>logger_init</code>
-function.</p>
+<p><strong>NOTE:</strong> <code>WorkerShutdown</code> and <code>Action</code> are boxed trait objects; hence have a single owner, and are stored on the heap. The <code>Unpin</code> marker trait requirement ensures that the given trait object can be moved into the internal datastructure. If the worker terminates with an error, it will be wrapped by a variant of the <code>WorkerError</code> enum. If the worker terminates without any error, <code>()</code> is returned - this time indicating that the worker doesn't produce a return value.</p>
+<h2><a class="header" href="#shutdown" id="shutdown"><code>Shutdown</code></a></h2>
+<p>The shutdown functionality can be implemented using only one central type, that essentially is an append-only registry with a single <code>execute</code> operation. There is no need for removal, or identifying single items as the operation is applied to all of them equally, and once done, the whole program can be expected to terminate.</p>
+<p>This <code>Shutdown</code> type looks like this:</p>
 <pre><pre class="playground"><code class="language-rust">
 <span class="boring">#![allow(unused)]
 </span><span class="boring">fn main() {
-</span>#[derive(Debug)]
-#[non_exhaustive]
-enum Error {
-    ...
+</span>struct Shutdown {
+    // A list of all registered shutdown signal senders, briefly labeled as &quot;notifiers&quot;.
+    notifiers: Vec&lt;ShutdownNotifier&gt;,
+
+    // A list of all registered worker termination `Future`s.
+    worker_shutdowns: Vec&lt;WorkerShutdown&gt;,
+
+    // A list of all registered finalizing actions performed once all async workers
+    // have terminated.
+    actions: Vec&lt;Action&gt;,
 }
 <span class="boring">}
 </span></code></pre></pre>
-<p><strong>Note</strong>: The <code>Error</code> enum has to be <code>non_exhaustive</code> to allow further improving / extending the logger without
-risking a breaking change.</p>
-<h2><a class="header" href="#format" id="format">Format</a></h2>
-<p>The following elements should appear in this order:</p>
-<ul>
-<li>Date in the <code>%Y-%m-%d</code> format e.g. <code>2020-05-25</code>;</li>
-<li>Time in the <code>%H:%M:%S</code> format e.g. <code>10:23:03</code>;</li>
-<li>Target e.g. <code>bee_node::node</code>;
-<ul>
-<li>The default target is preferred but can be overridden if needed;</li>
-</ul>
-</li>
-<li>Level e.g. <code>INFO</code>;</li>
-<li>Message e.g. <code>Initializing...</code>;</li>
-</ul>
-<p>All elements should be enclosed in brackets <code>[...]</code> with only a space between the level and the message.</p>
-<p>Example: <code>[2020-05-25][10:23:03][bee_node::node][INFO] Initializing...</code></p>
-<p><strong>Note</strong>: All messages should end either with <code>...</code> (3 dots) to indicate something potentially long-lasting is
-happening, or with <code>.</code> (1 dot) to indicate events that just happened.</p>
+<p>The API of <code>Shutdown</code> is very small. It only needs to allow filling those internal lists, and provide an <code>execute</code> method to facilitate the actual shutdown:</p>
+<pre><pre class="playground"><code class="language-rust">
+<span class="boring">#![allow(unused)]
+</span><span class="boring">fn main() {
+</span>impl Shutdown {
+
+    // Creates a new instance
+    fn new() -&gt; Self {
+        Self::default()
+    }
+
+    // Registers a worker shutdown future, which completes once the worker terminates in one
+    // way or another, and registers a shutdown notification channel by providing its sender half.
+    fn add_worker_shutdown(
+        &amp;mut self,
+        notifier: ShutdownNotifier,
+        worker: impl Future&lt;Output = Result&lt;(), WorkerError&gt;&gt; + Unpin + 'static,
+    ) {
+        self.notifiers.push(notifier);
+        self.worker_shutdowns.push(Box::new(worker));
+    }
+
+    // Registers an action to perform when the shutdown is executed.
+    fn add_action(&amp;mut self, action: impl FnOnce() + 'static) {
+        self.actions.push(Box::new(action));
+    }
+
+    // Executes the shutdown.
+    async fn execute(mut self) -&gt; Result&lt;(), Error&gt; {
+        // Step 1: notify all registrees.
+        while let Some(notifier) = self.notifiers.pop() {
+            notifier.send(()).map_err(|_| Error::SendingShutdownSignalFailed)?
+        }
+
+        // Step 2: await workers to terminate their event loop.
+        while let Some(worker_shutdown) = self.worker_shutdowns.pop() {
+            if let Err(e) = worker_shutdown.await {
+                error!(&quot;Awaiting worker failed: {:?}.&quot;, e);
+            }
+        }
+
+        // Step 3: perform finalizing actions to prevent data/resource corruption.
+        while let Some(action) = self.actions.pop() {
+            action();
+        }
+
+        Ok(())
+    }
+}
+<span class="boring">}
+</span></code></pre></pre>
+<p>About the <code>execute</code> method there are three things worth mentioning:</p>
+<ol>
+<li>takes <code>self</code> by value - in other words - claims ownership over the <code>Shutdown</code> instance, which means that it will be deallocated at the end of the method body, and can no longer be used;</li>
+<li>is decorated with the <code>async</code> keyword, which means that under the hood it returns a <code>Future</code> that needs to be polled by an async runtime in order to make progress. In this specific case of a shutdown it almost always makes sense to <code>block_on</code> this method;</li>
+<li>workers shut down in reverse order as they registered;</li>
+</ol>
 <h1><a class="header" href="#drawbacks" id="drawbacks">Drawbacks</a></h1>
-<p>No specific drawbacks using this library.</p>
-<h1><a class="header" href="#rationale-and-alternatives" id="rationale-and-alternatives">Rationale and alternatives</a></h1>
 <ul>
-<li>The <code>log</code> crate is maintained by the rust team, so it is a widely used and trusted dependency in the Bee framework;</li>
-<li>Most of the logging crates in the Rust ecosystem are actually backends for the <code>log</code> crate with different features;</li>
-<li>It should be very easy to switch to a different backend in the future by only changing the initialization function;</li>
-<li>There are a lot of <a href="https://docs.rs/log/0.4.8/log/#available-logging-implementations">available backends</a> but <code>fern</code>
-offers a very fine-grained logging configuration;</li>
+<li>No known drawbacks; the proposal uses trait objects, that have a certain performance overhead, but this shutdown is a one-time operation, performance is not a major issue;</li>
+</ul>
+<h1><a class="header" href="#rationale-and-alternatives" id="rationale-and-alternatives">Rationale and Alternatives</a></h1>
+<ul>
+<li>No viable alternatives known to the author;</li>
 </ul>
 <h1><a class="header" href="#unresolved-questions" id="unresolved-questions">Unresolved questions</a></h1>
-<p>There are no open questions as this RFC is pretty straightforward and the topic of logging is not a complex one.</p>
+<ul>
+<li>Should we have a forced shutdown after a certain time interval, in case some worker fails to terminate? When would such a thing actually happen?</li>
+</ul>
 
                     </main>
 
                     <nav class="nav-wrapper" aria-label="Page navigation">
                         <!-- Mobile navigation buttons -->
                         
-                            <a rel="prev" href="0034-ternary-hash.html" class="mobile-nav-chapters previous" title="Previous chapter" aria-label="Previous chapter" aria-keyshortcuts="Left">
+                            <a rel="prev" href="0037-ternary-numeric-conversion.html" class="mobile-nav-chapters previous" title="Previous chapter" aria-label="Previous chapter" aria-keyshortcuts="Left">
                                 <i class="fa fa-angle-left"></i>
                             </a>
                         
 
-                        
-                            <a rel="next" href="0036-ternary.html" class="mobile-nav-chapters next" title="Next chapter" aria-label="Next chapter" aria-keyshortcuts="Right">
-                                <i class="fa fa-angle-right"></i>
-                            </a>
                         
 
                         <div style="clear: both"></div>
@@ -323,15 +308,11 @@ offers a very fine-grained logging configuration;</li>
 
             <nav class="nav-wide-wrapper" aria-label="Page navigation">
                 
-                    <a rel="prev" href="0034-ternary-hash.html" class="nav-chapters previous" title="Previous chapter" aria-label="Previous chapter" aria-keyshortcuts="Left">
+                    <a rel="prev" href="0037-ternary-numeric-conversion.html" class="nav-chapters previous" title="Previous chapter" aria-label="Previous chapter" aria-keyshortcuts="Left">
                         <i class="fa fa-angle-left"></i>
                     </a>
                 
 
-                
-                    <a rel="next" href="0036-ternary.html" class="nav-chapters next" title="Next chapter" aria-label="Next chapter" aria-keyshortcuts="Right">
-                        <i class="fa fa-angle-right"></i>
-                    </a>
                 
             </nav>
 
