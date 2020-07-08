@@ -1,7 +1,7 @@
 + Feature name: `secret-debug-display`
 + Start date: 2020-07-03
-+ RFC PR: [iotaledger/bee-rfcs#00](https://github.com/iotaledger/bee-rfcs/pull/00)
-+ Bee issue: [iotaledger/bee#00](https://github.com/iotaledger/bee/issues/00)
++ RFC PR: [iotaledger/bee-rfcs#42](https://github.com/iotaledger/bee-rfcs/pull/42)
++ Bee issue: [iotaledger/bee#100](https://github.com/iotaledger/bee/issues/100)
 
 # Summary
 
