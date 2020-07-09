@@ -91,7 +91,7 @@
 
         <nav id="sidebar" class="sidebar" aria-label="Table of contents">
             <div class="sidebar-scrollbox">
-                <ol class="chapter"><li class="chapter-item expanded affix "><a href="introduction.html">Introduction</a></li><li class="chapter-item expanded "><a href="0030-protocol-messages.html">0030-protocol-messages</a></li><li class="chapter-item expanded "><a href="0031-configuration.html">0031-configuration</a></li><li class="chapter-item expanded "><a href="0033-network.html">0033-network</a></li><li class="chapter-item expanded "><a href="0034-ternary-hash.html">0034-ternary-hash</a></li><li class="chapter-item expanded "><a href="0035-logging.html">0035-logging</a></li><li class="chapter-item expanded "><a href="0036-ternary.html">0036-ternary</a></li><li class="chapter-item expanded "><a href="0037-ternary-numeric-conversion.html">0037-ternary-numeric-conversion</a></li><li class="chapter-item expanded "><a href="0041-shutdown.html">0041-shutdown</a></li></ol>
+                <ol class="chapter"><li class="chapter-item expanded affix "><a href="introduction.html">Introduction</a></li><li class="chapter-item expanded "><a href="0030-protocol-messages.html">0030-protocol-messages</a></li><li class="chapter-item expanded "><a href="0031-configuration.html">0031-configuration</a></li><li class="chapter-item expanded "><a href="0033-network.html">0033-network</a></li><li class="chapter-item expanded "><a href="0034-ternary-hash.html">0034-ternary-hash</a></li><li class="chapter-item expanded "><a href="0035-logging.html">0035-logging</a></li><li class="chapter-item expanded "><a href="0036-ternary.html">0036-ternary</a></li><li class="chapter-item expanded "><a href="0037-ternary-numeric-conversion.html">0037-ternary-numeric-conversion</a></li><li class="chapter-item expanded "><a href="0041-shutdown.html">0041-shutdown</a></li><li class="chapter-item expanded "><a href="0042-secret-debug-display.html">0042-secret-debug-display</a></li></ol>
             </div>
             <div id="sidebar-resize-handle" class="sidebar-resize-handle"></div>
         </nav>
@@ -2193,6 +2193,83 @@ type Action = Box&lt;dyn FnOnce()&gt;;
 <ul>
 <li>Should we have a forced shutdown after a certain time interval, in case some worker fails to terminate? When would such a thing actually happen?</li>
 </ul>
+<ul>
+<li>Feature name: <code>secret-debug-display</code></li>
+<li>Start date: 2020-07-03</li>
+<li>RFC PR: <a href="https://github.com/iotaledger/bee-rfcs/pull/42">iotaledger/bee-rfcs#42</a></li>
+<li>Bee issue: <a href="https://github.com/iotaledger/bee/issues/100">iotaledger/bee#100</a></li>
+</ul>
+<h1><a class="header" href="#summary-8" id="summary-8">Summary</a></h1>
+<p>This RFC introduces two <a href="https://doc.rust-lang.org/reference/procedural-macros.html">procedural macros</a>, <code>SecretDebug</code>
+and <code>SecretDisplay</code>, to derive the traits <a href="https://doc.rust-lang.org/std/fmt/trait.Debug.html">Debug</a> and
+<a href="https://doc.rust-lang.org/std/fmt/trait.Display.html">Display</a> for secret material types in order to avoid leaking
+their internals.</p>
+<h1><a class="header" href="#motivation-8" id="motivation-8">Motivation</a></h1>
+<p>Secret materials, private keys for example, are types that are expected to remain private and be shared/leaked under no
+circumstances. However, these types may be wrapped in other higher level types, a wallet for example, that may want to
+implement <code>Debug</code> and/or <code>Display</code>. Not implementing these traits on the secret types would then not permit it.
+At the same time, secret materials should not be exposed by logging them. The consensus is then to implement <code>Debug</code> and
+<code>Display</code> but to not actually log the inner secret. To make things easier, two procedural macros are proposed to
+automatically derive  such implementations.</p>
+<h1><a class="header" href="#detailed-design-8" id="detailed-design-8">Detailed design</a></h1>
+<h2><a class="header" href="#crate" id="crate">Crate</a></h2>
+<p>Procedural macros need to be defined in a different type of crate so a new dedicated crate has to be created with the following in its <code>Cargo.toml</code>:</p>
+<pre><code class="language-toml">[lib]
+proc-macro = true
+</code></pre>
+<h2><a class="header" href="#derivation" id="derivation">Derivation</a></h2>
+<p>This feature is expected to be used by deriving <code>SecretDebug</code> and/or <code>SecretDisplay</code>.</p>
+<pre><pre class="playground"><code class="language-rust">
+<span class="boring">#![allow(unused)]
+</span><span class="boring">fn main() {
+</span>#[derive(SecretDebug, SecretDisplay)]
+struct PrivateKey {
+    ...
+}
+<span class="boring">}
+</span></code></pre></pre>
+<h2><a class="header" href="#output" id="output">Output</a></h2>
+<p>When an attempt to display or debug a secret type is made, a generic message should be displayed instead.
+This RFC proposes <code>&lt;Omitted secret&gt;</code>.</p>
+<h2><a class="header" href="#implementation" id="implementation">Implementation</a></h2>
+<p>This feature makes use of the <a href="https://crates.io/crates/syn">syn</a> and <a href="https://crates.io/crates/quote">quote</a> crates to
+create derivation macros.</p>
+<p>Implementation of <code>SecretDebug</code>:</p>
+<pre><pre class="playground"><code class="language-rust">
+<span class="boring">#![allow(unused)]
+</span><span class="boring">fn main() {
+</span>#[proc_macro_derive(SecretDebug)]
+pub fn derive_secret_debug(input: proc_macro::TokenStream) -&gt; proc_macro::TokenStream {
+    // Parse the input tokens into a syntax tree.
+    let input = parse_macro_input!(input as DeriveInput);
+    // Used in the quasi-quotation below as `#name`.
+    let name = input.ident;
+    // Get the different implementation elements from the input.
+    let (impl_generics, ty_generics, _) = input.generics.split_for_impl();
+
+    let expanded = quote! {
+        // The generated implementation.
+        impl #impl_generics std::fmt::Debug for #name #ty_generics {
+            fn fmt(&amp;self, f: &amp;mut std::fmt::Formatter&lt;'_&gt;) -&gt; std::fmt::Result {
+                write!(f, &quot;&lt;Omitted secret&gt;&quot;)
+            }
+        }
+    };
+
+    // Hand the output tokens back to the compiler.
+    expanded.into()
+}
+<span class="boring">}
+</span></code></pre></pre>
+<p>Implementation of <code>SecretDisplay</code> is similar.</p>
+<h1><a class="header" href="#drawbacks-8" id="drawbacks-8">Drawbacks</a></h1>
+<p>User may actually really want to debug/display their secret types. With this feature in place, they would have to rely
+on APIs providing getters to the inner secret and/or serialization primitives.</p>
+<h1><a class="header" href="#rationale-and-alternatives-8" id="rationale-and-alternatives-8">Rationale and alternatives</a></h1>
+<p>By providing macros, we offer a consistent way to approach the problem and potentially reduce the risk of users leaking
+their secret materials by accident.</p>
+<h1><a class="header" href="#unresolved-questions-8" id="unresolved-questions-8">Unresolved questions</a></h1>
+<p>No questions at the moment.</p>
 
                     </main>
 
