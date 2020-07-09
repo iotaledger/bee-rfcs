@@ -23,7 +23,11 @@ automatically derive  such implementations.
 
 ## Crate
 
-Since procedural macros require a crate defined as `proc-macro = true`, a new dedicated crate has to be created.
+Procedural macros need to be defined in a different type of crate so a new dedicated crate has to be created with the following in its `Cargo.toml`:
+```toml
+[lib]
+proc-macro = true
+```
 
 ## Derivation
 
@@ -46,7 +50,7 @@ This RFC proposes `<Omitted secret>`.
 This feature makes use of the [syn](https://crates.io/crates/syn) and [quote](https://crates.io/crates/quote) crates to
 create derivation macros.
 
-Implementation for `SecretDebug`:
+Implementation of `SecretDebug`:
 ```rust
 #[proc_macro_derive(SecretDebug)]
 pub fn derive_secret_debug(input: proc_macro::TokenStream) -> proc_macro::TokenStream {
@@ -71,7 +75,7 @@ pub fn derive_secret_debug(input: proc_macro::TokenStream) -> proc_macro::TokenS
 }
 ```
 
-Implementation for `Display` is similar.
+Implementation of `SecretDisplay` is similar.
 
 # Drawbacks
 
