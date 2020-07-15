@@ -96,4 +96,4 @@ The alternative is to not recommend or enforce anything and risk users exposing 
 Even though this technique uses volatile memory and is probably effective most of the time the compiler is still free to
 move all of the inner data to another part of memory without zeroing the original data since it doesn't consider the
 value to be dropped yet. A solution to prevent the compiler moving things whenever possible would be to
-[Box](https://doc.rust-lang.org/std/boxed/struct.Box.html) secrets and only accessing them through [Pin](https://doc.rust-lang.org/std/pin/index.html).
+[box](https://doc.rust-lang.org/std/boxed/struct.Box.html) secrets and access them through [Pin](https://doc.rust-lang.org/std/pin/index.html).
