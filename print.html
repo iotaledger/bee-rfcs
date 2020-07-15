@@ -2040,24 +2040,84 @@ assert_eq!(x, y);
 <pre><pre class="playground"><code class="language-rust">
 <span class="boring">#![allow(unused)]
 </span><span class="boring">fn main() {
-</span>// Binary to ternary
-impl&lt;I: AsPrimitive&lt;i64&gt;, T: RawEncodingBuf&gt; From&lt;I&gt; for TritBuf&lt;T&gt; {}
+</span>// Signed binary to balanced ternary
+impl&lt;T: RawEncodingBuf&gt; From&lt;i64&gt; for TritBuf&lt;T&gt; where T::Slice: RawEncoding&lt;Trit = Btrit&gt; {}
+impl&lt;T: RawEncodingBuf&gt; From&lt;i32&gt; for TritBuf&lt;T&gt; where T::Slice: RawEncoding&lt;Trit = Btrit&gt; {}
+impl&lt;T: RawEncodingBuf&gt; From&lt;i16&gt; for TritBuf&lt;T&gt; where T::Slice: RawEncoding&lt;Trit = Btrit&gt; {}
+impl&lt;T: RawEncodingBuf&gt; From&lt;i8&gt; for TritBuf&lt;T&gt; where T::Slice: RawEncoding&lt;Trit = Btrit&gt; {}
 
-// Ternary to binary (these cannot be implemented as above due to Rust's orphan rules)
+// Balanced ternary to signed binary
 impl&lt;'a, T: RawEncoding&lt;Trit = Btrit&gt; + ?Sized&gt; TryFrom&lt;&amp;'a Trits&lt;T&gt;&gt; for i64 {}
 impl&lt;'a, T: RawEncoding&lt;Trit = Btrit&gt; + ?Sized&gt; TryFrom&lt;&amp;'a Trits&lt;T&gt;&gt; for i32 {}
 impl&lt;'a, T: RawEncoding&lt;Trit = Btrit&gt; + ?Sized&gt; TryFrom&lt;&amp;'a Trits&lt;T&gt;&gt; for i16 {}
 impl&lt;'a, T: RawEncoding&lt;Trit = Btrit&gt; + ?Sized&gt; TryFrom&lt;&amp;'a Trits&lt;T&gt;&gt; for i8 {}
+
+// Unsigned binary to unbalanced ternary
+impl&lt;T: RawEncodingBuf&gt; From&lt;u64&gt; for TritBuf&lt;T&gt; where T::Slice: RawEncoding&lt;Trit = Utrit&gt; {}
+impl&lt;T: RawEncodingBuf&gt; From&lt;u32&gt; for TritBuf&lt;T&gt; where T::Slice: RawEncoding&lt;Trit = Utrit&gt; {}
+impl&lt;T: RawEncodingBuf&gt; From&lt;u16&gt; for TritBuf&lt;T&gt; where T::Slice: RawEncoding&lt;Trit = Utrit&gt; {}
+impl&lt;T: RawEncodingBuf&gt; From&lt;u8&gt; for TritBuf&lt;T&gt; where T::Slice: RawEncoding&lt;Trit = Utrit&gt; {}
+
+// Unbalanced ternary to unsigned binary
+impl&lt;'a, T: RawEncoding&lt;Trit = Utrit&gt; + ?Sized&gt; TryFrom&lt;&amp;'a Trits&lt;T&gt;&gt; for u64 {}
+impl&lt;'a, T: RawEncoding&lt;Trit = Utrit&gt; + ?Sized&gt; TryFrom&lt;&amp;'a Trits&lt;T&gt;&gt; for u32 {}
+impl&lt;'a, T: RawEncoding&lt;Trit = Utrit&gt; + ?Sized&gt; TryFrom&lt;&amp;'a Trits&lt;T&gt;&gt; for u16 {}
+impl&lt;'a, T: RawEncoding&lt;Trit = Utrit&gt; + ?Sized&gt; TryFrom&lt;&amp;'a Trits&lt;T&gt;&gt; for u8 {}
 <span class="boring">}
 </span></code></pre></pre>
 <p>The aforementioned trait implementations allow conversion to and from a variety
-of numeric binary types for ternary types. The <code>AsPrimitive</code> trait comes from
-the <a href="https://docs.rs/num-traits/0.2.12/num_traits/cast/trait.AsPrimitive.html"><code>num_traits</code></a>
+of numeric binary types for ternary types.</p>
+<p>In addition, there exist utility functions that allow implementing this
+behaviour for arbitrary numeric values that implement relevant traits from
+<code>num_traits</code>.</p>
+<pre><pre class="playground"><code class="language-rust">
+<span class="boring">#![allow(unused)]
+</span><span class="boring">fn main() {
+</span>pub fn trits_to_signed_int&lt;
+    I: Clone + num_traits::CheckedAdd + num_traits::Signed,
+    T: RawEncoding&lt;Trit = Btrit&gt; + ?Sized,
+&gt;(trits: &amp;Trits&lt;T&gt;) -&gt; Result&lt;I, Error&gt; { ... }
+
+pub fn trits_to_unsigned_int&lt;
+    I: Clone + num_traits::CheckedAdd + num_traits::Num,
+    T: RawEncoding&lt;Trit = Utrit&gt; + ?Sized,
+&gt;(trits: &amp;Trits&lt;T&gt;) -&gt; Result&lt;I, Error&gt; { ... }
+
+pub fn signed_int_trits&lt;I: Clone
+    + num_trits::AsPrimitive&lt;i8&gt;
+    + num_trits::FromPrimitive
+    + num_traits::Signed&gt;(x: I) -&gt; impl Iterator&lt;Item=Btrit&gt; + Clone { ... }
+
+pub fn unsigned_int_trits&lt;I: Clone
+    + num_trits::AsPrimitive&lt;u8&gt;
+    + num_trits::FromPrimitive
+    + num_traits::Num&gt;(x: I) -&gt; impl Iterator&lt;Item=Utrit&gt; + Clone { ... }
+<span class="boring">}
+</span></code></pre></pre>
+<p>The <code>AsPrimitive</code> trait comes from the
+<a href="https://docs.rs/num-traits/0.2.12/num_traits/cast/trait.AsPrimitive.html"><code>num_traits</code></a>
 crate, common throughout the Rust ecosystem.</p>
+<p>All of the aforementioned numeric conversion functions and traits operate
+correctly for all possible values including numeric limits.</p>
 <h1><a class="header" href="#drawbacks-6" id="drawbacks-6">Drawbacks</a></h1>
-<p>It doesn't allow <em>arbitrary</em> binary conversion, only for fixed-size integers.</p>
+<ul>
+<li>
+<p>No support for ternary floating-point conversion (although this is probably
+not useful for IOTA's use case).</p>
+</li>
+<li>
+<p>Rust's orphan rules do not allow implementing foreign traits for foreign types
+so automatically implementing <code>TryFrom</code> for all numeric types is not possible.</p>
+</li>
+<li>
+<p><a href="https://github.com/rust-lang/rust/issues/20400">Rust's type system</a> cannot
+yet reason about type equality through associated type bindings and so it is
+not possible to implement <code>Btrit</code> trit slice to/from unsigned integers yet
+(although it's possible to use the utility functions to achieve this).</p>
+</li>
+</ul>
 <h1><a class="header" href="#rationale-and-alternatives-6" id="rationale-and-alternatives-6">Rationale and alternatives</a></h1>
-<p>No alternatives exist.</p>
+<p>No competing alternatives exist at this time.</p>
 <h1><a class="header" href="#unresolved-questions-6" id="unresolved-questions-6">Unresolved questions</a></h1>
 <p>None so far.</p>
 <ul>
