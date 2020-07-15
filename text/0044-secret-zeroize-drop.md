@@ -14,7 +14,7 @@ When dealing with sensitive data like key materials (e.g. seeds, private keys, .
 their memory to avoid having them continue existing and potentially exposing them to an attack.
 
 Since such an attack already assumes unauthorized access to the data, this technique is merely an exploit mitigation by
-ensuring sensitive data are no longer available.
+ensuring sensitive data is no longer available.
 
 Useful links:
 - [How to zero a buffer](https://www.daemonology.net/blog/2014-09-04-how-to-zero-a-buffer.html)
