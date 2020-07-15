@@ -1,7 +1,7 @@
 + Feature name: `secret-zeroize-drop`
 + Start date: 2020-07-08
-+ RFC PR: [iotaledger/bee-rfcs#00](https://github.com/iotaledger/bee-rfcs/pull/00)
-+ Bee issue: [iotaledger/bee#00](https://github.com/iotaledger/bee/issues/00)
++ RFC PR: [iotaledger/bee-rfcs#44](https://github.com/iotaledger/bee-rfcs/pull/44)
++ Bee issue: [iotaledger/bee#104](https://github.com/iotaledger/bee/issues/104)
 
 # Summary
 
