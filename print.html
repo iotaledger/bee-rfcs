@@ -91,7 +91,7 @@
 
         <nav id="sidebar" class="sidebar" aria-label="Table of contents">
             <div class="sidebar-scrollbox">
-                <ol class="chapter"><li class="chapter-item expanded affix "><a href="introduction.html">Introduction</a></li><li class="chapter-item expanded "><a href="0030-protocol-messages.html">0030-protocol-messages</a></li><li class="chapter-item expanded "><a href="0031-configuration.html">0031-configuration</a></li><li class="chapter-item expanded "><a href="0033-network.html">0033-network</a></li><li class="chapter-item expanded "><a href="0034-ternary-hash.html">0034-ternary-hash</a></li><li class="chapter-item expanded "><a href="0035-logging.html">0035-logging</a></li><li class="chapter-item expanded "><a href="0036-ternary.html">0036-ternary</a></li><li class="chapter-item expanded "><a href="0037-ternary-numeric-conversion.html">0037-ternary-numeric-conversion</a></li><li class="chapter-item expanded "><a href="0041-shutdown.html">0041-shutdown</a></li><li class="chapter-item expanded "><a href="0042-secret-debug-display.html">0042-secret-debug-display</a></li></ol>
+                <ol class="chapter"><li class="chapter-item expanded affix "><a href="introduction.html">Introduction</a></li><li class="chapter-item expanded "><a href="0030-protocol-messages.html">0030-protocol-messages</a></li><li class="chapter-item expanded "><a href="0031-configuration.html">0031-configuration</a></li><li class="chapter-item expanded "><a href="0033-network.html">0033-network</a></li><li class="chapter-item expanded "><a href="0034-ternary-hash.html">0034-ternary-hash</a></li><li class="chapter-item expanded "><a href="0035-logging.html">0035-logging</a></li><li class="chapter-item expanded "><a href="0036-ternary.html">0036-ternary</a></li><li class="chapter-item expanded "><a href="0037-ternary-numeric-conversion.html">0037-ternary-numeric-conversion</a></li><li class="chapter-item expanded "><a href="0041-shutdown.html">0041-shutdown</a></li><li class="chapter-item expanded "><a href="0042-secret-debug-display.html">0042-secret-debug-display</a></li><li class="chapter-item expanded "><a href="0044-secret-zeroize-drop.html">0044-secret-zeroize-drop</a></li></ol>
             </div>
             <div id="sidebar-resize-handle" class="sidebar-resize-handle"></div>
         </nav>
@@ -2330,6 +2330,106 @@ on APIs providing getters to the inner secret and/or serialization primitives.</
 their secret materials by accident.</p>
 <h1><a class="header" href="#unresolved-questions-8" id="unresolved-questions-8">Unresolved questions</a></h1>
 <p>No questions at the moment.</p>
+<ul>
+<li>Feature name: <code>secret-zeroize-drop</code></li>
+<li>Start date: 2020-07-08</li>
+<li>RFC PR: <a href="https://github.com/iotaledger/bee-rfcs/pull/44">iotaledger/bee-rfcs#44</a></li>
+<li>Bee issue: <a href="https://github.com/iotaledger/bee/issues/104">iotaledger/bee#104</a></li>
+</ul>
+<h1><a class="header" href="#summary-9" id="summary-9">Summary</a></h1>
+<p>This RFC does not really introduce a feature but rather a recommendation when dealing with sensitive data; their memory
+should be securely erased when not used anymore.</p>
+<h1><a class="header" href="#motivation-9" id="motivation-9">Motivation</a></h1>
+<p>When dealing with sensitive data like key materials (e.g. seeds, private keys, ...), it is wise to explicitly clear
+their memory to avoid having them continue existing and potentially exposing them to an attack.</p>
+<p>Since such an attack already assumes unauthorized access to the data, this technique is merely an exploit mitigation by
+ensuring sensitive data is no longer available.</p>
+<p>Useful links:</p>
+<ul>
+<li><a href="https://www.daemonology.net/blog/2014-09-04-how-to-zero-a-buffer.html">How to zero a buffer</a></li>
+<li><a href="https://www.gnu.org/software/libc/manual/html_node/Erasing-Sensitive-Data.html">Erasing Sensitive Data</a></li>
+<li><a href="https://wiki.sei.cmu.edu/confluence/display/c/MEM06-C.+Ensure+that+sensitive+data+is+not+written+out+to+disk">Ensure that sensitive data is not written out to disk</a></li>
+<li><a href="https://security.stackexchange.com/questions/74280/would-it-be-good-secure-programming-practice-to-overwrite-a-sensitive-variable">Would it be good secure programming practice to overwrite a “sensitive” variable before deleting it?</a></li>
+</ul>
+<h1><a class="header" href="#detailed-design-9" id="detailed-design-9">Detailed design</a></h1>
+<p>This task is made a bit more complex by compilers that have a tendency of removing zeroing of memory they deem pointless
+when doing optimizations. It is then not as trivial as resetting the memory to 0.</p>
+<p>These optimizations can however be bypassed by using <a href="https://en.wikipedia.org/wiki/Volatile_(computer_programming)">volatile memory</a>.</p>
+<h2><a class="header" href="#zeroize-and-drop" id="zeroize-and-drop"><code>Zeroize</code> and <code>Drop</code></a></h2>
+<p>This RFC recommends:</p>
+<ul>
+<li>implementing the following traits on sensitive data types:
+<ul>
+<li><a href="https://docs.rs/zeroize/1.1.0/zeroize/trait.Zeroize.html">Zeroize</a> to <code>Securely zero memory with a simple trait (Zeroize) built on stable Rust primitives which guarantee the operation will not be &quot;optimized away&quot;</code>;</li>
+<li><a href="https://doc.rust-lang.org/std/ops/trait.Drop.html">Drop</a> <code>Used to run some code when a value goes out of scope. This is sometimes called a 'destructor'</code> and making it call <code>self.zeroize()</code>;</li>
+</ul>
+</li>
+<li>having <code>Zeroize</code> and <code>Drop</code> as requirements of sensitive data traits;</li>
+</ul>
+<h2><a class="header" href="#examples" id="examples">Examples</a></h2>
+<p>Traits requirements:</p>
+<pre><pre class="playground"><code class="language-rust">
+<span class="boring">#![allow(unused)]
+</span><span class="boring">fn main() {
+</span>trait PrivateKey: Zeroize + Drop {
+    ...
+}
+<span class="boring">}
+</span></code></pre></pre>
+<p>If the type is trivial, <code>Zeroize</code> and <code>Drop</code> can be  derived:</p>
+<pre><pre class="playground"><code class="language-rust">
+<span class="boring">#![allow(unused)]
+</span><span class="boring">fn main() {
+</span>#[derive(Zeroize)]
+#[zeroize(drop)]
+struct ExamplePrivateKey([u8; 32]);
+<span class="boring">}
+</span></code></pre></pre>
+<p>Otherwise, <code>Zeroize</code> and <code>Drop</code> need to be manually implemented.</p>
+<ul>
+<li>
+<p><code>Zeroize</code> implementation:</p>
+<pre><pre class="playground"><code class="language-rust">
+<span class="boring">#![allow(unused)]
+</span><span class="boring">fn main() {
+</span>impl Zeroize for ExamplePrivateKey {
+    fn zeroize(&amp;mut self) {
+        ...
+    }
+}
+<span class="boring">}
+</span></code></pre></pre>
+</li>
+<li>
+<p><code>Drop</code> implementation:</p>
+<pre><pre class="playground"><code class="language-rust">
+<span class="boring">#![allow(unused)]
+</span><span class="boring">fn main() {
+</span>impl Drop for ExamplePrivateKey {
+    fn drop(&amp;mut self) {
+        self.zeroize()
+    }
+}
+<span class="boring">}
+</span></code></pre></pre>
+<p>A <a href="https://doc.rust-lang.org/reference/procedural-macros.html">derive macro</a> <code>SecretDrop</code> could be written to derive
+the <code>Drop</code> implementation that is always expected to be the same.</p>
+</li>
+</ul>
+<p>Useful links:</p>
+<ul>
+<li><a href="https://users.rust-lang.org/t/handling-sensitive-data-in-memory/14388">Handling sensitive data in memory</a></li>
+<li><a href="https://github.com/dalek-cryptography/curve25519-dalek/issues/11">Erasing secrets from memory (zero on drop)</a></li>
+</ul>
+<h1><a class="header" href="#drawbacks-9" id="drawbacks-9">Drawbacks</a></h1>
+<p>There are no major drawbacks in doing that, except the little overhead it comes with.</p>
+<h1><a class="header" href="#rationale-and-alternatives-9" id="rationale-and-alternatives-9">Rationale and alternatives</a></h1>
+<p>The alternative is to not recommend or enforce anything and risk users exposing their sensitive data to attacks.</p>
+<h1><a class="header" href="#unresolved-questions-9" id="unresolved-questions-9">Unresolved questions</a></h1>
+<p>Even though this technique uses volatile memory and is probably effective most of the time the compiler is still free to
+move all of the inner data to another part of memory without zeroing the original data since it doesn't consider the
+value to be dropped yet. A solution to prevent the compiler moving things whenever possible would be to
+<a href="https://doc.rust-lang.org/std/boxed/struct.Box.html">box</a> secrets and access them through <a href="https://doc.rust-lang.org/std/pin/index.html">Pin</a>.</p>
 
                     </main>
 
