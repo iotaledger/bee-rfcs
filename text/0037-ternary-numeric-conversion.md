@@ -27,24 +27,28 @@ This RFC introduces the following trait implementations:
 
 ```rust
 // Signed binary to balanced ternary
+impl<T: RawEncodingBuf> From<i128> for TritBuf<T> where T::Slice: RawEncoding<Trit = Btrit> {}
 impl<T: RawEncodingBuf> From<i64> for TritBuf<T> where T::Slice: RawEncoding<Trit = Btrit> {}
 impl<T: RawEncodingBuf> From<i32> for TritBuf<T> where T::Slice: RawEncoding<Trit = Btrit> {}
 impl<T: RawEncodingBuf> From<i16> for TritBuf<T> where T::Slice: RawEncoding<Trit = Btrit> {}
 impl<T: RawEncodingBuf> From<i8> for TritBuf<T> where T::Slice: RawEncoding<Trit = Btrit> {}
 
 // Balanced ternary to signed binary
+impl<'a, T: RawEncoding<Trit = Btrit> + ?Sized> TryFrom<&'a Trits<T>> for i128 {}
 impl<'a, T: RawEncoding<Trit = Btrit> + ?Sized> TryFrom<&'a Trits<T>> for i64 {}
 impl<'a, T: RawEncoding<Trit = Btrit> + ?Sized> TryFrom<&'a Trits<T>> for i32 {}
 impl<'a, T: RawEncoding<Trit = Btrit> + ?Sized> TryFrom<&'a Trits<T>> for i16 {}
 impl<'a, T: RawEncoding<Trit = Btrit> + ?Sized> TryFrom<&'a Trits<T>> for i8 {}
 
 // Unsigned binary to unbalanced ternary
+impl<T: RawEncodingBuf> From<u128> for TritBuf<T> where T::Slice: RawEncoding<Trit = Utrit> {}
 impl<T: RawEncodingBuf> From<u64> for TritBuf<T> where T::Slice: RawEncoding<Trit = Utrit> {}
 impl<T: RawEncodingBuf> From<u32> for TritBuf<T> where T::Slice: RawEncoding<Trit = Utrit> {}
 impl<T: RawEncodingBuf> From<u16> for TritBuf<T> where T::Slice: RawEncoding<Trit = Utrit> {}
 impl<T: RawEncodingBuf> From<u8> for TritBuf<T> where T::Slice: RawEncoding<Trit = Utrit> {}
 
 // Unbalanced ternary to unsigned binary
+impl<'a, T: RawEncoding<Trit = Utrit> + ?Sized> TryFrom<&'a Trits<T>> for u128 {}
 impl<'a, T: RawEncoding<Trit = Utrit> + ?Sized> TryFrom<&'a Trits<T>> for u64 {}
 impl<'a, T: RawEncoding<Trit = Utrit> + ?Sized> TryFrom<&'a Trits<T>> for u32 {}
 impl<'a, T: RawEncoding<Trit = Utrit> + ?Sized> TryFrom<&'a Trits<T>> for u16 {}
