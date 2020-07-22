@@ -59,14 +59,9 @@ behaviour for arbitrary numeric values that implement relevant traits from
 `num_traits`.
 
 ```rust
-pub fn trits_to_signed_int<
-    I: Clone + num_traits::CheckedAdd + num_traits::Signed,
-    T: RawEncoding<Trit = Btrit> + ?Sized,
->(trits: &Trits<T>) -> Result<I, Error> { ... }
-
-pub fn trits_to_unsigned_int<
-    I: Clone + num_traits::CheckedAdd + num_traits::Num,
-    T: RawEncoding<Trit = Utrit> + ?Sized,
+pub fn trits_to_int<
+    I: Clone + num_traits::CheckedAdd + num_traits::CheckedSub + PartialOrd + num_traits::Num,
+    T: RawEncoding + ?Sized,
 >(trits: &Trits<T>) -> Result<I, Error> { ... }
 
 pub fn signed_int_trits<I: Clone
@@ -89,8 +84,8 @@ correctly for all possible values including numeric limits.
 
 # Drawbacks
 
-- No support for ternary floating-point conversion (although this is probably
-not useful for IOTA's use case).
+- No support for fractional ternary floating-point conversion (although this is
+probably not useful for IOTA's use case).
 
 - Rust's orphan rules do not allow implementing foreign traits for foreign types
 so automatically implementing `TryFrom` for all numeric types is not possible.
