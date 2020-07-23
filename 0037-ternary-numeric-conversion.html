@@ -182,24 +182,28 @@ assert_eq!(x, y);
 <span class="boring">#![allow(unused)]
 </span><span class="boring">fn main() {
 </span>// Signed binary to balanced ternary
+impl&lt;T: RawEncodingBuf&gt; From&lt;i128&gt; for TritBuf&lt;T&gt; where T::Slice: RawEncoding&lt;Trit = Btrit&gt; {}
 impl&lt;T: RawEncodingBuf&gt; From&lt;i64&gt; for TritBuf&lt;T&gt; where T::Slice: RawEncoding&lt;Trit = Btrit&gt; {}
 impl&lt;T: RawEncodingBuf&gt; From&lt;i32&gt; for TritBuf&lt;T&gt; where T::Slice: RawEncoding&lt;Trit = Btrit&gt; {}
 impl&lt;T: RawEncodingBuf&gt; From&lt;i16&gt; for TritBuf&lt;T&gt; where T::Slice: RawEncoding&lt;Trit = Btrit&gt; {}
 impl&lt;T: RawEncodingBuf&gt; From&lt;i8&gt; for TritBuf&lt;T&gt; where T::Slice: RawEncoding&lt;Trit = Btrit&gt; {}
 
 // Balanced ternary to signed binary
+impl&lt;'a, T: RawEncoding&lt;Trit = Btrit&gt; + ?Sized&gt; TryFrom&lt;&amp;'a Trits&lt;T&gt;&gt; for i128 {}
 impl&lt;'a, T: RawEncoding&lt;Trit = Btrit&gt; + ?Sized&gt; TryFrom&lt;&amp;'a Trits&lt;T&gt;&gt; for i64 {}
 impl&lt;'a, T: RawEncoding&lt;Trit = Btrit&gt; + ?Sized&gt; TryFrom&lt;&amp;'a Trits&lt;T&gt;&gt; for i32 {}
 impl&lt;'a, T: RawEncoding&lt;Trit = Btrit&gt; + ?Sized&gt; TryFrom&lt;&amp;'a Trits&lt;T&gt;&gt; for i16 {}
 impl&lt;'a, T: RawEncoding&lt;Trit = Btrit&gt; + ?Sized&gt; TryFrom&lt;&amp;'a Trits&lt;T&gt;&gt; for i8 {}
 
 // Unsigned binary to unbalanced ternary
+impl&lt;T: RawEncodingBuf&gt; From&lt;u128&gt; for TritBuf&lt;T&gt; where T::Slice: RawEncoding&lt;Trit = Utrit&gt; {}
 impl&lt;T: RawEncodingBuf&gt; From&lt;u64&gt; for TritBuf&lt;T&gt; where T::Slice: RawEncoding&lt;Trit = Utrit&gt; {}
 impl&lt;T: RawEncodingBuf&gt; From&lt;u32&gt; for TritBuf&lt;T&gt; where T::Slice: RawEncoding&lt;Trit = Utrit&gt; {}
 impl&lt;T: RawEncodingBuf&gt; From&lt;u16&gt; for TritBuf&lt;T&gt; where T::Slice: RawEncoding&lt;Trit = Utrit&gt; {}
 impl&lt;T: RawEncodingBuf&gt; From&lt;u8&gt; for TritBuf&lt;T&gt; where T::Slice: RawEncoding&lt;Trit = Utrit&gt; {}
 
 // Unbalanced ternary to unsigned binary
+impl&lt;'a, T: RawEncoding&lt;Trit = Utrit&gt; + ?Sized&gt; TryFrom&lt;&amp;'a Trits&lt;T&gt;&gt; for u128 {}
 impl&lt;'a, T: RawEncoding&lt;Trit = Utrit&gt; + ?Sized&gt; TryFrom&lt;&amp;'a Trits&lt;T&gt;&gt; for u64 {}
 impl&lt;'a, T: RawEncoding&lt;Trit = Utrit&gt; + ?Sized&gt; TryFrom&lt;&amp;'a Trits&lt;T&gt;&gt; for u32 {}
 impl&lt;'a, T: RawEncoding&lt;Trit = Utrit&gt; + ?Sized&gt; TryFrom&lt;&amp;'a Trits&lt;T&gt;&gt; for u16 {}
@@ -214,14 +218,9 @@ behaviour for arbitrary numeric values that implement relevant traits from
 <pre><pre class="playground"><code class="language-rust">
 <span class="boring">#![allow(unused)]
 </span><span class="boring">fn main() {
-</span>pub fn trits_to_signed_int&lt;
-    I: Clone + num_traits::CheckedAdd + num_traits::Signed,
-    T: RawEncoding&lt;Trit = Btrit&gt; + ?Sized,
-&gt;(trits: &amp;Trits&lt;T&gt;) -&gt; Result&lt;I, Error&gt; { ... }
-
-pub fn trits_to_unsigned_int&lt;
-    I: Clone + num_traits::CheckedAdd + num_traits::Num,
-    T: RawEncoding&lt;Trit = Utrit&gt; + ?Sized,
+</span>pub fn trits_to_int&lt;
+    I: Clone + num_traits::CheckedAdd + num_traits::CheckedSub + PartialOrd + num_traits::Num,
+    T: RawEncoding + ?Sized,
 &gt;(trits: &amp;Trits&lt;T&gt;) -&gt; Result&lt;I, Error&gt; { ... }
 
 pub fn signed_int_trits&lt;I: Clone
@@ -243,8 +242,8 @@ correctly for all possible values including numeric limits.</p>
 <h1><a class="header" href="#drawbacks" id="drawbacks">Drawbacks</a></h1>
 <ul>
 <li>
-<p>No support for ternary floating-point conversion (although this is probably
-not useful for IOTA's use case).</p>
+<p>No support for fractional ternary floating-point conversion (although this is
+probably not useful for IOTA's use case).</p>
 </li>
 <li>
 <p>Rust's orphan rules do not allow implementing foreign traits for foreign types
