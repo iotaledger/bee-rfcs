@@ -6,8 +6,7 @@ tags: RFC, draft
 # bee-storage
 + Feature name: `storage`
 + Start date: 2020-07-15
-+ RFC PR: [iotaledger/bee-rfcs#46](https://github.com/iotaledger/bee-rfcs/pull/46)
-+ Bee issue:  [iotaledger/bee#106](https://github.com/iotaledger/bee/issues/106)
++ RFC PR: [iotaledger/bee-rfcs#47](https://github.com/iotaledger/bee-rfcs/pull/47)
 
 # Summary
 
