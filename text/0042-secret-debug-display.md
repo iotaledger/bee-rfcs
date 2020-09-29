@@ -6,8 +6,8 @@
 # Summary
 
 This RFC introduces two [procedural macros](https://doc.rust-lang.org/reference/procedural-macros.html), `SecretDebug`
-and `SecretDisplay`, to derive the traits [Debug](https://doc.rust-lang.org/std/fmt/trait.Debug.html) and
-[Display](https://doc.rust-lang.org/std/fmt/trait.Display.html) for secret material types in order to avoid leaking
+and `SecretDisplay`, to derive the traits [Debug](https://doc.rust-lang.org/core/fmt/trait.Debug.html) and
+[Display](https://doc.rust-lang.org/core/fmt/trait.Display.html) for secret material types in order to avoid leaking
 their internals.
 
 # Motivation
@@ -63,8 +63,8 @@ pub fn derive_secret_debug(input: proc_macro::TokenStream) -> proc_macro::TokenS
 
     let expanded = quote! {
         // The generated implementation.
-        impl #impl_generics std::fmt::Debug for #name #ty_generics {
-            fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        impl #impl_generics core::fmt::Debug for #name #ty_generics {
+            fn fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result {
                 write!(f, "<Omitted secret>")
             }
         }
